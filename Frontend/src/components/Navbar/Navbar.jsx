@@ -3,13 +3,13 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import Link from '@mui/material/Link';
+import Button from '@mui/material/Button'; 
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useState } from 'react';
-
+import { Link } from 'react-router-dom';
 export default function ButtonAppBar() {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
@@ -43,21 +43,19 @@ export default function ButtonAppBar() {
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
         <Toolbar sx={{ justifyContent: 'space-between' }}>
-          
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            AI Tour Guide
-          </Typography>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>AI Tour Guide</Link> {/* Link to home */}
+            </Typography>
           <Box sx={{ display: 'flex', gap: 4 }}>
-            <Link
+            <Button
               id="destination-button"
               aria-haspopup="true"
               aria-controls="destination-menu"
               onClick={handleOpenDestination}
               color="inherit"
-              underline="none"
             >
               Destinations
-            </Link>
+            </Button>
             <Menu
               id="destination-menu"
               anchorEl={anchorElDestination}
@@ -66,27 +64,23 @@ export default function ButtonAppBar() {
               MenuListProps={{
                 'aria-labelledby': 'destination-button',
               }}
-      
             >
-              <MenuItem onClick={handleCloseDestination}>World Heritage Sites</MenuItem>
-              <MenuItem onClick={handleCloseDestination}>National Parks and Community Protected Area</MenuItem>
-              <MenuItem onClick={handleCloseDestination}>Lakes, Hot Springs and Water Falls</MenuItem>
-              <MenuItem onClick={handleCloseDestination}>Religious Sites</MenuItem>
-              <MenuItem onClick={handleCloseDestination}>Historical Landmarks</MenuItem>
+              <MenuItem onClick={() => { handleCloseDestination(); }}>World Heritage Sites</MenuItem>
+              <MenuItem onClick={() => { handleCloseDestination(); }}>National Parks and Community Protected Area</MenuItem>
+              <MenuItem onClick={() => { handleCloseDestination(); }}>Lakes, Hot Springs and Water Falls</MenuItem>
+              <MenuItem onClick={() => { handleCloseDestination(); }}>Religious Sites</MenuItem>
+              <MenuItem onClick={() => { handleCloseDestination(); }}>Historical Landmarks</MenuItem>
             </Menu>
-            <Link href="/" color="inherit" underline="none">
-              Things to do
-            </Link>
-            <Link
+            <Link to='/things'>Things to Do</Link>
+            <Button
               id="tourist-button"
               aria-haspopup="true"
               aria-controls="tourist-menu"
               onClick={handleOpenTourist}
               color="inherit"
-              underline="none"
             >
               Tourist Facilities
-            </Link>
+            </Button>
             <Menu
               id="tourist-menu"
               anchorEl={anchorElTourist}
@@ -96,27 +90,22 @@ export default function ButtonAppBar() {
                 'aria-labelledby': 'tourist-button',
               }}
             >
-              <MenuItem onClick={handleCloseTourist}>Flights</MenuItem>
-              <MenuItem onClick={handleCloseTourist}>Hotels and Lodges</MenuItem>
-              <MenuItem onClick={handleCloseTourist}>Tourist Information Centers</MenuItem>
-              <MenuItem onClick={handleCloseTourist}>Other Service Providers</MenuItem>
+              <MenuItem onClick={() => { handleCloseTourist(); }}>Flights</MenuItem>
+              <MenuItem onClick={() => { handleCloseTourist(); }}>Hotels and Lodges</MenuItem>
+              <MenuItem onClick={() => { handleCloseTourist(); }}>Tourist Information Centers</MenuItem>
+              <MenuItem onClick={() => { handleCloseTourist(); }}>Other Service Providers</MenuItem>
             </Menu>
-            <Link href="/" color="inherit" underline="none">
-              Events
-            </Link>
-            <Link href="/" color="inherit" underline="none">
-              News
-            </Link>
-            <Link
+            <Link to='/events'>Events</Link>
+            <Link to='/news'>News</Link>
+            <Button
               id="about-button"
               aria-haspopup="true"
               aria-controls="about-menu"
               onClick={handleOpenAbout}
               color="inherit"
-              underline="none"
             >
               About
-            </Link>
+            </Button>
             <Menu
               id="about-menu"
               anchorEl={anchorElAbout}
@@ -126,10 +115,10 @@ export default function ButtonAppBar() {
                 'aria-labelledby': 'about-button',
               }}
             >
-              <MenuItem onClick={handleCloseAbout}>Amhara Region</MenuItem>
-              <MenuItem onClick={handleCloseAbout}>The Bureau</MenuItem>
-              <MenuItem onClick={handleCloseAbout}>Our Management</MenuItem>
-              <MenuItem onClick={handleCloseAbout}>Mandate and Responsibility</MenuItem>
+              <MenuItem onClick={() => { handleCloseAbout(); }}>Amhara Region</MenuItem>
+              <MenuItem onClick={() => { handleCloseAbout(); }}>The Bureau</MenuItem>
+              <MenuItem onClick={() => { handleCloseAbout(); }}>Our Management</MenuItem>
+              <MenuItem onClick={() => { handleCloseAbout(); }}>Mandate and Responsibility</MenuItem>
             </Menu>
           </Box>
         </Toolbar>
