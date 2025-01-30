@@ -7,12 +7,14 @@ import Events from './components/Events/Events'
 import ThingsToDo from './components/Things To Do/DoThings'
 import HotelsandLocations from './components/Hotels and Lodges/HotelsandLocations'
 import World from './components/Destinations/World Heritage Sites/World'
+import ReligiousHome from './components/Destinations/Religious Sites/ReligiousHome'
 function App() {
   return (
     <>
     <ButtonAppBar/>
     <Routes>
       <Route path='/worldheritagesites' element={<World/>}/>
+      <Route path='/religioussites' element={<ReligiousHome/>}/>
       <Route path='/' element={<Home/>}/>
       <Route path='/news' element={<News/>}/>
       <Route path='/events' element={<Events/>}/>

@@ -68,7 +68,7 @@ export default function ButtonAppBar() {
               <MenuItem onClick={() => { handleCloseDestination(); }}><Link to='/worldheritagesites'>World Heritage Sites</Link></MenuItem>
               <MenuItem onClick={() => { handleCloseDestination(); }}>National Parks and Community Protected Area</MenuItem>
               <MenuItem onClick={() => { handleCloseDestination(); }}>Lakes, Hot Springs and Water Falls</MenuItem>
-              <MenuItem onClick={() => { handleCloseDestination(); }}>Religious Sites</MenuItem>
+              <MenuItem onClick={() => { handleCloseDestination(); }}><Link to='/religioussites'>Religious Sites</Link></MenuItem>
               <MenuItem onClick={() => { handleCloseDestination(); }}>Historical Landmarks</MenuItem>
             </Menu>
             <Link to='/things'>Things to Do</Link>
