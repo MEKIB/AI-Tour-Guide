@@ -65,7 +65,7 @@ export default function ButtonAppBar() {
                 'aria-labelledby': 'destination-button',
               }}
             >
-              <MenuItem onClick={() => { handleCloseDestination(); }}>World Heritage Sites</MenuItem>
+              <MenuItem onClick={() => { handleCloseDestination(); }}><Link to='/worldheritagesites'>World Heritage Sites</Link></MenuItem>
               <MenuItem onClick={() => { handleCloseDestination(); }}>National Parks and Community Protected Area</MenuItem>
               <MenuItem onClick={() => { handleCloseDestination(); }}>Lakes, Hot Springs and Water Falls</MenuItem>
               <MenuItem onClick={() => { handleCloseDestination(); }}>Religious Sites</MenuItem>
@@ -91,7 +91,7 @@ export default function ButtonAppBar() {
               }}
             >
               <MenuItem onClick={() => { handleCloseTourist(); }}>Flights</MenuItem>
-              <MenuItem onClick={() => { handleCloseTourist(); }}>Hotels and Lodges</MenuItem>
+              <MenuItem onClick={() => { handleCloseTourist(); }}><Link to='/hotelslocation'>Hotels and Lodges</Link></MenuItem>
               <MenuItem onClick={() => { handleCloseTourist(); }}>Tourist Information Centers</MenuItem>
               <MenuItem onClick={() => { handleCloseTourist(); }}>Other Service Providers</MenuItem>
             </Menu>
