@@ -90,7 +90,7 @@ export default function ButtonAppBar() {
                 'aria-labelledby': 'tourist-button',
               }}
             >
-              <MenuItem onClick={() => { handleCloseTourist(); }}>Flights</MenuItem>
+              <MenuItem onClick={() => { handleCloseTourist(); }}><Link to='/flights'>Flights</Link></MenuItem>
               <MenuItem onClick={() => { handleCloseTourist(); }}><Link to='/hotelslocation'>Hotels and Lodges</Link></MenuItem>
               <MenuItem onClick={() => { handleCloseTourist(); }}>Tourist Information Centers</MenuItem>
               <MenuItem onClick={() => { handleCloseTourist(); }}>Other Service Providers</MenuItem>

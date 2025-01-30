@@ -5,9 +5,11 @@ import Home from './components/Home page/Home'
 import News from './components/News/News'
 import Events from './components/Events/Events'
 import ThingsToDo from './components/Things To Do/DoThings'
-import HotelsandLocations from './components/Hotels and Lodges/HotelsandLocations'
 import World from './components/Destinations/World Heritage Sites/World'
 import ReligiousHome from './components/Destinations/Religious Sites/ReligiousHome'
+import Flight from './components/Tourist Facilities/Flights/Flight'
+import HotelsandLocations from './components/Tourist Facilities/Hotels and Lodges/HotelsandLocations'
+
 function App() {
   return (
     <>
@@ -19,6 +21,7 @@ function App() {
       <Route path='/news' element={<News/>}/>
       <Route path='/events' element={<Events/>}/>
       <Route path='/things' element={<ThingsToDo/>}/>
+      <Route path='/flights' element={<Flight/>}/>
       <Route path='/hotelslocation' element={<HotelsandLocations/>}/>
     </Routes>
     </>
