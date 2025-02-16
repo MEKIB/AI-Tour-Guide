@@ -9,6 +9,8 @@ import World from './components/Destinations/World Heritage Sites/World'
 import ReligiousHome from './components/Destinations/Religious Sites/ReligiousHome'
 import Flight from './components/Tourist Facilities/Flights/Flight'
 import HotelsandLocations from './components/Tourist Facilities/Hotels and Lodges/HotelsandLocations'
+import FilteredHotels from './components/Tourist Facilities/Hotels and Lodges/FilteredHotels'
+import HotelList from './components/Tourist Facilities/Hotels and Lodges/HotelLists'
 
 function App() {
   return (
@@ -22,7 +24,8 @@ function App() {
       <Route path='/events' element={<Events/>}/>
       <Route path='/things' element={<ThingsToDo/>}/>
       <Route path='/flights' element={<Flight/>}/>
-      {/* <Route path='/hotelslocation' element={<HotelsandLocations/>}/> */}
+      <Route path='/hotelslocation' element={<HotelsandLocations/>}/>
+      <Route path='/filtered-hotels' element={<FilteredHotels/>}/>
     </Routes>
     </>
   )
