@@ -1,6 +1,6 @@
-// FilteredHotels.js (Create a new component for the filtered hotels page)
+// FilteredHotels.js
 import React from 'react';
-import { useLocation } from 'react-router-dom'; // Import useLocation
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -11,8 +11,13 @@ import {
 } from '@mui/material';
 
 const FilteredHotels = () => {
-  const location = useLocation(); // Get the location object
-  const filteredHotels = location.state?.filteredHotels || []; // Access the filtered hotels
+  const location = useLocation();
+  const filteredHotels = location.state?.filteredHotels || [];
+  const navigate = useNavigate();
+
+  const handleHotelClick = (hotel) => {
+    navigate(`/hotel/${hotel.id}`, { state: { hotel: hotel } }); // Pass hotel data
+  };
 
   return (
     <Box sx={{ p: 3 }}>
@@ -20,7 +25,7 @@ const FilteredHotels = () => {
       <Grid container spacing={2}>
         {filteredHotels.map(hotel => (
           <Grid item xs={12} sm={6} md={4} key={hotel.id}>
-            <Card>
+            <Card onClick={() => handleHotelClick(hotel)} style={{ cursor: 'pointer' }}> {/* Make card clickable */}
               <CardMedia component="img" height="200" image={hotel.image} alt={hotel.name} />
               <CardContent>
                 <Typography variant="h6" component="h3">{hotel.name}</Typography>

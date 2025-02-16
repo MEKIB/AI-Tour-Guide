@@ -11,6 +11,8 @@ import Flight from './components/Tourist Facilities/Flights/Flight'
 import HotelsandLocations from './components/Tourist Facilities/Hotels and Lodges/HotelsandLocations'
 import FilteredHotels from './components/Tourist Facilities/Hotels and Lodges/FilteredHotels'
 import HotelList from './components/Tourist Facilities/Hotels and Lodges/HotelLists'
+import HotelDetails from './components/Tourist Facilities/Hotels and Lodges/HotelDetails'
+import Footer from './components/Footer/Footer'
 
 function App() {
   return (
@@ -26,7 +28,9 @@ function App() {
       <Route path='/flights' element={<Flight/>}/>
       <Route path='/hotelslocation' element={<HotelsandLocations/>}/>
       <Route path='/filtered-hotels' element={<FilteredHotels/>}/>
+      <Route path='/hotel/:id' element={<HotelDetails/>}/>
     </Routes>
+    <Footer/>
     </>
   )
 }
