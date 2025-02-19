@@ -10,30 +10,91 @@ import {
 } from '@mui/material';
 import images from '../../../assets/Biking.jpg';
 import HotelFilter from './FilterHotel';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import sky from '../../../assets/sky resort.jpeg'
-import grand from '../../../assets/grand hotel.jpeg'
-import unison from '../../../assets/unison.jpg'
+import { useNavigate } from 'react-router-dom';
+import sky from '../../../assets/sky resort.jpeg';
+import grand from '../../../assets/grand hotel.jpeg';
+import unison from '../../../assets/unison.jpg';
+import unisonBed1 from '../../../assets/unison bed.jpg';
+import unisonGym from '../../../assets/unison gym.jpeg';
 
 const HotelList = () => {
   const [hotels, setHotels] = useState([]);
-  const [filteredHotels, setFilteredHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
   useEffect(() => {
     const mockHotels = [
-      { id: 1, name: 'Hotel A', location: 'Hotels', facilityType: 'Gondar', image: images },
-      { id: 2, name: 'Hotel B', location: 'Gondar', facilityType: 'Hotels', image: images },
-      { id: 3, name: 'Hotel C', location: 'Bahir Dar', facilityType: 'Hotels', image: unison },
-      { id: 4, name: 'Hotel D', location: 'Gondar', facilityType: 'Hotels', image: images },
-      { id: 5, name: 'Hotel E', location: 'Bahir Dar', facilityType: 'Hotels', image: sky },
-      { id: 6, name: 'Hotel F', location: 'Bahir Dar', facilityType: 'Hotels', image: grand },
+      {
+        id: 1,
+        name: 'Hotel A',
+        location: 'Gondar',
+        facilityType: 'Hotels',
+        image: images,
+        description: "A charming hotel in Gondar, offering comfortable rooms and a convenient location.",
+      },
+      {
+        id: 2,
+        name: 'Hotel B',
+        location: 'Gondar',
+        facilityType: 'Hotel',
+        image: images,
+        description: "Experience luxury at Hotel B in Gondar. Enjoy our excellent amenities and services.",
+      },
+      {
+        id: 3,
+        name: 'Unison Hotel',
+        location: 'Bahir Dar',
+        facilityType: 'Hotels',
+        image: unison,
+        images: [unison,unison,unison,unison,unison,unison,unison, unisonBed1, unisonGym],
+        description: `
+      You might be eligible for a Genius discount at AYA Addis Hotel. To check if a Genius discount is available for your selected dates sign in.
+      
+      Genius discounts at this property are subject to book dates, stay dates and other available deals.
+      
+      Located in Addis Ababa, 500 metres from Matti Multiplex Theatre, AYA Addis Hotel provides accommodation with a restaurant, free private parking and a bar. With free WiFi, this 4-star hotel offers room service and a 24-hour front desk. The accommodation features entertainment staff and an ATM.
+      
+      At the hotel, each room is fitted with a desk. Complete with a private bathroom equipped with a bath or shower and free toiletries, guest rooms at AYA Addis Hotel have a TV and air conditioning, and selected rooms are equipped with a balcony. All rooms include a safety deposit box.
+      
+      Guests at the accommodation can enjoy a buffet breakfast.
+      
+      UNECA Conference Center is 2.9 km from AYA Addis Hotel, while UN Conference Centre Addis Ababa is 3.2 km away. Addis Ababa Bole International Airport is 2 km from the property.
+      
+      Couples particularly like the very good location — they rated it 8.2 for a two-person trip.
+      
+      Distance in property description is calculated using © OpenStreetMap
+        `.trim()
+      },
+      {
+        id: 4,
+        name: 'Hotel D',
+        location: 'Gondar',
+        facilityType: 'Hotel',
+        image: images,
+        description: "A great choice for your stay in Gondar, offering comfortable accommodations.",
+      },
+      {
+        id: 5,
+        name: 'Sky Resort',
+        location: 'Bahir Dar',
+        facilityType: 'Hotels',
+        image: sky,
+        images: [unison, unisonBed1, unisonGym],
+        description: "Luxurious resort in Bahir Dar with stunning views and excellent facilities.",
+      },
+      {
+        id: 6,
+        name: 'Grand Hotel',
+        location: 'Bahir Dar',
+        facilityType: 'Hotels',
+        image: grand,
+        images: [unison, unisonBed1, unisonGym],
+        description: "Sophisticated hotel in Bahir Dar with spacious suites and gourmet dining.",
+      },
     ];
 
     setHotels(mockHotels);
-    setFilteredHotels(mockHotels);
     setLoading(false);
   }, []);
 
@@ -48,7 +109,6 @@ const HotelList = () => {
       filtered = filtered.filter(hotel => hotel.facilityType === facilityType);
     }
 
-    // Navigate to a new page with the filtered hotels
     navigate('/filtered-hotels', { state: { filteredHotels: filtered } });
   };
 

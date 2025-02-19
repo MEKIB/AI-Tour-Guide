@@ -13,6 +13,8 @@ import FilteredHotels from './components/Tourist Facilities/Hotels and Lodges/Fi
 import HotelList from './components/Tourist Facilities/Hotels and Lodges/HotelLists'
 import HotelDetails from './components/Tourist Facilities/Hotels and Lodges/HotelDetails'
 import Footer from './components/Footer/Footer'
+import SignupPage from './components/account/Signup'
+import LoginPage from './components/account/Login'
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
       <Route path='/hotelslocation' element={<HotelsandLocations/>}/>
       <Route path='/filtered-hotels' element={<FilteredHotels/>}/>
       <Route path='/hotel/:id' element={<HotelDetails/>}/>
+      <Route path='/signup' element={<SignupPage/>}/>
+      <Route path='/login' element={<LoginPage/>}/>
     </Routes>
     <Footer/>
     </>
