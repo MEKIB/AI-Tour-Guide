@@ -1,51 +1,21 @@
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import express from 'express'
+import env from 'dotenv'
+import mongoose from 'mongoose'
+import router from './Routes/Routes.js'
+env.config()
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const app = express()
+app.use(router)
+const port = process.env.PORT||2001
+const password = process.env.PASSWORD
 
-const app = express();
-const port = 3001;
+// Database connection with MongoDB
+mongoose.connect(`mongodb+srv://mekibib:${password}@cluster0.trdz9op.mongodb.net/`)
+.then(()=>console.log('the database connectd successfully'))
+.catch(error=>console.log(error))
 
-app.use(express.static(path.join(__dirname, 'public')));
 
-const hotels = [
-  {
-    id: 1,
-    name: "Blue Nile",
-    location: "Bahir Dar",
-    facilityType: "Hotels",
-    image: '/images/AbuneMelketsedeq1.jpg' // Correct URL!
-  },
-  {
-    id: 2,
-    name: "Tana Hotel",
-    location: "Bahir Dar",
-    facilityType: "Hotels",
-    image: '/images/AbuneMelketsedeq1.jpg' 
-  },
-  {
-    id: 3,
-    name: "Gonder Lodge",
-    location: "Gonder",
-    facilityType: "Lodges",
-    image: '/images/AbuneMelketsedeq1.jpg' // Example
-  },
-  {
-    id: 4,
-    name: "Lalibela Hotel",
-    location: "Lalibela",
-    facilityType: "Hotels",
-    image: '/images/AbuneMelketsedeq1.jpg' // Example
-  },
-  // ... more hotels
-];
-
-app.get('/api/hotels', (req, res) => {
-  res.json(hotels);
-});
-
+// Start server
 app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
-});
+  console.log(`Server running on port ${port}`)
+})
