@@ -15,6 +15,8 @@ import HotelDetails from './components/Tourist Facilities/Hotels and Lodges/Hote
 import Footer from './components/Footer/Footer'
 import SignupPage from './components/account/Signup'
 import LoginPage from './components/account/Login'
+import ForgotPasswordPage from './components/account/ForgotPassword'
+import ResetPasswordPage from './components/account/ResetPassword'
 
 function App() {
   return (
@@ -33,6 +35,8 @@ function App() {
       <Route path='/hotel/:id' element={<HotelDetails/>}/>
       <Route path='/signup' element={<SignupPage/>}/>
       <Route path='/login' element={<LoginPage/>}/>
+      <Route path='/forgot-password' element={<ForgotPasswordPage/>}/>
+      <Route path='/reset-password' element={<ResetPasswordPage/>}/>
     </Routes>
     <Footer/>
     <SignupPage/>

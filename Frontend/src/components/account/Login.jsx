@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
   Container,
   Box,
@@ -10,50 +11,68 @@ import {
   Button,
   Grid,
   Checkbox,
-  FormControlLabel
+  FormControlLabel,
+  CircularProgress,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: '',
     showPassword: false,
-    rememberMe: false
+    rememberMe: false,
   });
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
 
   const handleBlur = (e) => {
     const { name } = e.target;
-    setTouched(prev => ({ ...prev, [name]: true }));
+    setTouched((prev) => ({ ...prev, [name]: true }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
 
-    if (!formData.username.trim()) newErrors.username = 'Username is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
     if (!formData.password.trim()) newErrors.password = 'Password is required';
 
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      // Submit login logic
-      console.log('Login submitted:', formData);
+      setLoading(true);
+      try {
+        const response = await axios.post('http://localhost:2000/login', {
+          email: formData.email,
+          password: formData.password,
+        });
+
+        console.log('Login successful:', response.data);
+        // Store user data or token securely here (e.g., localStorage, sessionStorage)
+        // Example: localStorage.setItem('token', response.data.token);
+        navigate('/');
+      } catch (error) {
+        console.error('Login failed:', error.response ? error.response.data : error.message);
+        setErrors({ general: 'Invalid email or password' });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -64,23 +83,28 @@ const LoginPage = () => {
           Welcome Back
         </Typography>
 
+        {errors.general && (
+          <Typography color="error" align="center">
+            {errors.general}
+          </Typography>
+        )}
+
         <form onSubmit={handleSubmit}>
           <Grid container spacing={2}>
-            {/* Username */}
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Username"
-                name="username"
-                value={formData.username}
+                label="Email"
+                name="email"
+                type="email"
+                value={formData.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                error={!!errors.username && touched.username}
-                helperText={touched.username && errors.username}
+                error={!!errors.email && touched.email}
+                helperText={touched.email && errors.email}
               />
             </Grid>
 
-            {/* Password */}
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -96,41 +120,45 @@ const LoginPage = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        onClick={() => setFormData(prev => ({
-                          ...prev,
-                          showPassword: !prev.showPassword
-                        }))}
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            showPassword: !prev.showPassword,
+                          }))
+                        }
                       >
                         {formData.showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
-                  )
+                  ),
                 }}
               />
             </Grid>
 
-            {/* Remember Me & Forgot Password */}
             <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <FormControlLabel
                 control={
                   <Checkbox
                     name="rememberMe"
                     checked={formData.rememberMe}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      rememberMe: e.target.checked
-                    }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        rememberMe: e.target.checked,
+                      }))
+                    }
                     color="primary"
                   />
                 }
                 label="Remember me"
               />
-              <Link href="#" variant="body2" underline="hover">
-                Forgot Password?
+              <Link to="/forgot-password" style={{ textDecoration: 'none' }}>
+                <Typography variant="body2" color="inherit" component="span">
+                  Forgot Password?
+                </Typography>
               </Link>
             </Grid>
 
-            {/* Submit Button */}
             <Grid item xs={12}>
               <Button
                 fullWidth
@@ -138,21 +166,21 @@ const LoginPage = () => {
                 size="large"
                 type="submit"
                 sx={{ mt: 2 }}
+                disabled={loading}
               >
-                Sign In
+                {loading ? <CircularProgress size={24} /> : 'Sign In'}
               </Button>
             </Grid>
 
-            {/* Signup Link */}
             <Grid item xs={12}>
-            <Typography variant="body2" align="center">
+              <Typography variant="body2" align="center">
                 Don't have an account?{' '}
                 <Link to="/signup" style={{ textDecoration: 'none' }}>
-                    <Typography variant="body2" color="primary" component="span">
+                  <Typography variant="body2" color="primary" component="span">
                     Sign Up
-                    </Typography>
+                  </Typography>
                 </Link>
-            </Typography>
+              </Typography>
             </Grid>
           </Grid>
         </form>
