@@ -22,6 +22,7 @@ import {
   TextField,
   Avatar
 } from '@mui/material';
+import { GoogleMap, Marker, LoadScript } from '@react-google-maps/api';
 import AddIcon from '@mui/icons-material/Add';
 import WifiIcon from '@mui/icons-material/Wifi';
 import PoolIcon from '@mui/icons-material/Pool';
@@ -61,10 +62,21 @@ const HotelDetails = () => {
 
   const defaultHotel = {
     name: "Luxury Resort & Spa",
-    location: "Tropical Island",
+    location: {
+      address: "Tropical Island",
+      lat: 1.3521,
+      lng: 103.8198
+    },
     description: `Experience ultimate luxury at our award-winning resort. Enjoy stunning ocean views from every room, 
     world-class dining, and our exclusive spa services. Perfect for both romantic getaways and family vacations.`,
-    images: [],
+    images: [
+      "https://source.unsplash.com/random/800x600/?hotel",
+      "https://source.unsplash.com/random/800x600/?resort",
+      "https://source.unsplash.com/random/800x600/?pool",
+      "https://source.unsplash.com/random/800x600/?luxury",
+      "https://source.unsplash.com/random/800x600/?spa",
+      "https://source.unsplash.com/random/800x600/?restaurant"
+    ],
     facilities: [
       { name: "Free Wifi" },
       { name: "Swimming Pool" },
@@ -117,6 +129,12 @@ const HotelDetails = () => {
     "24-Hour Room Service": <RoomServiceIcon />,
     "Spa": <span>💆</span>,
     "Fitness Center": <span>🏋️</span>
+  };
+
+  const mapContainerStyle = {
+    width: '100%',
+    height: '400px',
+    borderRadius: '8px'
   };
 
   return (
@@ -211,7 +229,7 @@ const HotelDetails = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <LocationOnIcon color="primary" />
           <Typography variant="h6" sx={{ color: theme.palette.text.secondary }}>
-            {hotel.location}
+            {hotel.location.address}
           </Typography>
         </Box>
       </Box>
@@ -271,6 +289,13 @@ const HotelDetails = () => {
           </Card>
         </Grid>
 
+
+
+
+
+
+
+
         <Grid item xs={12} md={5}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
@@ -296,6 +321,67 @@ const HotelDetails = () => {
                 </CardContent>
               </Card>
             </Grid>
+
+
+
+          {/* Property Highlights Card */}
+        <Grid item xs={12} md={6}>
+          <Box sx={{ 
+            p: 2,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 2,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}>
+            <div>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Property Highlights
+              </Typography>
+              
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Breakfast info
+                </Typography>
+                <Typography variant="body2">Continental, Buffet</Typography>
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  <span style={{ marginRight: 8 }}>🅿️</span>
+                  Free private parking available at the hotel
+                </Typography>
+              </Box>
+            </div>
+
+            <Button 
+              variant="contained" 
+              fullWidth
+              sx={{ mt: 2 }}
+              component="a"
+              href="#reserve" // Replace with your actual booking link
+              target="_blank"
+            >
+              Reserve Now
+            </Button>
+          </Box>
+        </Grid>
+      </Grid>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             <Grid item xs={12}>
               <Card 
@@ -341,6 +427,14 @@ const HotelDetails = () => {
           </Grid>
         </Grid>
 
+
+
+
+
+
+
+
+
         <Grid item xs={12} md={7}>
           <Card sx={{ 
             borderRadius: '12px',
@@ -364,7 +458,58 @@ const HotelDetails = () => {
             </CardContent>
           </Card>
         </Grid>
-      </Grid>
+
+
+
+
+
+
+
+
+        {/* <Grid item xs={12}>
+          <Card sx={{ borderRadius: '12px', boxShadow: theme.shadows[2], mt: 3 }}>
+            <CardContent>
+              <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
+                Location
+              </Typography>
+              
+              <LoadScript
+                googleMapsApiKey="YOUR_GOOGLE_MAPS_API_KEY"
+                loadingElement={<div style={{ height: '400px' }} />}
+              >
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={{ lat: hotel.location.lat, lng: hotel.location.lng }}
+                  zoom={15}
+                >
+                  <Marker 
+                    position={{ lat: hotel.location.lat, lng: hotel.location.lng }}
+                    icon={{
+                      url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                      scaledSize: new window.google.maps.Size(40, 40)
+                    }}
+                  />
+                </GoogleMap>
+              </LoadScript>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
+                <LocationOnIcon color="primary" />
+                <Typography variant="h6">
+                  {hotel.location.address}
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid> */}
+
+
+
+
+
+
+
+
+
     </Box>
   );
 };
