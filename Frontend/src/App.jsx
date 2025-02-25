@@ -17,6 +17,7 @@ import SignupPage from './components/account/Signup'
 import LoginPage from './components/account/Login'
 import ForgotPasswordPage from './components/account/ForgotPassword'
 import ResetPasswordPage from './components/account/ResetPassword'
+import Availability from './components/Tourist Facilities/Hotels and Lodges/Avaliability'
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
     </Routes>
     <Footer/>
     <SignupPage/>
+    <Availability/>
     </>
   )
 }
