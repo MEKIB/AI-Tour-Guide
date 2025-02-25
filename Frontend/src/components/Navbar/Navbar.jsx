@@ -10,11 +10,54 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import LanguageIcon from '@mui/icons-material/Language';
+import { styled } from '@mui/material/styles';
+import Modal from '@mui/material/Modal';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import CloseIcon from '@mui/icons-material/Close';
+const StyledLanguageButton = styled(IconButton)(({ theme }) => ({
+  padding: theme.spacing(0.5, 1),
+  borderRadius: theme.shape.borderRadius,
+  border: `1px solid ${theme.palette.divider}`,
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
+
+const LanguageModal = styled(Modal)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+}));
+
+const LanguageModalContent = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  border: '2px solid #000',
+  boxShadow: theme.shadows[5],
+  padding: theme.spacing(2, 4, 3),
+  borderRadius: theme.shape.borderRadius,
+  minWidth: 300,
+  maxWidth: 800,
+}));
+
+const LanguageButtonContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: theme.spacing(1),
+  justifyContent: 'center',
+  marginTop: theme.spacing(2),
+}));
+
+
 export default function ButtonAppBar() {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
-
+  const [languageModalOpen, setLanguageModalOpen] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
   const handleOpenTourist = (event) => {
     setAnchorElTourist(event.currentTarget);
   };
@@ -38,6 +81,35 @@ export default function ButtonAppBar() {
   const handleCloseDestination = () => {
     setAnchorElDestination(null);
   };
+
+  const handleOpenLanguageModal = () => {
+    setLanguageModalOpen(true);
+  };
+
+  const handleCloseLanguageModal = () => {
+    setLanguageModalOpen(false);
+  };
+
+  const handleLanguageSelect = (language) => {
+    setSelectedLanguage(language);
+    // Don't close the modal here!
+  };
+
+  const languages = ['English', 'Amharic', 'Arabic', 'Russian', 'Oromiffa', 'French', 'Spanish', 'German'];
+
+
+
+
+
+  const StyledLinkButton = styled(Button)(({ theme }) => ({
+    textDecoration: 'none',
+    color: theme.palette.common.white, // Or theme.palette.text.primary, depending on your theme
+    '&:hover': {
+      backgroundColor: theme.palette.action.hover, // Optional: add hover effect
+    },
+  }));
+
+
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -65,13 +137,13 @@ export default function ButtonAppBar() {
                 'aria-labelledby': 'destination-button',
               }}
             >
+              <MenuItem onClick={() => { handleCloseDestination();}}><Link to='/things'>Things to Do</Link>              </MenuItem>
               <MenuItem onClick={() => { handleCloseDestination(); }}><Link to='/worldheritagesites'>World Heritage Sites</Link></MenuItem>
               <MenuItem onClick={() => { handleCloseDestination(); }}>National Parks and Community Protected Area</MenuItem>
               <MenuItem onClick={() => { handleCloseDestination(); }}>Lakes, Hot Springs and Water Falls</MenuItem>
               <MenuItem onClick={() => { handleCloseDestination(); }}><Link to='/religioussites'>Religious Sites</Link></MenuItem>
               <MenuItem onClick={() => { handleCloseDestination(); }}>Historical Landmarks</MenuItem>
             </Menu>
-            <Link to='/things'>Things to Do</Link>
             <Button
               id="tourist-button"
               aria-haspopup="true"
@@ -95,8 +167,69 @@ export default function ButtonAppBar() {
               <MenuItem onClick={() => { handleCloseTourist(); }}>Tourist Information Centers</MenuItem>
               <MenuItem onClick={() => { handleCloseTourist(); }}>Other Service Providers</MenuItem>
             </Menu>
-            <Link to='/events'>Events</Link>
-            <Link to='/news'>News</Link>
+            <StyledLinkButton component={Link} to="/events">
+              Events
+            </StyledLinkButton>
+
+
+
+
+
+
+
+
+
+
+
+
+            <StyledLanguageButton
+        id="language-button"
+        onClick={handleOpenLanguageModal}
+        color="inherit"
+      >
+        <LanguageIcon />
+      </StyledLanguageButton>
+      <LanguageModal
+        open={languageModalOpen}
+        onClose={() => {}} // prevent closing on backdrop click
+        aria-labelledby="language-modal-title"
+        aria-describedby="language-modal-description"
+      >
+        <LanguageModalContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography id="language-modal-title" variant="h6" component="h2">
+              Select Language ({selectedLanguage})
+            </Typography>
+            <IconButton aria-label="close" onClick={handleCloseLanguageModal}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <LanguageButtonContainer>
+            {languages.map((language) => (
+              <Button
+                key={language}
+                variant={selectedLanguage === language ? 'contained' : 'outlined'}
+                onClick={() => handleLanguageSelect(language)}
+              >
+                {language}
+              </Button>
+            ))}
+          </LanguageButtonContainer>
+        </LanguageModalContent>
+      </LanguageModal>
+
+
+
+
+
+
+
+
+
+
+
+
+
             <Button
               id="about-button"
               aria-haspopup="true"
