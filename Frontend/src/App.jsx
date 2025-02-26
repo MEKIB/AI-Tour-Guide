@@ -48,7 +48,7 @@ function App() {
       <ChatbotLogic />
 
       <Footer />
-      <SignupP
+      
 
     
     </>
