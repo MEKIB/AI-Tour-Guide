@@ -18,6 +18,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import CloseIcon from '@mui/icons-material/Close';
+import AccountCircle from '@mui/icons-material/AccountCircle';
 const StyledLanguageButton = styled(IconButton)(({ theme }) => ({
   padding: theme.spacing(0.5, 1),
   borderRadius: theme.shape.borderRadius,
@@ -52,12 +53,31 @@ const LanguageButtonContainer = styled(Box)(({ theme }) => ({
 }));
 
 
+const StyledLinkButton = styled(Button)(({ theme }) => ({
+  textDecoration: 'none',
+  color: theme.palette.common.white, // Or theme.palette.text.primary, depending on your theme
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover, // Optional: add hover effect
+  },
+}));
+
+const StyledAccountButton = styled(IconButton)(({ theme }) => ({
+  padding: theme.spacing(0.5, 1),
+  borderRadius: theme.shape.borderRadius,
+  border: `1px solid ${theme.palette.divider}`,
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
+
 export default function ButtonAppBar() {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
   const [languageModalOpen, setLanguageModalOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [accountModalOpen, setAccountModalOpen] = useState(false);
+
   const handleOpenTourist = (event) => {
     setAnchorElTourist(event.currentTarget);
   };
@@ -97,17 +117,15 @@ export default function ButtonAppBar() {
 
   const languages = ['English', 'Amharic', 'Arabic', 'Russian', 'Oromiffa', 'French', 'Spanish', 'German'];
 
+  const handleOpenAccountModal = () => {
+    setAccountModalOpen(true);
+  };
+
+  const handleCloseAccountModal = () => {
+    setAccountModalOpen(false);
+  };
 
 
-
-
-  const StyledLinkButton = styled(Button)(({ theme }) => ({
-    textDecoration: 'none',
-    color: theme.palette.common.white, // Or theme.palette.text.primary, depending on your theme
-    '&:hover': {
-      backgroundColor: theme.palette.action.hover, // Optional: add hover effect
-    },
-  }));
 
 
 
@@ -219,6 +237,55 @@ export default function ButtonAppBar() {
       </LanguageModal>
 
 
+
+
+
+
+
+
+      <StyledAccountButton
+          id="account-button"
+          onClick={handleOpenAccountModal}
+          color="inherit"
+        >
+          <AccountCircle />
+        </StyledAccountButton>
+        <Modal
+          open={accountModalOpen}
+          onClose={handleCloseAccountModal}
+          aria-labelledby="account-modal-title"
+          aria-describedby="account-modal-description"
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 400,
+              bgcolor: 'background.paper',
+              border: '2px solid #000',
+              boxShadow: 24,
+              p: 4,
+              borderRadius: 2,
+            }}
+          >
+            <Typography id="account-modal-title" variant="h6" component="h2">
+              Account
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
+              <Button component={Link} to="/login" variant="contained" color="primary">
+                Login
+              </Button>
+              <Button component={Link} to="/signup" variant="outlined" color="primary">
+                Signup
+              </Button>
+              <IconButton aria-label="close" onClick={handleCloseAccountModal} sx={{alignSelf:"flex-end", marginTop:2}}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </Box>
+        </Modal>
 
 
 
