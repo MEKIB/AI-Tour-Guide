@@ -1,3 +1,4 @@
+
 import React from 'react';
 import ButtonAppBar from './components/Navbar/Navbar';
 import { Routes, Route } from 'react-router-dom';
@@ -20,9 +21,11 @@ import ResetPasswordPage from './components/account/ResetPassword';
 import Availability from './components/Tourist Facilities/Hotels and Lodges/Avaliability';
 import ChatbotLogic from './components/Chatbot/ChatbotLogic'; // Import the ChatbotLogic component
 
+
 function App() {
   return (
     <>
+
       <ButtonAppBar />
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
@@ -45,8 +48,9 @@ function App() {
       <ChatbotLogic />
 
       <Footer />
-      <SignupPage />
-      <Availability />
+      <SignupP
+
+    
     </>
   );
 }

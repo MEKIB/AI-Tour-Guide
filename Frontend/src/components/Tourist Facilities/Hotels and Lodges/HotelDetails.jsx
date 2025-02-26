@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -376,7 +377,7 @@ const HotelDetails = () => {
       href="#reserve" // Replace with your actual booking link
       target="_blank"
     >
-      Reserve Now
+      <Link to='/avaliability'>Reserve now</Link>
     </Button>
   </Box>
 </Grid>
