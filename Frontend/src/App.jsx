@@ -3,7 +3,7 @@ import ButtonAppBar from "./components/Navbar/Navbar";
 import { Routes, Route } from "react-router-dom";
 import Home from "./components/Home page/Home";
 import News from "./components/News/News";
-import Events from "./components/Events/Events";
+import EventsBoth from "./components/Events/EventsBoth";
 import ThingsToDo from "./components/Things To Do/DoThings";
 import World from "./components/Destinations/World Heritage Sites/World";
 import ReligiousHome from "./components/Destinations/Religious Sites/ReligiousHome";
@@ -28,7 +28,7 @@ function App() {
         <Route path="/religioussites" element={<ReligiousHome />} />
         <Route path="/" element={<Home />} />
         <Route path="/news" element={<News />} />
-        <Route path="/events" element={<Events />} />
+        <Route path="/events" element={<EventsBoth />} />
         <Route path="/things" element={<ThingsToDo />} />
         <Route path="/flights" element={<Flight />} />
         <Route path="/hotelslocation" element={<HotelsandLocations />} />
