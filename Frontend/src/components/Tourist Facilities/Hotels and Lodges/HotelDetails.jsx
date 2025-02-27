@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -324,58 +325,64 @@ const HotelDetails = () => {
 
 
 
-          {/* Property Highlights Card */}
-        <Grid item xs={12} md={6}>
-          <Box sx={{ 
-            p: 2,
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 2,
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}>
-            <div>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                Property Highlights
-              </Typography>
-              
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Breakfast info
-                </Typography>
-                <Typography variant="body2">Continental, Buffet</Typography>
-              </Box>
+          {/* Property Highlights Card (Styled) */}
+<Grid item xs={12} md={12}>
+  <Box
+    sx={{
+      p: 3, // Increased padding
+      border: `2px solid ${theme.palette.divider}`, // Thicker border
+      borderRadius: 3, // More rounded corners
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      backgroundColor: theme.palette.background.paper, // Ensure consistent background
+      boxShadow: theme.shadows[1], // Add subtle shadow
+    }}
+  >
+    <div>
+      <Typography
+        variant="h6"
+        sx={{ fontWeight: 700, mb: 2, color: theme.palette.primary.main }} // Primary color
+      >
+        Property Highlights
+      </Typography>
 
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  <span style={{ marginRight: 8 }}>🅿️</span>
-                  Free private parking available at the hotel
-                </Typography>
-              </Box>
-            </div>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="subtitle1" color="text.secondary" sx={{ fontWeight: 600 }}>
+          Breakfast info
+        </Typography>
+        <Typography variant="body1">Continental, Buffet</Typography>
+      </Box>
 
-            <Button 
-              variant="contained" 
-              fullWidth
-              sx={{ mt: 2 }}
-              component="a"
-              href="#reserve" // Replace with your actual booking link
-              target="_blank"
-            >
-              Reserve Now
-            </Button>
-          </Box>
-        </Grid>
-      </Grid>
-    
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="body1" sx={{ fontWeight: 600 }}>
+          <span style={{ marginRight: 10, color: theme.palette.primary.dark }}>🅿️</span>
+          Free private parking available at the hotel
+        </Typography>
+      </Box>
+    </div>
 
+    <Button
+      variant="contained"
+      fullWidth
+      size="large" // Larger button
+      sx={{
+        mt: 3,
+        py: 1.5, // Increased padding
+        borderRadius: 2.5, // More rounded button
+        fontWeight: 600,
+      }}
+      component="a"
+      href="#reserve" // Replace with your actual booking link
+      target="_blank"
+    >
+      <Link to='/avaliability'>Reserve now</Link>
+    </Button>
+  </Box>
+</Grid>
 
-
-
-
-
-
+</Grid>
 
 
 
