@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link,useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
+  Alert,
   Typography,
   TextField,
   InputAdornment,
@@ -17,6 +18,7 @@ import {
   FormHelperText
 } from '@mui/material';
 import { Visibility, VisibilityOff, LocationOn } from '@mui/icons-material';
+import axios from 'axios'
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
@@ -31,6 +33,8 @@ const SignupPage = () => {
     showPassword: false,
     showConfirmPassword: false
   });
+  const [alert, setAlert] = useState(null);
+  const navigate=useNavigate()
 
   const [validation, setValidation] = useState({
     minLength: false,
@@ -90,30 +94,47 @@ const SignupPage = () => {
     return 'success';
   };
 
-  const handleSubmit = (e) => {
+
+
+
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
     const phoneRegex = /^\+?[0-9]{7,15}$/;
-
+  
     if (!formData.username.trim()) newErrors.username = 'Username is required';
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.location) newErrors.location = 'Location is required';
     if (!emailRegex.test(formData.email)) newErrors.email = 'Invalid email format';
     if (!phoneRegex.test(formData.phone)) newErrors.phone = 'Invalid phone number';
-    
+  
     const passwordValid = Object.values(validation).every(Boolean);
     if (!passwordValid) newErrors.password = 'Password does not meet requirements';
-    
+  
     setErrors(newErrors);
-
+  
     if (Object.keys(newErrors).length === 0) {
-      // Submit form
-      console.log('Form submitted:', formData);
-    }
+      try {
+          const response = await axios.post('http://localhost:2000/register', formData);
+          console.log('Registration successful:', response.data);
+          setAlert({ type: 'success', message: 'Registration successful!' });
+          navigate('/login'); // Or wherever you want to redirect
+      } catch (error) {
+          console.error('Registration failed:', error.response); // Log the full response
+          if (error.response && error.response.data && error.response.data.message) {
+              setErrors({ general: error.response.data.message }); // Display backend message
+          } else {
+              setAlert({ type: 'error', message: 'Registration failed. Please try again.' });
+              setErrors({ general: 'Registration failed. Please try again.' });
+          }
+      }
+  }
   };
-
+ 
+  
   return (
     <Container maxWidth="md" sx={{ mt: 8, mb: 4 }}>
       <Box sx={{ p: 4, boxShadow: 3, borderRadius: 2 }}>
@@ -121,6 +142,15 @@ const SignupPage = () => {
           Create Account
         </Typography>
 
+
+
+
+      {/* Display the Alert component here */}
+      {alert && <Alert severity={alert.type} sx={{ mb: 2 }}>{alert.message}</Alert>}
+
+        
+        
+        
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             {/* Username */}
