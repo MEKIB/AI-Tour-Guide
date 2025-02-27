@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -70,6 +71,7 @@ const StyledAccountButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
+
 export default function ButtonAppBar() {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
@@ -126,6 +128,7 @@ export default function ButtonAppBar() {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
+
       <AppBar position="fixed" sx={{ marginBottom: '-500px' }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -133,6 +136,7 @@ export default function ButtonAppBar() {
           </Typography>
           <Box sx={{ display: 'flex', gap: 4 }}>
             {/* Destinations Menu */}
+
             <Button
               id="destination-button"
               aria-haspopup="true"
@@ -148,9 +152,10 @@ export default function ButtonAppBar() {
               open={Boolean(anchorElDestination)}
               onClose={handleCloseDestination}
               MenuListProps={{
-                'aria-labelledby': 'destination-button',
+                "aria-labelledby": "destination-button",
               }}
             >
+
               <MenuItem onClick={handleCloseDestination}><Link to='/things'>Things to Do</Link></MenuItem>
               <MenuItem onClick={handleCloseDestination}><Link to='/worldheritagesites'>World Heritage Sites</Link></MenuItem>
               <MenuItem onClick={handleCloseDestination}>National Parks and Community Protected Area</MenuItem>
@@ -160,6 +165,7 @@ export default function ButtonAppBar() {
             </Menu>
 
             {/* Tourist Facilities Menu */}
+
             <Button
               id="tourist-button"
               aria-haspopup="true"
@@ -175,9 +181,10 @@ export default function ButtonAppBar() {
               open={Boolean(anchorElTourist)}
               onClose={handleCloseTourist}
               MenuListProps={{
-                'aria-labelledby': 'tourist-button',
+                "aria-labelledby": "tourist-button",
               }}
             >
+
               <MenuItem onClick={handleCloseTourist}><Link to='/flights'>Flights</Link></MenuItem>
               <MenuItem onClick={handleCloseTourist}><Link to='/hotelslocation'>Hotels and Lodges</Link></MenuItem>
               <MenuItem onClick={handleCloseTourist}>Tourist Information Centers</MenuItem>
@@ -185,9 +192,7 @@ export default function ButtonAppBar() {
             </Menu>
 
             {/* Events Link */}
-            <StyledLinkButton component={Link} to="/events">
-              Events
-            </StyledLinkButton>
+             <Link to="/events">Events</Link>
 
             {/* Language Modal */}
             <StyledLanguageButton
@@ -272,6 +277,7 @@ export default function ButtonAppBar() {
             </Modal>
 
             {/* About Menu */}
+
             <Button
               id="about-button"
               aria-haspopup="true"
@@ -287,13 +293,38 @@ export default function ButtonAppBar() {
               open={Boolean(anchorElAbout)}
               onClose={handleCloseAbout}
               MenuListProps={{
-                'aria-labelledby': 'about-button',
+                "aria-labelledby": "about-button",
               }}
             >
-              <MenuItem onClick={handleCloseAbout}>Amhara Region</MenuItem>
-              <MenuItem onClick={handleCloseAbout}>The Bureau</MenuItem>
-              <MenuItem onClick={handleCloseAbout}>Our Management</MenuItem>
-              <MenuItem onClick={handleCloseAbout}>Mandate and Responsibility</MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseAbout();
+                }}
+              >
+                <Link to="/amhara">Amhara Region</Link>
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseAbout();
+                }}
+              >
+                <Link to="/bureau">The Bureau</Link>
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseAbout();
+                }}
+              >
+                <Link to="/managment">Our Management</Link>
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseAbout();
+                }}
+              >
+                <Link to="/mandate">Mandate and Responsibility</Link>
+              </MenuItem>
+
             </Menu>
           </Box>
         </Toolbar>
