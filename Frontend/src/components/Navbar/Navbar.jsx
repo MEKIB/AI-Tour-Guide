@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -69,6 +70,7 @@ const StyledAccountButton = styled(IconButton)(({ theme }) => ({
     backgroundColor: theme.palette.action.hover,
   },
 }));
+
 
 const SearchBox = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -161,8 +163,10 @@ export default function ButtonAppBar() {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
+
       {/* AppBar with fixed position and no overlapping */}
       <AppBar position="fixed" sx={{ background: '#192f46' }}>
+
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>AI Tour Guide</Link>
@@ -194,6 +198,7 @@ export default function ButtonAppBar() {
             )}
 
             {/* Destinations Menu */}
+
             <Box
               onMouseEnter={handleOpenDestination}
               onMouseLeave={handleCloseDestination}
@@ -255,10 +260,9 @@ export default function ButtonAppBar() {
               </Menu>
             </Box>
 
+
             {/* Events Link */}
-            <StyledLinkButton component={Link} to="/events">
-              Events
-            </StyledLinkButton>
+             <Link to="/events">Events</Link>
 
             {/* Language Modal */}
             <StyledLanguageButton
@@ -308,6 +312,7 @@ export default function ButtonAppBar() {
             </StyledAccountButton>
 
             {/* About Menu */}
+
             <Button
               id="about-button"
               aria-haspopup="true"
@@ -323,13 +328,38 @@ export default function ButtonAppBar() {
               open={Boolean(anchorElAbout)}
               onClose={handleCloseAbout}
               MenuListProps={{
-                'aria-labelledby': 'about-button',
+                "aria-labelledby": "about-button",
               }}
             >
-              <MenuItem onClick={handleCloseAbout}>Amhara Region</MenuItem>
-              <MenuItem onClick={handleCloseAbout}>The Bureau</MenuItem>
-              <MenuItem onClick={handleCloseAbout}>Our Management</MenuItem>
-              <MenuItem onClick={handleCloseAbout}>Mandate and Responsibility</MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseAbout();
+                }}
+              >
+                <Link to="/amhara">Amhara Region</Link>
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseAbout();
+                }}
+              >
+                <Link to="/bureau">The Bureau</Link>
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseAbout();
+                }}
+              >
+                <Link to="/managment">Our Management</Link>
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleCloseAbout();
+                }}
+              >
+                <Link to="/mandate">Mandate and Responsibility</Link>
+              </MenuItem>
+
             </Menu>
           </Box>
         </Toolbar>

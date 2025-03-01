@@ -1,8 +1,7 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import heroImage from "../../../assets/DebreBirhanSellasie.jpg"; // Import your image
-
-const ReligiousSites = () => {
+import EventImage from "../../assets/events.jpg";
+const EventsUpper = () => {
   return (
     <Box
       sx={{
@@ -13,8 +12,8 @@ const ReligiousSites = () => {
       }}
     >
       <img
-        src={heroImage}
-        alt="Religious Sites"
+        src={EventImage}
+        alt="Hotels and Lodges"
         style={{
           position: "absolute",
           top: 0,
@@ -42,7 +41,7 @@ const ReligiousSites = () => {
           gutterBottom
           sx={{ textShadow: "2px 2px 4px #000000" }}
         >
-          Religious Sites
+          Events
         </Typography>
       </Box>
       <Box
@@ -59,4 +58,6 @@ const ReligiousSites = () => {
   );
 };
 
-export default ReligiousSites;
+export default EventsUpper;
+
+// ... (Rendering code remains the same)

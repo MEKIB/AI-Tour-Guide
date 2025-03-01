@@ -1,8 +1,8 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import heroImage from "../../../assets/DebreBirhanSellasie.jpg"; // Import your image
+import heroImage from "../../../assets/Semien-Mountains.jpg"; // Import your image
 
-const ReligiousSites = () => {
+const AmharaS = () => {
   return (
     <Box
       sx={{
@@ -14,7 +14,7 @@ const ReligiousSites = () => {
     >
       <img
         src={heroImage}
-        alt="Religious Sites"
+        alt="Hotels and Lodges"
         style={{
           position: "absolute",
           top: 0,
@@ -42,7 +42,7 @@ const ReligiousSites = () => {
           gutterBottom
           sx={{ textShadow: "2px 2px 4px #000000" }}
         >
-          Religious Sites
+          About Amhara Region
         </Typography>
       </Box>
       <Box
@@ -59,4 +59,6 @@ const ReligiousSites = () => {
   );
 };
 
-export default ReligiousSites;
+export default AmharaS;
+
+// ... (Rendering code remains the same)
