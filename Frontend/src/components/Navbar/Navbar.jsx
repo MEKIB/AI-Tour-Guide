@@ -161,8 +161,10 @@ export default function ButtonAppBar() {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
+
       {/* AppBar with fixed position and no overlapping */}
       <AppBar position="fixed" sx={{ background: '#192f46' }}>
+
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>AI Tour Guide</Link>
