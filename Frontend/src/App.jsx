@@ -25,6 +25,7 @@ import Bureau from "./components/About/Bureau";
 import AmharaBoth from "./components/About/Amhara/AmharaBoth";
 import Merge from "./components/About/Mandate/Merge";
 import Managment from "./components/About/OurManagment/Managment";
+import HistoricalHome from './components/Destinations/Historical Landmarks/HistoricalHome';
 
 function App() {
   return (
@@ -34,6 +35,9 @@ function App() {
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
         <Route path="/religioussites" element={<ReligiousHome />} />
+
+
+        <Route path='/historicalLandmarks' element={<HistoricalHome/>}/>
         <Route path="/" element={<Home />} />
         <Route path="/news" element={<News />} />
 

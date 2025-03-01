@@ -226,7 +226,7 @@ export default function ButtonAppBar() {
                 <MenuItem onClick={handleCloseDestination}>National Parks and Community Protected Area</MenuItem>
                 <MenuItem onClick={handleCloseDestination}>Lakes, Hot Springs and Water Falls</MenuItem>
                 <MenuItem onClick={handleCloseDestination}><Link to='/religioussites'>Religious Sites</Link></MenuItem>
-                <MenuItem onClick={handleCloseDestination}>Historical Landmarks</MenuItem>
+                <MenuItem onClick={handleCloseDestination}><Link to='/historicalLandmarks'>Historical Landmarks</Link></MenuItem>
               </Menu>
             </Box>
 
