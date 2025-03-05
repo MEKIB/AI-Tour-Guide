@@ -31,7 +31,13 @@ import Bureau from "./components/About/Bureau";
 import AmharaBoth from "./components/About/Amhara/AmharaBoth";
 import Merge from "./components/About/Mandate/Merge";
 import Managment from "./components/About/OurManagment/Managment";
+<<<<<<< HEAD
 >>>>>>> 74ff7eaa4f0142be70deb5155416c3b731f9c2f8
+=======
+import HistoricalHome from './components/Destinations/Historical Landmarks/HistoricalHome';
+import LakesAndWaterfallHome from './components/Destinations/Lakes,waterfall/LakesAndWaterfallHome';
+import NationalParksHome from './components/Destinations/National Parks and Community Protected Area/NationalParksHome';
+>>>>>>> d1b50f1c3a766dcb5a6d0e1c770b6ad339022036
 
 function App() {
   return (
@@ -41,6 +47,9 @@ function App() {
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
         <Route path="/religioussites" element={<ReligiousHome />} />
+        <Route path='/nationalparks' element={<NationalParksHome/>}/>
+        <Route path='/lakeAndWaterfall' element={<LakesAndWaterfallHome/>}/>
+        <Route path='/historicalLandmarks' element={<HistoricalHome/>}/>
         <Route path="/" element={<Home />} />
         <Route path="/news" element={<News />} />
 

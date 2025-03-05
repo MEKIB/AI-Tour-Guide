@@ -1,35 +1,49 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { CssBaseline, Box } from '@mui/material';
+import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+import Dashboard from './components/HotelAdmin/Dashboard';
+import ProfileManagement from './components/HotelAdmin/ProfileManagement';
+import RoomManagement from './components/HotelAdmin/RoomManagement';
+import BookingManagement from './components/HotelAdmin/BookingManagement';
+import CheckBooking from './components/HotelAdmin/CheckBooking';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Router>
+      <CssBaseline />
+      {/* Navbar */}
+      <Navbar />
+
+      {/* Main container */}
+      <Box className="main-container">
+        {/* Sidebar */}
+        <Sidebar />
+
+        {/* Content area */}
+        <Box className="content">
+          <Routes>
+            {/* Dashboard */}
+            <Route path="/hotel-admin" element={<Dashboard />} />
+
+            {/* Profile Management */}
+            <Route path="/hotel-admin/profile" element={<ProfileManagement />} />
+
+            {/* Room Management */}
+            <Route path="/hotel-admin/rooms" element={<RoomManagement />} />
+
+            {/* Booking Management */}
+            <Route path="/hotel-admin/bookings" element={<BookingManagement />} />
+
+            {/* Check Booking */}
+            <Route path="/hotel-admin/check-booking" element={<CheckBooking />} />
+          </Routes>
+        </Box>
+      </Box>
+    </Router>
+  );
 }
 
-export default App
+export default App;
