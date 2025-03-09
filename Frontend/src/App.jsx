@@ -28,6 +28,7 @@ import Managment from "./components/About/OurManagment/Managment";
 import HistoricalHome from './components/Destinations/Historical Landmarks/HistoricalHome';
 import LakesAndWaterfallHome from './components/Destinations/Lakes,waterfall/LakesAndWaterfallHome';
 import NationalParksHome from './components/Destinations/National Parks and Community Protected Area/NationalParksHome';
+import HotelsLodges from './components/Tourist Facilities/Hotels and Lodges/HotelsLodges';
 
 function App() {
   return (
@@ -49,7 +50,8 @@ function App() {
         <Route path="/flights" element={<Flight />} />
         <Route path="/hotelslocation" element={<HotelsandLocations />} />
         <Route path="/filtered-hotels" element={<FilteredHotels />} />
-        <Route path="/hotel/:id" element={<HotelDetails />} />
+        <Route path='/hoteldetails' element={<HotelDetails />} />
+        <Route path="/hotel/:id" element={<HotelsLodges/>}/>
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
 
