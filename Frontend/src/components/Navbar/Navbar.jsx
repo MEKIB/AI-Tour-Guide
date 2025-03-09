@@ -1,47 +1,43 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> 74ff7eaa4f0142be70deb5155416c3b731f9c2f8
-import * as React from 'react';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Added useNavigate
-import LanguageIcon from '@mui/icons-material/Language';
-import { styled } from '@mui/material/styles';
-import Modal from '@mui/material/Modal';
-import CloseIcon from '@mui/icons-material/Close';
-import AccountCircle from '@mui/icons-material/AccountCircle';
-import SearchIcon from '@mui/icons-material/Search';
-import InputBase from '@mui/material/InputBase';
+import * as React from "react";
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
+import LanguageIcon from "@mui/icons-material/Language";
+import { styled } from "@mui/material/styles";
+import Modal from "@mui/material/Modal";
+import CloseIcon from "@mui/icons-material/Close";
+import AccountCircle from "@mui/icons-material/AccountCircle";
+import SearchIcon from "@mui/icons-material/Search";
+import InputBase from "@mui/material/InputBase";
 
 // Import flag icons (using react-country-flag for example)
-import ReactCountryFlag from 'react-country-flag';
+import ReactCountryFlag from "react-country-flag";
 
 const StyledLanguageButton = styled(IconButton)(({ theme }) => ({
   padding: theme.spacing(0.5, 1),
   borderRadius: theme.shape.borderRadius,
   border: `1px solid ${theme.palette.divider}`,
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.action.hover,
   },
 }));
 
 const LanguageModal = styled(Modal)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 }));
 
 const LanguageModalContent = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
-  border: '2px solid #000',
+  border: "2px solid #000",
   boxShadow: theme.shadows[5],
   padding: theme.spacing(2, 4, 3),
   borderRadius: theme.shape.borderRadius,
@@ -50,17 +46,17 @@ const LanguageModalContent = styled(Box)(({ theme }) => ({
 }));
 
 const LanguageButtonContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexWrap: 'wrap',
+  display: "flex",
+  flexWrap: "wrap",
   gap: theme.spacing(1),
-  justifyContent: 'center',
+  justifyContent: "center",
   marginTop: theme.spacing(2),
 }));
 
 const StyledLinkButton = styled(Button)(({ theme }) => ({
-  textDecoration: 'none',
+  textDecoration: "none",
   color: theme.palette.common.white,
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.action.hover,
   },
 }));
@@ -69,35 +65,28 @@ const StyledAccountButton = styled(IconButton)(({ theme }) => ({
   padding: theme.spacing(0.5, 1),
   borderRadius: theme.shape.borderRadius,
   border: `1px solid ${theme.palette.divider}`,
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.action.hover,
   },
 }));
 
-<<<<<<< HEAD
-=======
-
-<<<<<<< HEAD
->>>>>>> 74ff7eaa4f0142be70deb5155416c3b731f9c2f8
-=======
 const SearchBox = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
+  display: "flex",
+  alignItems: "center",
   backgroundColor: theme.palette.common.white,
   borderRadius: theme.shape.borderRadius,
   padding: theme.spacing(0.5, 1),
   marginRight: theme.spacing(2),
 }));
 
->>>>>>> d1b50f1c3a766dcb5a6d0e1c770b6ad339022036
 export default function ButtonAppBar() {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
   const [languageModalOpen, setLanguageModalOpen] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [searchBoxOpen, setSearchBoxOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate(); // Added useNavigate
 
   const handleOpenTourist = (event) => {
@@ -138,14 +127,14 @@ export default function ButtonAppBar() {
   };
 
   const languages = [
-    { name: 'English', code: 'US' },
-    { name: 'Amharic', code: 'ET' },
-    { name: 'Arabic', code: 'SA' },
-    { name: 'Russian', code: 'RU' },
-    { name: 'Oromiffa', code: 'ET' },
-    { name: 'French', code: 'FR' },
-    { name: 'Spanish', code: 'ES' },
-    { name: 'German', code: 'DE' },
+    { name: "English", code: "US" },
+    { name: "Amharic", code: "ET" },
+    { name: "Arabic", code: "SA" },
+    { name: "Russian", code: "RU" },
+    { name: "Oromiffa", code: "ET" },
+    { name: "French", code: "FR" },
+    { name: "Spanish", code: "ES" },
+    { name: "German", code: "DE" },
   ];
 
   const handleSearchBoxToggle = () => {
@@ -162,39 +151,31 @@ export default function ButtonAppBar() {
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
-    console.log('Search Query:', searchQuery);
+    console.log("Search Query:", searchQuery);
     // Add your search logic here
   };
 
   const handleAccountClick = () => {
-    navigate('/login'); // Redirect to login page
+    navigate("/login"); // Redirect to login page
   };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-<<<<<<< HEAD
-=======
-
-<<<<<<< HEAD
->>>>>>> 74ff7eaa4f0142be70deb5155416c3b731f9c2f8
-      <AppBar position="fixed" sx={{ marginBottom: '-500px' }}>
-=======
-      {/* AppBar with fixed position and no overlapping */}
-      <AppBar position="fixed" sx={{ background: '#192f46' }}>
-
->>>>>>> d1b50f1c3a766dcb5a6d0e1c770b6ad339022036
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
+      <AppBar position="fixed" sx={{ marginBottom: "-500px" }}>
+        <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>AI Tour Guide</Link>
+            <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
+              AI Tour Guide
+            </Link>
           </Typography>
-          <Box sx={{ display: 'flex', gap: 4 }}>
+          <Box sx={{ display: "flex", gap: 4 }}>
             {/* Search Icon and Search Box */}
             {searchBoxOpen ? (
               <SearchBox onBlur={handleSearchBoxClose}>
                 <form onSubmit={handleSearchSubmit}>
                   <InputBase
                     placeholder="Search…"
-                    inputProps={{ 'aria-label': 'search' }}
+                    inputProps={{ "aria-label": "search" }}
                     value={searchQuery}
                     onChange={handleSearchInputChange}
                     autoFocus
@@ -205,20 +186,12 @@ export default function ButtonAppBar() {
                 </form>
               </SearchBox>
             ) : (
-              <IconButton
-                color="inherit"
-                onClick={handleSearchBoxToggle}
-              >
+              <IconButton color="inherit" onClick={handleSearchBoxToggle}>
                 <SearchIcon />
               </IconButton>
             )}
 
             {/* Destinations Menu */}
-<<<<<<< HEAD
-=======
-
-<<<<<<< HEAD
->>>>>>> 74ff7eaa4f0142be70deb5155416c3b731f9c2f8
             <Button
               id="destination-button"
               aria-haspopup="true"
@@ -237,23 +210,27 @@ export default function ButtonAppBar() {
                 "aria-labelledby": "destination-button",
               }}
             >
-<<<<<<< HEAD
-=======
-
->>>>>>> 74ff7eaa4f0142be70deb5155416c3b731f9c2f8
-              <MenuItem onClick={handleCloseDestination}><Link to='/things'>Things to Do</Link></MenuItem>
-              <MenuItem onClick={handleCloseDestination}><Link to='/worldheritagesites'>World Heritage Sites</Link></MenuItem>
-              <MenuItem onClick={handleCloseDestination}>National Parks and Community Protected Area</MenuItem>
-              <MenuItem onClick={handleCloseDestination}>Lakes, Hot Springs and Water Falls</MenuItem>
-              <MenuItem onClick={handleCloseDestination}><Link to='/religioussites'>Religious Sites</Link></MenuItem>
-              <MenuItem onClick={handleCloseDestination}>Historical Landmarks</MenuItem>
+              <MenuItem onClick={handleCloseDestination}>
+                <Link to="/things">Things to Do</Link>
+              </MenuItem>
+              <MenuItem onClick={handleCloseDestination}>
+                <Link to="/worldheritagesites">World Heritage Sites</Link>
+              </MenuItem>
+              <MenuItem onClick={handleCloseDestination}>
+                National Parks and Community Protected Area
+              </MenuItem>
+              <MenuItem onClick={handleCloseDestination}>
+                Lakes, Hot Springs and Water Falls
+              </MenuItem>
+              <MenuItem onClick={handleCloseDestination}>
+                <Link to="/religioussites">Religious Sites</Link>
+              </MenuItem>
+              <MenuItem onClick={handleCloseDestination}>
+                Historical Landmarks
+              </MenuItem>
             </Menu>
 
             {/* Tourist Facilities Menu */}
-<<<<<<< HEAD
-=======
-
->>>>>>> 74ff7eaa4f0142be70deb5155416c3b731f9c2f8
             <Button
               id="tourist-button"
               aria-haspopup="true"
@@ -272,16 +249,19 @@ export default function ButtonAppBar() {
                 "aria-labelledby": "tourist-button",
               }}
             >
-<<<<<<< HEAD
-=======
-
->>>>>>> 74ff7eaa4f0142be70deb5155416c3b731f9c2f8
-              <MenuItem onClick={handleCloseTourist}><Link to='/flights'>Flights</Link></MenuItem>
-              <MenuItem onClick={handleCloseTourist}><Link to='/hotelslocation'>Hotels and Lodges</Link></MenuItem>
-              <MenuItem onClick={handleCloseTourist}>Tourist Information Centers</MenuItem>
-              <MenuItem onClick={handleCloseTourist}>Other Service Providers</MenuItem>
+              <MenuItem onClick={handleCloseTourist}>
+                <Link to="/flights">Flights</Link>
+              </MenuItem>
+              <MenuItem onClick={handleCloseTourist}>
+                <Link to="/hotelslocation">Hotels and Lodges</Link>
+              </MenuItem>
+              <MenuItem onClick={handleCloseTourist}>
+                Tourist Information Centers
+              </MenuItem>
+              <MenuItem onClick={handleCloseTourist}>
+                Other Service Providers
+              </MenuItem>
             </Menu>
-=======
             <Box
               onMouseEnter={handleOpenDestination}
               onMouseLeave={handleCloseDestination}
@@ -300,16 +280,32 @@ export default function ButtonAppBar() {
                 open={Boolean(anchorElDestination)}
                 onClose={handleCloseDestination}
                 MenuListProps={{
-                  'aria-labelledby': 'destination-button',
+                  "aria-labelledby": "destination-button",
                 }}
                 onMouseLeave={handleCloseDestination} // Close on mouse leave
               >
-                <MenuItem onClick={handleCloseDestination}><Link to='/things'>Things to Do</Link></MenuItem>
-                <MenuItem onClick={handleCloseDestination}><Link to='/worldheritagesites'>World Heritage Sites</Link></MenuItem>
-                <MenuItem onClick={handleCloseDestination}><Link to='/nationalparks'>National Parks and Community Protected Area</Link></MenuItem>
-                <MenuItem onClick={handleCloseDestination}><Link to='/lakeAndWaterfall'>Lakes, Hot Springs and Water Falls</Link></MenuItem>
-                <MenuItem onClick={handleCloseDestination}><Link to='/religioussites'>Religious Sites</Link></MenuItem>
-                <MenuItem onClick={handleCloseDestination}><Link to='/historicalLandmarks'>Historical Landmarks</Link></MenuItem>
+                <MenuItem onClick={handleCloseDestination}>
+                  <Link to="/things">Things to Do</Link>
+                </MenuItem>
+                <MenuItem onClick={handleCloseDestination}>
+                  <Link to="/worldheritagesites">World Heritage Sites</Link>
+                </MenuItem>
+                <MenuItem onClick={handleCloseDestination}>
+                  <Link to="/nationalparks">
+                    National Parks and Community Protected Area
+                  </Link>
+                </MenuItem>
+                <MenuItem onClick={handleCloseDestination}>
+                  <Link to="/lakeAndWaterfall">
+                    Lakes, Hot Springs and Water Falls
+                  </Link>
+                </MenuItem>
+                <MenuItem onClick={handleCloseDestination}>
+                  <Link to="/religioussites">Religious Sites</Link>
+                </MenuItem>
+                <MenuItem onClick={handleCloseDestination}>
+                  <Link to="/historicalLandmarks">Historical Landmarks</Link>
+                </MenuItem>
               </Menu>
             </Box>
 
@@ -332,21 +328,27 @@ export default function ButtonAppBar() {
                 open={Boolean(anchorElTourist)}
                 onClose={handleCloseTourist}
                 MenuListProps={{
-                  'aria-labelledby': 'tourist-button',
+                  "aria-labelledby": "tourist-button",
                 }}
                 onMouseLeave={handleCloseTourist} // Close on mouse leave
               >
-                <MenuItem onClick={handleCloseTourist}><Link to='/flights'>Flights</Link></MenuItem>
-                <MenuItem onClick={handleCloseTourist}><Link to='/hotelslocation'>Hotels and Lodges</Link></MenuItem>
-                <MenuItem onClick={handleCloseTourist}>Tourist Information Centers</MenuItem>
-                <MenuItem onClick={handleCloseTourist}>Other Service Providers</MenuItem>
+                <MenuItem onClick={handleCloseTourist}>
+                  <Link to="/flights">Flights</Link>
+                </MenuItem>
+                <MenuItem onClick={handleCloseTourist}>
+                  <Link to="/hotelslocation">Hotels and Lodges</Link>
+                </MenuItem>
+                <MenuItem onClick={handleCloseTourist}>
+                  Tourist Information Centers
+                </MenuItem>
+                <MenuItem onClick={handleCloseTourist}>
+                  Other Service Providers
+                </MenuItem>
               </Menu>
             </Box>
 
->>>>>>> d1b50f1c3a766dcb5a6d0e1c770b6ad339022036
-
             {/* Events Link */}
-             <Link to="/events">Events</Link>
+            <Link to="/events">Events</Link>
 
             {/* Language Modal */}
             <StyledLanguageButton
@@ -363,11 +365,24 @@ export default function ButtonAppBar() {
               aria-describedby="language-modal-description"
             >
               <LanguageModalContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography id="language-modal-title" variant="h6" component="h2">
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Typography
+                    id="language-modal-title"
+                    variant="h6"
+                    component="h2"
+                  >
                     Select Language ({selectedLanguage})
                   </Typography>
-                  <IconButton aria-label="close" onClick={handleCloseLanguageModal}>
+                  <IconButton
+                    aria-label="close"
+                    onClick={handleCloseLanguageModal}
+                  >
                     <CloseIcon />
                   </IconButton>
                 </Box>
@@ -375,9 +390,15 @@ export default function ButtonAppBar() {
                   {languages.map((language) => (
                     <Button
                       key={language.name}
-                      variant={selectedLanguage === language.name ? 'contained' : 'outlined'}
+                      variant={
+                        selectedLanguage === language.name
+                          ? "contained"
+                          : "outlined"
+                      }
                       onClick={() => handleLanguageSelect(language.name)}
-                      startIcon={<ReactCountryFlag countryCode={language.code} svg />} // Add flag icon
+                      startIcon={
+                        <ReactCountryFlag countryCode={language.code} svg />
+                      } // Add flag icon
                     >
                       {language.name}
                     </Button>
@@ -396,10 +417,6 @@ export default function ButtonAppBar() {
             </StyledAccountButton>
 
             {/* About Menu */}
-<<<<<<< HEAD
-=======
-
->>>>>>> 74ff7eaa4f0142be70deb5155416c3b731f9c2f8
             <Button
               id="about-button"
               aria-haspopup="true"
@@ -418,12 +435,6 @@ export default function ButtonAppBar() {
                 "aria-labelledby": "about-button",
               }}
             >
-<<<<<<< HEAD
-              <MenuItem onClick={handleCloseAbout}>Amhara Region</MenuItem>
-              <MenuItem onClick={handleCloseAbout}>The Bureau</MenuItem>
-              <MenuItem onClick={handleCloseAbout}>Our Management</MenuItem>
-              <MenuItem onClick={handleCloseAbout}>Mandate and Responsibility</MenuItem>
-=======
               <MenuItem
                 onClick={() => {
                   handleCloseAbout();
@@ -452,17 +463,13 @@ export default function ButtonAppBar() {
               >
                 <Link to="/mandate">Mandate and Responsibility</Link>
               </MenuItem>
-
->>>>>>> 74ff7eaa4f0142be70deb5155416c3b731f9c2f8
             </Menu>
           </Box>
         </Toolbar>
       </AppBar>
 
       {/* Add padding to prevent content overlap */}
-      <Box sx={{ paddingTop: '64px' }}>
-        {/* Page content goes here */}
-      </Box>
+      <Box sx={{ paddingTop: "64px" }}>{/* Page content goes here */}</Box>
     </Box>
   );
 }
