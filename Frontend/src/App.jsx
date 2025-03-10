@@ -22,10 +22,11 @@ import Bureau from "./components/About/Bureau";
 import AmharaBoth from "./components/About/Amhara/AmharaBoth";
 import Merge from "./components/About/Mandate/Merge";
 import Managment from "./components/About/OurManagment/Managment";
-import HistoricalHome from "./components/Destinations/Historical Landmarks/HistoricalHome";
-import LakesAndWaterfallHome from "./components/Destinations/Lakes,waterfall/LakesAndWaterfallHome";
-import NationalParksHome from "./components/Destinations/National Parks and Community Protected Area/NationalParksHome";
-import { Select, MenuItem, FormControl, InputLabel, Box } from "@mui/material";
+import HistoricalHome from './components/Destinations/Historical Landmarks/HistoricalHome';
+import LakesAndWaterfallHome from './components/Destinations/Lakes,waterfall/LakesAndWaterfallHome';
+import NationalParksHome from './components/Destinations/National Parks and Community Protected Area/NationalParksHome';
+import HotelsLodges from './components/Tourist Facilities/Hotels and Lodges/HotelsLodges';
+import HOMEPage from "./components/Home page/HOMEPage";
 
 function App() {
   const [userLocation, setUserLocation] = useState(null);
@@ -71,14 +72,15 @@ function App() {
         <Route path="/nationalparks" element={<NationalParksHome />} />
         <Route path="/lakeAndWaterfall" element={<LakesAndWaterfallHome />} />
         <Route path="/historicalLandmarks" element={<HistoricalHome />} />
-        <Route path="/" element={<Home location={userLocation} />} />
+        <Route path="/" element={<HOMEPage location={userLocation} />} />
         <Route path="/news" element={<News />} />
         <Route path="/events" element={<EventsBoth />} />
         <Route path="/things" element={<ThingsToDo />} />
         <Route path="/flights" element={<Flight />} />
         <Route path="/hotelslocation" element={<HotelsandLocations />} />
         <Route path="/filtered-hotels" element={<FilteredHotels />} />
-        <Route path="/hotel/:id" element={<HotelDetails />} />
+        <Route path='/hoteldetails' element={<HotelDetails />} />
+        <Route path="/hotel/:id" element={<HotelsLodges/>}/>
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
