@@ -1,11 +1,16 @@
 import React from 'react';
 import { Carousel } from 'antd';
 import 'antd/dist/antd.js';
-import image from '../../../assets/family.jpg'
+import lalibela from '../../../assets/lalibela-1.jpg'
+import laketana from '../../../assets/lake_tana.jpg'
+import gonder from '../../../assets/Gondar-1.jpg'
 const images = [
-  image,
-  image
+  lalibela,
+  laketana,
+  gonder
 ];
+
+
 
 function HomeCarousel() {
   return (
