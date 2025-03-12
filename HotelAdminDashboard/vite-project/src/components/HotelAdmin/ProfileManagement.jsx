@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// src/components/ProfileManagement.jsx
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -13,21 +14,31 @@ import {
   Stack,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const ProfileManagement = () => {
-  // State to manage form inputs
+  const { id } = useParams();
+  const navigate = useNavigate();
+
   const [hotelData, setHotelData] = useState({
-    id: 1, // This can be auto-generated or fetched from the backend
     name: '',
     location: '',
     facilityType: '',
     description: '',
     lat: '',
     long: '',
-    images: [], // Array to store uploaded images
+    images: [],
   });
 
-  // Handle form input changes
+  useEffect(() => {
+    if (id) {
+      axios.get(`http://localhost:500/api/hotels/${id}`).then((response) => {
+        setHotelData(response.data);
+      });
+    }
+  }, [id]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setHotelData({
@@ -36,25 +47,21 @@ const ProfileManagement = () => {
     });
   };
 
-  // Handle image upload
   const handleImageUpload = (e) => {
     const files = e.target.files;
     if (files) {
-      const imagesArray = Array.from(files).map((file) => {
-        return {
-          name: file.name,
-          url: URL.createObjectURL(file), // Create a preview URL for the image
-          file, // Store the file object for later upload
-        };
-      });
+      const imagesArray = Array.from(files).map((file) => ({
+        name: file.name,
+        url: URL.createObjectURL(file),
+        file,
+      }));
       setHotelData({
         ...hotelData,
-        images: [...hotelData.images, ...imagesArray], // Add new images to the existing ones
+        images: [...hotelData.images, ...imagesArray],
       });
     }
   };
 
-  // Handle image deletion
   const handleImageDelete = (index) => {
     const updatedImages = hotelData.images.filter((_, i) => i !== index);
     setHotelData({
@@ -63,21 +70,43 @@ const ProfileManagement = () => {
     });
   };
 
-  // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Hotel Data Submitted:', hotelData);
-    // Here, you can send the data to the backend or update the state
+    const formData = new FormData();
+    formData.append('name', hotelData.name);
+    formData.append('location', hotelData.location);
+    formData.append('facilityType', hotelData.facilityType);
+    formData.append('description', hotelData.description);
+    formData.append('lat', hotelData.lat);
+    formData.append('long', hotelData.long);
+    if (id) {
+      formData.append('id', id);
+    }
+    hotelData.images.forEach((image) => {
+      if (image.file) {
+        formData.append('images', image.file);
+      }
+    });
+
+    try {
+      await axios.post('http://localhost:500/api/hotels', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
   };
 
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Profile Management
+        {id ? 'Edit Hotel' : 'Add Hotel'}
       </Typography>
       <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 800 }}>
         <Grid container spacing={3}>
-          {/* Hotel Name */}
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -90,8 +119,6 @@ const ProfileManagement = () => {
               required
             />
           </Grid>
-
-          {/* Location */}
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -104,8 +131,6 @@ const ProfileManagement = () => {
               required
             />
           </Grid>
-
-          {/* Facility Type */}
           <Grid item xs={12} md={6}>
             <InputLabel id="facility-type-label">Facility Type</InputLabel>
             <Select
@@ -124,8 +149,6 @@ const ProfileManagement = () => {
               <MenuItem value="Guest Houses">Guest Houses</MenuItem>
             </Select>
           </Grid>
-
-          {/* Latitude */}
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -138,8 +161,6 @@ const ProfileManagement = () => {
               required
             />
           </Grid>
-
-          {/* Longitude */}
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -152,8 +173,6 @@ const ProfileManagement = () => {
               required
             />
           </Grid>
-
-          {/* Description */}
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -168,8 +187,6 @@ const ProfileManagement = () => {
               required
             />
           </Grid>
-
-          {/* Image Upload */}
           <Grid item xs={12}>
             <InputLabel>Upload Images</InputLabel>
             <input
@@ -186,8 +203,6 @@ const ProfileManagement = () => {
               </Button>
             </label>
           </Grid>
-
-          {/* Image Preview */}
           <Grid item xs={12}>
             <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
               {hotelData.images.map((image, index) => (
@@ -208,8 +223,6 @@ const ProfileManagement = () => {
               ))}
             </Stack>
           </Grid>
-
-          {/* Submit Button */}
           <Grid item xs={12}>
             <Button
               type="submit"
