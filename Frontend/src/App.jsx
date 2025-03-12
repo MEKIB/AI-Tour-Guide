@@ -91,6 +91,7 @@ function App() {
         <Route path="/managment" element={<Managment />} />
       </Routes>
       <ChatbotLogic />
+
       <Footer />
     </>
   );
