@@ -61,7 +61,7 @@ function App() {
 
       {/* Add the ChatbotLogic component here */}
       <ChatbotLogic />
-
+     
       <Footer />
 
     </>
