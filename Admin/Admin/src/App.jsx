@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Box, CssBaseline } from '@mui/material';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
@@ -12,6 +12,8 @@ import ProfileManagement from './components/HotelAdmin/ProfileManagement';
 import RoomManagement from './components/HotelAdmin/RoomManagement';
 import BookingManagement from './components/HotelAdmin/BookingManagement';
 import CheckBooking from './components/HotelAdmin/CheckBooking';
+import AddAmenitiesForm from './components/HotelAdmin/AddAmenitiesForm';
+import AddHotelRules from './components/HotelAdmin/AddHotelRules';
 
 // System admin components
 import SystemAdminDashboard from './components/SystemAdmin/SystemAdminDashboard';
@@ -31,13 +33,26 @@ const App = () => {
   const [userRole, setUserRole] = useState(null); // null means user is not logged in
   const [userEmail, setUserEmail] = useState(''); // Store the logged-in user's email
   const [userName, setUserName] = useState(''); // Store the logged-in user's name
+  const [collapsed, setCollapsed] = useState(false); // State for sidebar collapse
+
+  // Function to toggle sidebar state
+  const toggleSidebar = () => {
+    setCollapsed(!collapsed);
+  };
 
   return (
     <Router>
-      <Box sx={{ display: 'flex', backgroundColor:'#393E46', }}>
+      <Box sx={{ display: 'flex', backgroundColor: '#393E46' }}>
         <CssBaseline />
-        {/* Pass userName to Navbar */}
-        <Navbar userRole={userRole} userEmail={userEmail} userName={userName} setUserRole={setUserRole} />
+        {/* Pass userName, collapsed, and toggleSidebar to Navbar */}
+        <Navbar
+          userRole={userRole}
+          userEmail={userEmail}
+          userName={userName}
+          setUserRole={setUserRole}
+          collapsed={collapsed}
+          onToggleSidebar={toggleSidebar}
+        />
         <Routes>
           <Route path="/" element={<HomePage />} />
           {/* Pass setUserName to Login */}
@@ -56,7 +71,7 @@ const App = () => {
           {/* System Admin Routes */}
           <Route
             path="/system-admin-dashboard"
-            element={userRole === 'system-admin' ? <SystemAdminDashboard /> : <Navigate to="/login" />}
+            element={userRole === 'system-admin' ? <SystemAdminDashboard collapsed={collapsed} /> : <Navigate to="/login" />}
           >
             <Route index element={<Dashboards />} /> {/* Default route */}
             <Route path="user-management" element={<UserManagement />} />
@@ -72,11 +87,13 @@ const App = () => {
           {/* Hotel Admin Routes */}
           <Route
             path="/hotel-admin-dashboard"
-            element={userRole === 'hotel-admin' ? <HotelAdminDashboard /> : <Navigate to="/login" />}
+            element={userRole === 'hotel-admin' ? <HotelAdminDashboard collapsed={collapsed} /> : <Navigate to="/login" />}
           >
             <Route index element={<Dashboard />} /> {/* Default route */}
             <Route path="profile" element={<ProfileManagement />} />
             <Route path="rooms" element={<RoomManagement />} />
+            <Route path="amenties" element={<AddAmenitiesForm />} />
+            <Route path="hotel-rules" element={<AddHotelRules />} />
             <Route path="bookings" element={<BookingManagement />} />
             <Route path="check-booking" element={<CheckBooking />} />
           </Route>

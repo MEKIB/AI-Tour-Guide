@@ -1,8 +1,9 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import MenuIcon from '@mui/icons-material/Menu'; // Import Menu Icon
 
-const Navbar = ({ userRole, userEmail, userName, setUserRole }) => {
+const Navbar = ({ userRole, userEmail, userName, setUserRole, collapsed, onToggleSidebar }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -27,6 +28,18 @@ const Navbar = ({ userRole, userEmail, userName, setUserRole }) => {
       }}
     >
       <Toolbar>
+        {/* Menu Icon (only shown on dashboard pages) */}
+        {userRole && (
+          <IconButton
+            color="inherit"
+            onClick={onToggleSidebar} // Toggle sidebar state
+            sx={{ mr: 2, color: '#00ADB5' }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
+
+        {/* Dashboard Title */}
         <Typography
           variant="h6"
           component="div"
@@ -34,6 +47,8 @@ const Navbar = ({ userRole, userEmail, userName, setUserRole }) => {
         >
           {dashboardTitle}
         </Typography>
+
+        {/* User Info and Logout Button */}
         <Box sx={{ display: 'flex', gap: 2 }}>
           {userRole ? (
             <>
@@ -43,7 +58,7 @@ const Navbar = ({ userRole, userEmail, userName, setUserRole }) => {
               <Button
                 color="inherit"
                 onClick={handleLogout}
-                sx={{ fontWeight: 'bold', fontSize: '1rem', color: '#EEEEEE' }}
+                sx={{ fontWeight: 'bold', fontSize: '1rem', color: '#EEEEEE', bgcolor: '#00ADB5' }}
               >
                 Logout
               </Button>
@@ -55,7 +70,7 @@ const Navbar = ({ userRole, userEmail, userName, setUserRole }) => {
                 onClick={() => navigate('/login')}
                 sx={{ fontWeight: 'bold', fontSize: '1rem', color: '#EEEEEE' }}
               >
-             
+            
               </Button>
             </>
           )}
