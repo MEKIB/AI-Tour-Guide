@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -12,22 +12,53 @@ import {
   Avatar,
   Stack,
   Paper,
+  Alert,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import axios from 'axios';
 
-const ProfileManagement = () => {
-  // State to manage form inputs
+const ProfileManagement = ({ hotelId }) => { // Added hotelId as a prop to edit existing hotels
   const [hotelData, setHotelData] = useState({
-    id: 1, // This can be auto-generated or fetched from the backend
+    id: '',
     name: '',
     location: '',
     facilityType: '',
     description: '',
     lat: '',
     long: '',
-    images: [], // Array to store uploaded images
+    images: [],
   });
+  const [message, setMessage] = useState(null); // For success/error messages
+  const [error, setError] = useState(null); // For error handling
+
+  // Fetch hotel data if hotelId is provided (for editing)
+  useEffect(() => {
+    if (hotelId) {
+      fetchHotelData(hotelId);
+    }
+  }, [hotelId]);
+
+  const fetchHotelData = async (id) => {
+    try {
+      const response = await axios.get(`http://localhost:500/api/hotels/${id}`);
+      const hotel = response.data;
+      setHotelData({
+        id: hotel._id,
+        name: hotel.name,
+        location: hotel.location,
+        facilityType: hotel.facilityType,
+        description: hotel.description,
+        lat: hotel.lat,
+        long: hotel.long,
+        images: hotel.images || [], // Images from backend (with URL)
+      });
+      setMessage('Hotel data loaded successfully');
+    } catch (err) {
+      setError('Failed to fetch hotel data');
+      console.error(err);
+    }
+  };
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -42,16 +73,14 @@ const ProfileManagement = () => {
   const handleImageUpload = (e) => {
     const files = e.target.files;
     if (files) {
-      const imagesArray = Array.from(files).map((file) => {
-        return {
-          name: file.name,
-          url: URL.createObjectURL(file), // Create a preview URL for the image
-          file, // Store the file object for later upload
-        };
-      });
+      const imagesArray = Array.from(files).map((file) => ({
+        name: file.name,
+        url: URL.createObjectURL(file), // Temporary preview URL
+        file, // Store file object for upload
+      }));
       setHotelData({
         ...hotelData,
-        images: [...hotelData.images, ...imagesArray], // Add new images to the existing ones
+        images: [...hotelData.images, ...imagesArray],
       });
     }
   };
@@ -66,17 +95,69 @@ const ProfileManagement = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Hotel Data Submitted:', hotelData);
-    // Here, you can send the data to the backend or update the state
+    setMessage(null);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append('name', hotelData.name);
+    formData.append('location', hotelData.location);
+    formData.append('facilityType', hotelData.facilityType);
+    formData.append('description', hotelData.description);
+    formData.append('lat', hotelData.lat);
+    formData.append('long', hotelData.long);
+    if (hotelData.id) {
+      formData.append('id', hotelData.id); // Include ID for updates
+    }
+
+    // Append new images (only those with a `file` property, not existing ones from DB)
+    hotelData.images.forEach((image) => {
+      if (image.file) {
+        formData.append('images', image.file);
+      }
+    });
+
+    try {
+      const url = 'http://localhost:500/api/hotels';
+      const method = hotelData.id ? 'put' : 'post'; // Use PUT for update, POST for create
+      const response = await axios({
+        method,
+        url,
+        data: formData,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setMessage(response.data.message);
+      if (!hotelData.id) {
+        // Reset form after successful creation
+        setHotelData({
+          id: '',
+          name: '',
+          location: '',
+          facilityType: '',
+          description: '',
+          lat: '',
+          long: '',
+          images: [],
+        });
+      }
+    } catch (err) {
+      setError('Failed to save hotel data');
+      console.error(err);
+    }
   };
 
   return (
     <Box sx={{ p: 3, bgcolor: '#393E46', color: '#EEEEEE', minHeight: '100vh' }}>
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#00ADB5' }}>
-        Profile Management
+        {hotelId ? 'Edit Hotel Profile' : 'Create Hotel Profile'}
       </Typography>
+
+      {/* Success/Error Messages */}
+      {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
       <Paper
         component="form"
         onSubmit={handleSubmit}
@@ -266,7 +347,7 @@ const ProfileManagement = () => {
               {hotelData.images.map((image, index) => (
                 <Box key={index} sx={{ position: 'relative' }}>
                   <Avatar
-                    src={image.url}
+                    src={image.url.startsWith('blob:') ? image.url : `http://localhost:2001${image.url}`} // Handle local preview vs backend URL
                     alt={image.name}
                     variant="rounded"
                     sx={{ width: 100, height: 100 }}
@@ -301,7 +382,7 @@ const ProfileManagement = () => {
                 mt: 2,
               }}
             >
-              Save Changes
+              {hotelId ? 'Update Hotel' : 'Create Hotel'}
             </Button>
           </Grid>
         </Grid>
