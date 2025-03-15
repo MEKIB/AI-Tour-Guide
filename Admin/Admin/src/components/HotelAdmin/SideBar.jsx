@@ -55,7 +55,7 @@ const SideBar = ({ collapsed }) => {
         <Collapse in={openManagementGroup} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {/* Profile Management */}
-            <ListItem button component={Link} to="profile" sx={{ pl: collapsed ? 3 : 4, '&:hover': { bgcolor: '#222831' } }}>
+            <ListItem button component={Link} to="hotel-profile" sx={{ pl: collapsed ? 3 : 4, '&:hover': { bgcolor: '#222831' } }}>
               <ListItemIcon>
                 <ProfileIcon sx={{ color: '#00ADB5' }} />
               </ListItemIcon>
@@ -115,7 +115,7 @@ const SideBar = ({ collapsed }) => {
             </ListItem>
 
             {/* Amenities */}
-            <ListItem button component={Link} to="amenities" sx={{ pl: collapsed ? 3 : 4, '&:hover': { bgcolor: '#222831' } }}>
+            <ListItem button component={Link} to="amenties-detail" sx={{ pl: collapsed ? 3 : 4, '&:hover': { bgcolor: '#222831' } }}>
               <ListItemIcon>
                 <AmenitiesIcon sx={{ color: '#00ADB5' }} /> {/* Updated icon for Amenities */}
               </ListItemIcon>
@@ -123,11 +123,19 @@ const SideBar = ({ collapsed }) => {
             </ListItem>
 
             {/* Hotel Rules */}
-            <ListItem button component={Link} to="hotel-rules" sx={{ pl: collapsed ? 3 : 4, '&:hover': { bgcolor: '#222831' } }}>
+            <ListItem button component={Link} to="hotel-rule-detail" sx={{ pl: collapsed ? 3 : 4, '&:hover': { bgcolor: '#222831' } }}>
               <ListItemIcon>
                 <RulesIcon sx={{ color: '#00ADB5' }} /> {/* Updated icon for Hotel Rules */}
               </ListItemIcon>
               {!collapsed && <ListItemText primary="Hotel Rules" sx={{ color: '#00ADB5' }} />}
+            </ListItem>
+
+            {/* Hotel Review */}
+            <ListItem button component={Link} to="hotel-review" sx={{ pl: collapsed ? 3 : 4, '&:hover': { bgcolor: '#222831' } }}>
+              <ListItemIcon>
+                <RulesIcon sx={{ color: '#00ADB5' }} /> {/* Updated icon for Hotel Rules */}
+              </ListItemIcon>
+              {!collapsed && <ListItemText primary="Hotel Review " sx={{ color: '#00ADB5' }} />}
             </ListItem>
           </List>
         </Collapse>
@@ -148,12 +156,14 @@ const SideBar = ({ collapsed }) => {
           {!collapsed && <ListItemText primary="Promotions" sx={{ color: '#00ADB5' }} />}
         </ListItem>
 
-        {/* Reviews */}
-        <ListItem button component={Link} to="/hotel-admin-dashboard/reviews" sx={{ '&:hover': { bgcolor: '#222831' } }}>
+       
+
+         {/* Profile Setting */}
+         <ListItem button component={Link} to="profile" sx={{ '&:hover': { bgcolor: '#222831' } }}>
           <ListItemIcon>
             <ReviewIcon sx={{ color: '#00ADB5' }} />
           </ListItemIcon>
-          {!collapsed && <ListItemText primary="Reviews" sx={{ color: '#00ADB5' }} />}
+          {!collapsed && <ListItemText primary="Profile" sx={{ color: '#00ADB5' }} />}
         </ListItem>
       </List>
       <Divider />

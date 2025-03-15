@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 // Mock user data (replace with actual authentication logic)
 const users = [
   { email: 'systemadmin@example.com', password: 'system123', role: 'system-admin', name: 'Zelalem Tadese Admas' },
-  { email: 'hoteladmin@example.com', password: 'hotel123', role: 'hotel-admin', name: 'Kebede Alemu Kebede' },
+  { email: 'hoteladmin@example.com', password: 'hotel123', role: 'hotel-admin', name: 'Zelalem Tadese Admas' },
 ];
 
 const Login = ({ setUserRole, setUserEmail, setUserName }) => {

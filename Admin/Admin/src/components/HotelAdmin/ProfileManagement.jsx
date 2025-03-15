@@ -18,7 +18,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import axios from 'axios';
 
-const ProfileManagement = ({ hotelId }) => { // Added hotelId as a prop to edit existing hotels
+// Utility function to normalize decimal separators (replace commas with periods)
+const normalizeDecimal = (value) => {
+  return value.replace(/,/g, '.'); // Replace all commas with periods
+};
+
+const ProfileManagement = ({ hotelId }) => {
   const [hotelData, setHotelData] = useState({
     id: '',
     name: '',
@@ -49,8 +54,8 @@ const ProfileManagement = ({ hotelId }) => { // Added hotelId as a prop to edit 
         location: hotel.location,
         facilityType: hotel.facilityType,
         description: hotel.description,
-        lat: hotel.lat,
-        long: hotel.long,
+        lat: normalizeDecimal(hotel.lat), // Normalize latitude
+        long: normalizeDecimal(hotel.long), // Normalize longitude
         images: hotel.images || [], // Images from backend (with URL)
       });
       setMessage('Hotel data loaded successfully');
@@ -63,9 +68,34 @@ const ProfileManagement = ({ hotelId }) => { // Added hotelId as a prop to edit 
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    // Normalize the input value (replace commas with periods)
+    const normalizedValue = normalizeDecimal(value);
+
+    // Validate latitude and longitude inputs
+    if (name === 'lat') {
+      const latValue = parseFloat(normalizedValue);
+      if (isNaN(latValue) || latValue < -90 || latValue > 90) {
+        setError('Latitude must be between -90 and 90 degrees');
+        return; // Prevent updating state with invalid value
+      }
+    }
+
+    if (name === 'long') {
+      const longValue = parseFloat(normalizedValue);
+      if (isNaN(longValue) || longValue < -180 || longValue > 180) {
+        setError('Longitude must be between -180 and 180 degrees');
+        return; // Prevent updating state with invalid value
+      }
+    }
+
+    // Clear any previous error if the input is valid
+    setError(null);
+
+    // Update the state with the normalized value
     setHotelData({
       ...hotelData,
-      [name]: value,
+      [name]: normalizedValue,
     });
   };
 
@@ -100,13 +130,17 @@ const ProfileManagement = ({ hotelId }) => { // Added hotelId as a prop to edit 
     setMessage(null);
     setError(null);
 
+    // Normalize latitude and longitude values
+    const normalizedLat = normalizeDecimal(hotelData.lat);
+    const normalizedLong = normalizeDecimal(hotelData.long);
+
     const formData = new FormData();
     formData.append('name', hotelData.name);
     formData.append('location', hotelData.location);
     formData.append('facilityType', hotelData.facilityType);
     formData.append('description', hotelData.description);
-    formData.append('lat', hotelData.lat);
-    formData.append('long', hotelData.long);
+    formData.append('lat', normalizedLat); // Use normalized latitude
+    formData.append('long', normalizedLong); // Use normalized longitude
     if (hotelData.id) {
       formData.append('id', hotelData.id); // Include ID for updates
     }
@@ -252,11 +286,13 @@ const ProfileManagement = ({ hotelId }) => { // Added hotelId as a prop to edit 
               fullWidth
               label="Latitude"
               name="lat"
+              type="number"
               value={hotelData.lat}
               onChange={handleInputChange}
               variant="outlined"
               margin="normal"
               required
+              inputProps={{ min: -90, max: 90, step: 0.000001 }} // Restrict input range
               sx={{
                 '& .MuiInputBase-input': { color: '#222831' },
                 '& .MuiInputLabel-root': { color: '#222831' },
@@ -274,11 +310,13 @@ const ProfileManagement = ({ hotelId }) => { // Added hotelId as a prop to edit 
               fullWidth
               label="Longitude"
               name="long"
+              type="number"
               value={hotelData.long}
               onChange={handleInputChange}
               variant="outlined"
               margin="normal"
               required
+              inputProps={{ min: -180, max: 180, step: 0.000001 }} // Restrict input range
               sx={{
                 '& .MuiInputBase-input': { color: '#222831' },
                 '& .MuiInputLabel-root': { color: '#222831' },
