@@ -23,7 +23,11 @@
     "lodash": "^4.17.21",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-images-upload": "^1.2.8",
     "react-leaflet": "^5.0.0",
+    "react-qr-reader": "^3.0.0-beta-1",
+    "react-qr-scanner": "^1.0.0-alpha.11",
+    "react-qrcode": "^0.3.6",
     "react-router-dom": "^6.30.0",
     "react-window": "^1.8.11"
   },
