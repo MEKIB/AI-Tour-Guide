@@ -1,4 +1,3 @@
-// HotelFilter.js
 import React, { useState } from 'react';
 import {
   FormControl,
@@ -15,10 +14,17 @@ import {
 const ALL_LOCATIONS = 'All Locations';
 const ALL_FACILITY_TYPES = 'All Facility Types';
 
+// New background image (replace with your own image URL)
+const backgroundImage = 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&q=80';
+
 const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: 8,
-  boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+  padding: theme.spacing(4),
+  borderRadius: 16,
+  backdropFilter: 'blur(10px)',
+  backgroundColor: 'rgba(57, 62, 70, 0.8)', // Semi-transparent dark background
+  border: '1px solid rgba(238, 238, 238, 0.1)', // Light border for glassmorphism effect
+  boxShadow: '0px 8px 32px rgba(0, 0, 0, 0.2)',
+  color: '#EEEEEE', // Light text color
 }));
 
 const HotelFilter = ({ onApply = () => {} }) => {
@@ -28,67 +34,147 @@ const HotelFilter = ({ onApply = () => {} }) => {
   const [selectedLocation, setSelectedLocation] = useState(ALL_LOCATIONS);
   const [selectedFacilityType, setSelectedFacilityType] = useState(ALL_FACILITY_TYPES);
 
-  const handleLocationChange = event => setSelectedLocation(event.target.value);
-  const handleFacilityTypeChange = event => setSelectedFacilityType(event.target.value);
+  const handleLocationChange = (event) => setSelectedLocation(event.target.value);
+  const handleFacilityTypeChange = (event) => setSelectedFacilityType(event.target.value);
 
   const handleApplyFilters = () => onApply(selectedLocation, selectedFacilityType);
 
   return (
-    <StyledPaper>
-      <Box sx={{ minWidth: 120, maxWidth: 300 }}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 2, fontWeight: '500' }}>Filter Hotels</Typography>
-
-        <Typography variant="subtitle1" gutterBottom sx={{ mb: 1, color: '#555' }}>Locations</Typography>
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="location-filter-label" sx={{ color: '#777' }}>Location</InputLabel>
-          <Select
-            labelId="location-filter-label"
-            id="location-filter"
-            value={selectedLocation}
-            onChange={handleLocationChange}
-            displayEmpty
-            renderValue={selected => selected || "Select Location"}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: '#ccc' },
-                '&:hover fieldset': { borderColor: '#999' },
-                '&.Mui-focused fieldset': { borderColor: '#3f51b5' },
-              },
-            }}
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      <StyledPaper>
+        <Box sx={{ minWidth: 300, maxWidth: 400 }}>
+          {/* Title */}
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ mb: 3, fontWeight: 'bold', color: '#00ADB5', textAlign: 'center' }}
           >
-            {locations.map(location => <MenuItem key={location} value={location}>{location}</MenuItem>)}
-          </Select>
-        </FormControl>
+            Find Your Perfect Stay
+          </Typography>
 
-        <Typography variant="subtitle1" gutterBottom sx={{ mb: 1, color: '#555' }}>Facility Types</Typography>
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="facility-type-filter-label" sx={{ color: '#777' }}>Facility Type</InputLabel>
-          <Select
-            labelId="facility-type-filter-label"
-            id="facility-type-filter"
-            value={selectedFacilityType}
-            onChange={handleFacilityTypeChange}
-            displayEmpty
-            renderValue={selected => selected || "Select Facility Type"}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: '#ccc' },
-                '&:hover fieldset': { borderColor: '#999' },
-                '&.Mui-focused fieldset': { borderColor: '#3f51b5' },
-              },
-            }}
+          {/* Location Filter */}
+          <Typography
+            variant="subtitle1"
+            gutterBottom
+            sx={{ mb: 1, color: '#EEEEEE', fontWeight: '500' }}
           >
-            {facilityTypes.map(type => <MenuItem key={type} value={type}>{type}</MenuItem>)}
-          </Select>
-        </FormControl>
+            Location
+          </Typography>
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <InputLabel
+              id="location-filter-label"
+              sx={{ color: '#EEEEEE' }}
+            >
+              Select Location
+            </InputLabel>
+            <Select
+              labelId="location-filter-label"
+              id="location-filter"
+              value={selectedLocation}
+              onChange={handleLocationChange}
+              displayEmpty
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: '#00ADB5' },
+                  '&:hover fieldset': { borderColor: '#00ADB5' },
+                  '&.Mui-focused fieldset': { borderColor: '#00ADB5' },
+                },
+                '& .MuiSelect-icon': {
+                  color: '#EEEEEE',
+                },
+                color: '#EEEEEE',
+              }}
+            >
+              {locations.map((location) => (
+                <MenuItem
+                  key={location}
+                  value={location}
+                  sx={{ color: '#222831' }}
+                >
+                  {location}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant="contained" color="primary" onClick={handleApplyFilters} sx={{ textTransform: 'none' }}>
-            Apply Filter
-          </Button>
+          {/* Facility Type Filter */}
+          <Typography
+            variant="subtitle1"
+            gutterBottom
+            sx={{ mb: 1, color: '#EEEEEE', fontWeight: '500' }}
+          >
+            Facility Type
+          </Typography>
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <InputLabel
+              id="facility-type-filter-label"
+              sx={{ color: '#EEEEEE' }}
+            >
+              Select Facility Type
+            </InputLabel>
+            <Select
+              labelId="facility-type-filter-label"
+              id="facility-type-filter"
+              value={selectedFacilityType}
+              onChange={handleFacilityTypeChange}
+              displayEmpty
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: '#00ADB5' },
+                  '&:hover fieldset': { borderColor: '#00ADB5' },
+                  '&.Mui-focused fieldset': { borderColor: '#00ADB5' },
+                },
+                '& .MuiSelect-icon': {
+                  color: '#EEEEEE',
+                },
+                color: '#EEEEEE',
+              }}
+            >
+              {facilityTypes.map((type) => (
+                <MenuItem
+                  key={type}
+                  value={type}
+                  sx={{ color: '#222831' }}
+                >
+                  {type}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Apply Button */}
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Button
+              variant="contained"
+              onClick={handleApplyFilters}
+              sx={{
+                textTransform: 'none',
+                bgcolor: '#00ADB5',
+                color: '#EEEEEE',
+                '&:hover': { bgcolor: '#0097A7' },
+                px: 4,
+                py: 1.5,
+                borderRadius: 2,
+                fontSize: '1rem',
+                fontWeight: '500',
+              }}
+            >
+              Search Hotels
+            </Button>
+          </Box>
         </Box>
-      </Box>
-    </StyledPaper>
+      </StyledPaper>
+    </Box>
   );
 };
 
