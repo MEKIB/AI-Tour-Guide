@@ -33,7 +33,7 @@ const Navbar = ({ userRole, userEmail, userName, setUserRole, collapsed, onToggl
           <IconButton
             color="inherit"
             onClick={onToggleSidebar} // Toggle sidebar state
-            sx={{ mr: 2, color: '#00ADB5' }}
+            sx={{ mr: 2, color: '#F37199' }}
           >
             <MenuIcon />
           </IconButton>

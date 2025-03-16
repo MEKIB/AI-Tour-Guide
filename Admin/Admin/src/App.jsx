@@ -14,6 +14,11 @@ import BookingManagement from './components/HotelAdmin/BookingManagement';
 import CheckBooking from './components/HotelAdmin/CheckBooking';
 import AddAmenitiesForm from './components/HotelAdmin/AddAmenitiesForm';
 import AddHotelRules from './components/HotelAdmin/AddHotelRules';
+import HotelDetail from './components/HotelAdmin/HotelDetail';
+import Amenities from './components/HotelAdmin/Amenities';
+import HotelRulesDetail from './components/HotelAdmin/HotelRulesDetail';
+import Profile from './components/HotelAdmin/Profile';
+import Review from './components/HotelAdmin/Review';
 
 // System admin components
 import SystemAdminDashboard from './components/SystemAdmin/SystemAdminDashboard';
@@ -90,12 +95,17 @@ const App = () => {
             element={userRole === 'hotel-admin' ? <HotelAdminDashboard collapsed={collapsed} /> : <Navigate to="/login" />}
           >
             <Route index element={<Dashboard />} /> {/* Default route */}
-            <Route path="profile" element={<ProfileManagement />} />
+            <Route path="hotel-profile" element={<ProfileManagement />} />
             <Route path="rooms" element={<RoomManagement />} />
             <Route path="amenties" element={<AddAmenitiesForm />} />
             <Route path="hotel-rules" element={<AddHotelRules />} />
+            <Route path="hotel-details" element={<HotelDetail />} />
+            <Route path="amenties-detail" element={<Amenities />} />
+            <Route path="hotel-rule-detail" element={<HotelRulesDetail />} />
+            <Route path="hotel-review" element={<Review />} />
             <Route path="bookings" element={<BookingManagement />} />
             <Route path="check-booking" element={<CheckBooking />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
         </Routes>
       </Box>
