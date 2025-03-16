@@ -18,6 +18,13 @@ const Navbar = ({ userRole, userEmail, userName, setUserRole, collapsed, onToggl
     ? 'Hotel Admin Dashboard' 
     : 'AI-Based Touring Guide System';
 
+  // Handle title click: navigate to homepage only if user is not logged in
+  const handleTitleClick = () => {
+    if (!userRole) {
+      navigate('/'); // Navigate to homepage only if user is not logged in
+    }
+  };
+
   return (
     <AppBar
       position="fixed" // Fix the Navbar at the top
@@ -43,7 +50,14 @@ const Navbar = ({ userRole, userEmail, userName, setUserRole, collapsed, onToggl
         <Typography
           variant="h6"
           component="div"
-          sx={{ flexGrow: 1, fontWeight: 'bold', fontSize: '1.5rem', color: '#00ADB5' }} // Accent color
+          onClick={handleTitleClick} // Conditionally handle click
+          sx={{ 
+            flexGrow: 1, 
+            fontWeight: 'bold', 
+            fontSize: '1.5rem', 
+            color: '#00ADB5', // Accent color
+            cursor: !userRole ? 'pointer' : 'default', // Change cursor if clickable
+          }}
         >
           {dashboardTitle}
         </Typography>
@@ -70,7 +84,7 @@ const Navbar = ({ userRole, userEmail, userName, setUserRole, collapsed, onToggl
                 onClick={() => navigate('/login')}
                 sx={{ fontWeight: 'bold', fontSize: '1rem', color: '#EEEEEE' }}
               >
-            
+                
               </Button>
             </>
           )}
