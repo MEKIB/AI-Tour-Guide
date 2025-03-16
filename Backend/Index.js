@@ -8,6 +8,8 @@ import path from 'path'
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import Hotel from './modules/Hotel.js'
+import Amenity from './modules/Facilities.js'
+import HotelRules from './modules/HotelRules.js'
 env.config()
 
 const app = express()
@@ -122,8 +124,89 @@ app.listen(PORT, () => {
 
 
 
+// Get all amenities
+app.get('/api/amenities', async (req, res) => {
+  try {
+    const amenities = await Amenity.find();
+    res.json(amenities);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Add a new amenity
+app.post('/api/amenities', async (req, res) => {
+  const amenity = new Amenity({
+    name: req.body.name,
+    description: req.body.description,
+    icon: req.body.icon,
+  });
+
+  try {
+    const newAmenity = await amenity.save();
+    res.status(201).json(newAmenity);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
 
 
+
+
+
+
+
+
+
+// Add/Update Hotel Rules
+app.post('/api/hotel-rules', async (req, res) => {
+  try {
+    const {
+      checkIn,
+      checkOut,
+      cancellationPolicy,
+      childPolicies,
+      cotAndExtraBedPolicies,
+      noAgeRestriction,
+      petsAllowed,
+      acceptedCards,
+    } = req.body;
+
+    // Check if there are existing rules, if there are, update them. Otherwise, create new rules.
+    const existingRules = await HotelRules.findOne({});
+
+    if (existingRules) {
+      await HotelRules.findOneAndUpdate({}, {
+        checkIn,
+        checkOut,
+        cancellationPolicy,
+        childPolicies,
+        cotAndExtraBedPolicies,
+        noAgeRestriction,
+        petsAllowed,
+        acceptedCards,
+      });
+      res.json({ message: 'Hotel rules updated successfully' });
+    } else {
+      const newHotelRules = new HotelRules({
+        checkIn,
+        checkOut,
+        cancellationPolicy,
+        childPolicies,
+        cotAndExtraBedPolicies,
+        noAgeRestriction,
+        petsAllowed,
+        acceptedCards,
+      });
+
+      await newHotelRules.save();
+      res.json({ message: 'Hotel rules created successfully' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 
 
@@ -137,7 +220,7 @@ const port = process.env.PORT||2001
 const password = process.env.PASSWORD
 
 // Database connection with MongoDB
-mongoose.connect('mongodb://127.0.0.1:27017/AI_Tour_Guide') // Replace 'yourDatabaseName'
+mongoose.connect('mongodb://127.0.0.1:27017/AI_Tour_Guide') 
   .then(() => console.log('The database connected successfully (local)'))
   .catch(error => console.log('Error connecting to local database:', error));
 

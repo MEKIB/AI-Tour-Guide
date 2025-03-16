@@ -5,15 +5,12 @@ import {
   TextField,
   Button,
   Grid,
-  List,
-  ListItem,
-  ListItemText,
   Checkbox,
   FormControlLabel,
 } from '@mui/material';
+import axios from 'axios';
 
 const HotelRules = () => {
-  // State to manage form inputs
   const [checkInFrom, setCheckInFrom] = useState('14:00');
   const [checkInTo, setCheckInTo] = useState('00:00');
   const [checkOutFrom, setCheckOutFrom] = useState('07:00');
@@ -38,22 +35,24 @@ const HotelRules = () => {
   const [petsAllowed, setPetsAllowed] = useState(false);
   const [acceptedCards, setAcceptedCards] = useState(['Visa', 'MasterCard', 'American Express']);
 
-  // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Create a hotel rules object
-    const hotelRules = {
-      checkIn: `From ${checkInFrom} to ${checkInTo}`,
-      checkOut: `From ${checkOutFrom} to ${checkOutTo}`,
-      cancellationPolicy,
-      childPolicies,
-      cotAndExtraBedPolicies,
-      noAgeRestriction,
-      petsAllowed,
-      acceptedCards,
-    };
-    // Log the hotel rules (you can replace this with an API call to save the data)
-    console.log('Hotel Rules:', hotelRules);
+    try {
+      await axios.post('http://localhost:2000/api/hotel-rules', { // Use your backend URL
+        checkIn: `From ${checkInFrom} to ${checkInTo}`,
+        checkOut: `From ${checkOutFrom} to ${checkOutTo}`,
+        cancellationPolicy,
+        childPolicies,
+        cotAndExtraBedPolicies,
+        noAgeRestriction,
+        petsAllowed,
+        acceptedCards,
+      });
+      alert('Hotel rules saved successfully!');
+    } catch (error) {
+      console.error('Error saving hotel rules:', error);
+      alert('Failed to save hotel rules.');
+    }
   };
 
   return (
@@ -62,7 +61,6 @@ const HotelRules = () => {
         Hotel Rules
       </Typography>
 
-      {/* Form to add hotel rules */}
       <form onSubmit={handleSubmit}>
         <Grid container spacing={3}>
           {/* Check-in/Check-out */}

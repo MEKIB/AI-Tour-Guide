@@ -7,7 +7,6 @@ const Dashboard = () => {
     <Box sx={{ display: 'flex', bgcolor: '#393E46', minHeight: '100vh' }}>
       {/* Sidebar */}
  
-
       {/* Main Content */}
       <Box
         sx={{
