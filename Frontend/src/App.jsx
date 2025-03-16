@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import ButtonAppBar from "./components/Navbar/Navbar";
 import { Routes, Route } from "react-router-dom";
+import { Box } from "@mui/material"; // Import Box component
+import ButtonAppBar from "./components/Navbar/Navbar";
 import Home from "./components/Home page/Home";
 import News from "./components/News/News";
 import EventsBoth from "./components/Events/EventsBoth";
@@ -10,7 +11,6 @@ import ReligiousHome from "./components/Destinations/Religious Sites/ReligiousHo
 import Flight from "./components/Tourist Facilities/Flights/Flight";
 import HotelsandLocations from "./components/Tourist Facilities/Hotels and Lodges/HotelsandLocations";
 import FilteredHotels from "./components/Tourist Facilities/Hotels and Lodges/FilteredHotels";
-import HotelList from "./components/Tourist Facilities/Hotels and Lodges/HotelLists";
 import HotelDetails from "./components/Tourist Facilities/Hotels and Lodges/HotelDetails";
 import Footer from "./components/Footer/Footer";
 import SignupPage from "./components/account/Signup";
@@ -22,10 +22,10 @@ import Bureau from "./components/About/Bureau";
 import AmharaBoth from "./components/About/Amhara/AmharaBoth";
 import Merge from "./components/About/Mandate/Merge";
 import Managment from "./components/About/OurManagment/Managment";
-import HistoricalHome from './components/Destinations/Historical Landmarks/HistoricalHome';
-import LakesAndWaterfallHome from './components/Destinations/Lakes,waterfall/LakesAndWaterfallHome';
-import NationalParksHome from './components/Destinations/National Parks and Community Protected Area/NationalParksHome';
-import HotelsLodges from './components/Tourist Facilities/Hotels and Lodges/HotelsLodges';
+import HistoricalHome from "./components/Destinations/Historical Landmarks/HistoricalHome";
+import LakesAndWaterfallHome from "./components/Destinations/Lakes,waterfall/LakesAndWaterfallHome";
+import NationalParksHome from "./components/Destinations/National Parks and Community Protected Area/NationalParksHome";
+import HotelsLodges from "./components/Tourist Facilities/Hotels and Lodges/HotelsLodges";
 import HOMEPage from "./components/Home page/HOMEPage";
 
 function App() {
@@ -63,9 +63,21 @@ function App() {
   };
 
   return (
-    <>
+    <Box
+      sx={{
+        marginLeft: '-8px', // Remove default margin
+        // marginBottom:'20px',
+        padding: 2, // Remove default padding
+        width: "100%", // Ensure full width
+        minHeight: "100vh", // Ensure full height
+        backgroundColor: "#393E46", // Set background color
+        overflowX: "hidden", // Prevent horizontal overflow
+      }}
+    >
+      {/* Navbar */}
       <ButtonAppBar />
 
+      {/* Routes */}
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
         <Route path="/religioussites" element={<ReligiousHome />} />
@@ -79,8 +91,8 @@ function App() {
         <Route path="/flights" element={<Flight />} />
         <Route path="/hotelslocation" element={<HotelsandLocations />} />
         <Route path="/filtered-hotels" element={<FilteredHotels />} />
-        <Route path='/hoteldetails' element={<HotelDetails />} />
-        <Route path="/hotel/:id" element={<HotelsLodges/>}/>
+        <Route path="/hoteldetails" element={<HotelDetails />} />
+        <Route path="/hotel/:id" element={<HotelsLodges />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -90,10 +102,13 @@ function App() {
         <Route path="/mandate" element={<Merge />} />
         <Route path="/managment" element={<Managment />} />
       </Routes>
+
+      {/* Chatbot */}
       <ChatbotLogic />
 
+      {/* Footer */}
       <Footer />
-    </>
+    </Box>
   );
 }
 
