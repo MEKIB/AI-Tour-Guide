@@ -1,13 +1,12 @@
-// modules/HotelAdminList.js
+// modules/ApprovedHotelAdmin.js
 import mongoose from 'mongoose';
 
-const hotelAdminSchema = new mongoose.Schema({
+const approvedHotelAdminSchema = new mongoose.Schema({
   firstName: { type: String, required: true },
   middleName: { type: String },
   lastName: { type: String, required: true },
   location: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
   phoneNumber: { type: String, required: true },
   passportId: {
     name: String,
@@ -21,13 +20,10 @@ const hotelAdminSchema = new mongoose.Schema({
     name: String,
     url: String,
   },
-  agreedToTerms: { type: Boolean, required: true },
-  isApproved: { type: Boolean, default: false },
-  hotelAdminId: { type: Number, unique: true, sparse: true }, // Added hotelAdminId
-  createdAt: { type: Date, default: Date.now },
+  hotelAdminId: { type: Number, required: true, unique: true },
+  approvedAt: { type: Date, default: Date.now },
 });
 
+const ApprovedHotelAdmin=mongoose.model("Approved Hotel Admin",approvedHotelAdminSchema)
 
-  const HotelAdminList=mongoose.model("HotelAdminLists",hotelAdminSchema)
-
-  export default HotelAdminList
+export default ApprovedHotelAdmin;

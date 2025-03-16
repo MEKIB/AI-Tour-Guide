@@ -16,52 +16,56 @@ import {
   IconButton,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import image from "../../assets/13.jpg";
+import axios from 'axios';
 
 const ApproveHotelAdmin = () => {
   const [pendingHotelAdmins, setPendingHotelAdmins] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null); // State to track the selected image
-  const [open, setOpen] = useState(false); // State to control the modal
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Fetch pending Hotel Admins from the backend (mock data for now)
+  // Fetch pending Hotel Admins from the backend
   useEffect(() => {
-    const mockPendingHotelAdmins = [
-      {
-        id: 1,
-        name: 'Hotel Admin A',
-        passportImage: image, // Placeholder image URL
-        location: 'Addis Ababa, Ethiopia',
-        phoneNumber: '+251 912 345 678',
-        email: 'hoteladminA@example.com',
-        tradeLicenseImage: image, // Placeholder image URL
-        managerIdImage: image, // Placeholder image URL
-      },
-      {
-        id: 2,
-        name: 'Hotel Admin B',
-        passportImage: 'https://via.placeholder.com/100', // Placeholder image URL
-        location: 'Hawassa, Ethiopia',
-        phoneNumber: '+251 987 654 321',
-        email: 'hoteladminB@example.com',
-        tradeLicenseImage: 'https://via.placeholder.com/100', // Placeholder image URL
-        managerIdImage: 'https://via.placeholder.com/100', // Placeholder image URL
-      },
-    ];
-    setPendingHotelAdmins(mockPendingHotelAdmins);
+    const fetchPendingHotelAdmins = async () => {
+      try {
+        const response = await axios.get('http://localhost:2000/api/hotel-admins');
+        const adminsWithFullUrls = response.data.map((admin) => ({
+          id: admin._id,
+          name: `${admin.firstName} ${admin.middleName || ''} ${admin.lastName}`.trim(),
+          passportImage: `http://localhost:2000${admin.passportId.url}`,
+          location: admin.location,
+          phoneNumber: admin.phoneNumber,
+          email: admin.email,
+          tradeLicenseImage: `http://localhost:2000${admin.tradeLicense.url}`,
+          managerIdImage: `http://localhost:2000${admin.managerId.url}`,
+        }));
+        setPendingHotelAdmins(adminsWithFullUrls);
+        setLoading(false);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to fetch pending hotel admins');
+        setLoading(false);
+      }
+    };
+    fetchPendingHotelAdmins();
   }, []);
 
   // Approve a Hotel Admin
-  const approveHotelAdmin = (userId) => {
-    setPendingHotelAdmins((prevAdmins) =>
-      prevAdmins.filter((admin) => admin.id !== userId)
-    );
-    alert(`Hotel Admin ${userId} approved.`);
+  const approveHotelAdmin = async (userId) => {
+    try {
+      const response = await axios.post(`http://localhost:2000/api/hotel-admins/approve/${userId}`);
+      setPendingHotelAdmins((prevAdmins) => prevAdmins.filter((admin) => admin.id !== userId));
+      alert(response.data.message);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to approve hotel admin');
+    }
   };
+  
 
   // Handle image click
   const handleImageClick = (imageUrl) => {
-    setSelectedImage(imageUrl); // Set the selected image
-    setOpen(true); // Open the modal
+    setSelectedImage(imageUrl);
+    setOpen(true);
   };
 
   // Close the modal
@@ -70,11 +74,27 @@ const ApproveHotelAdmin = () => {
     setSelectedImage(null);
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ backgroundColor: '#222831', color: '#EEEEEE', minHeight: '100vh', p: 4, textAlign: 'center' }}>
+        <Typography variant="h6">Loading...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ backgroundColor: '#222831', color: '#EEEEEE', minHeight: '100vh', p: 4, textAlign: 'center' }}>
+        <Typography variant="h6" color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{
-        backgroundColor: '#222831', // Dark background
-        color: '#EEEEEE', // Light text
+        backgroundColor: '#222831',
+        color: '#EEEEEE',
         minHeight: '100vh',
         p: 4,
       }}
@@ -84,12 +104,10 @@ const ApproveHotelAdmin = () => {
         variant="contained"
         onClick={() => window.open('https://etrade.gov.et/business-license-checker', '_blank')}
         sx={{
-          backgroundColor: '#00ADB5', // Accent color
-          color: '#EEEEEE', // Light text
-          '&:hover': {
-            backgroundColor: '#0097A7', // Darker accent color on hover
-          },
-          mb: 4, // Add margin at the bottom
+          backgroundColor: '#00ADB5',
+          color: '#EEEEEE',
+          '&:hover': { backgroundColor: '#0097A7' },
+          mb: 4,
         }}
       >
         Open Business License Checker
@@ -101,7 +119,7 @@ const ApproveHotelAdmin = () => {
         sx={{
           fontWeight: 'bold',
           mb: 4,
-          color: '#00ADB5', // Accent color
+          color: '#00ADB5',
           textAlign: 'center',
         }}
       >
@@ -110,8 +128,8 @@ const ApproveHotelAdmin = () => {
       <TableContainer
         component={Paper}
         sx={{
-          backgroundColor: '#393E46', // Table background
-          color: '#EEEEEE', // Table text
+          backgroundColor: '#393E46',
+          color: '#EEEEEE',
           borderRadius: 2,
           boxShadow: 3,
         }}
@@ -131,54 +149,60 @@ const ApproveHotelAdmin = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {pendingHotelAdmins.map((admin) => (
-              <TableRow key={admin.id}>
-                <TableCell sx={{ color: '#EEEEEE' }}>{admin.id}</TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>{admin.name}</TableCell>
-                <TableCell>
-                  <Avatar
-                    src={admin.passportImage}
-                    alt="Passport/ID"
-                    sx={{ width: 60, height: 60, cursor: 'pointer' }}
-                    onClick={() => handleImageClick(admin.passportImage)}
-                  />
-                </TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>{admin.location}</TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>{admin.phoneNumber}</TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>{admin.email}</TableCell>
-                <TableCell>
-                  <Avatar
-                    src={admin.tradeLicenseImage}
-                    alt="Trade License"
-                    sx={{ width: 60, height: 60, cursor: 'pointer' }}
-                    onClick={() => handleImageClick(admin.tradeLicenseImage)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Avatar
-                    src={admin.managerIdImage}
-                    alt="Manager ID"
-                    sx={{ width: 60, height: 60, cursor: 'pointer' }}
-                    onClick={() => handleImageClick(admin.managerIdImage)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="contained"
-                    onClick={() => approveHotelAdmin(admin.id)}
-                    sx={{
-                      backgroundColor: '#00ADB5', // Accent color
-                      color: '#EEEEEE', // Light text
-                      '&:hover': {
-                        backgroundColor: '#0097A7', // Darker accent color on hover
-                      },
-                    }}
-                  >
-                    Approve
-                  </Button>
+            {pendingHotelAdmins.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} sx={{ color: '#EEEEEE', textAlign: 'center' }}>
+                  No pending hotel admins found
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              pendingHotelAdmins.map((admin) => (
+                <TableRow key={admin.id}>
+                  <TableCell sx={{ color: '#EEEEEE' }}>{admin.id}</TableCell>
+                  <TableCell sx={{ color: '#EEEEEE' }}>{admin.name}</TableCell>
+                  <TableCell>
+                    <Avatar
+                      src={admin.passportImage}
+                      alt="Passport/ID"
+                      sx={{ width: 60, height: 60, cursor: 'pointer' }}
+                      onClick={() => handleImageClick(admin.passportImage)}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ color: '#EEEEEE' }}>{admin.location}</TableCell>
+                  <TableCell sx={{ color: '#EEEEEE' }}>{admin.phoneNumber}</TableCell>
+                  <TableCell sx={{ color: '#EEEEEE' }}>{admin.email}</TableCell>
+                  <TableCell>
+                    <Avatar
+                      src={admin.tradeLicenseImage}
+                      alt="Trade License"
+                      sx={{ width: 60, height: 60, cursor: 'pointer' }}
+                      onClick={() => handleImageClick(admin.tradeLicenseImage)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Avatar
+                      src={admin.managerIdImage}
+                      alt="Manager ID"
+                      sx={{ width: 60, height: 60, cursor: 'pointer' }}
+                      onClick={() => handleImageClick(admin.managerIdImage)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="contained"
+                      onClick={() => approveHotelAdmin(admin.id)}
+                      sx={{
+                        backgroundColor: '#00ADB5',
+                        color: '#EEEEEE',
+                        '&:hover': { backgroundColor: '#0097A7' },
+                      }}
+                    >
+                      Approve
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
@@ -191,8 +215,8 @@ const ApproveHotelAdmin = () => {
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: '#222831',
-            p: 3, // Add padding to the modal content
-            overflow: 'auto', // Enable scrolling
+            p: 3,
+            overflow: 'auto',
           }}
         >
           <Box
@@ -209,24 +233,22 @@ const ApproveHotelAdmin = () => {
               src={selectedImage}
               alt="Enlarged"
               style={{
-                width: '100%', // Make the image fill the modal width
-                height: 'auto', // Allow the image to scale naturally
-                maxWidth: 'none', // Remove width constraint
-                maxHeight: 'none', // Remove height constraint
+                width: '100%',
+                height: 'auto',
+                maxWidth: 'none',
+                maxHeight: 'none',
                 borderRadius: '8px',
               }}
             />
             <IconButton
               onClick={handleClose}
               sx={{
-                position: 'absolute', // Position relative to the parent container
+                position: 'absolute',
                 top: 8,
                 right: 8,
                 color: '#EEEEEE',
                 backgroundColor: '#00ADB5',
-                '&:hover': {
-                  backgroundColor: '#0097A7',
-                },
+                '&:hover': { backgroundColor: '#0097A7' },
               }}
             >
               <CloseIcon />

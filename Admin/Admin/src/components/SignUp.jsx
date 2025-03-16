@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, TextField, Button, Container, Alert, Grid } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -22,8 +23,8 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const [filePreview, setFilePreview] = useState(null); // For Passport/ID preview
 
-  // Predefined agreement file (stored in the system)
-  const agreementFile = '/path/to/agreement.pdf'; // Replace with the actual path to your agreement file
+  // Predefined agreement file (stored in the system or a URL)
+  const agreementFile = '/path/to/agreement.pdf'; // Replace with the actual path or URL to your agreement file
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -51,12 +52,31 @@ const SignUp = () => {
       return;
     }
 
-    // Simulate account creation (replace with API call)
-    setTimeout(() => {
+    // Prepare form data for API request
+    const data = new FormData();
+    data.append('firstName', formData.firstName);
+    data.append('middleName', formData.middleName);
+    data.append('lastName', formData.lastName);
+    data.append('location', formData.location);
+    data.append('email', formData.email);
+    data.append('password', formData.password);
+    data.append('phoneNumber', formData.phoneNumber);
+    data.append('passportId', formData.passportId);
+    data.append('tradeLicense', formData.tradeLicense);
+    data.append('managerId', formData.managerId);
+    data.append('agreedToTerms', formData.agreedToTerms);
+
+    try {
+      const response = await axios.post('http://localhost:2000/api/signup', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       setLoading(false);
-      alert('Account created successfully! Please log in.');
+      alert(response.data.message); // "Account created successfully"
       navigate('/login');
-    }, 1000);
+    } catch (err) {
+      setLoading(false);
+      setError(err.response?.data?.message || 'Failed to create account');
+    }
   };
 
   const handleChange = (e) => {
@@ -98,9 +118,9 @@ const SignUp = () => {
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        marginTop: '80PX',
+        marginTop: '80px',
         p: 3,
-        marginLeft:19,
+        marginLeft: 19,
       }}
     >
       <Container maxWidth="md">
@@ -176,7 +196,7 @@ const SignUp = () => {
                     sx: {
                       bgcolor: '#393E46',
                       borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' }, // Change bg color on focus
+                      '&:focus': { bgcolor: '#00ADB5' },
                     },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
@@ -197,7 +217,7 @@ const SignUp = () => {
                     sx: {
                       bgcolor: '#393E46',
                       borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' }, // Change bg color on focus
+                      '&:focus': { bgcolor: '#00ADB5' },
                     },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
@@ -217,7 +237,7 @@ const SignUp = () => {
                     sx: {
                       bgcolor: '#393E46',
                       borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' }, // Change bg color on focus
+                      '&:focus': { bgcolor: '#00ADB5' },
                     },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
@@ -238,7 +258,7 @@ const SignUp = () => {
                     sx: {
                       bgcolor: '#393E46',
                       borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' }, // Change bg color on focus
+                      '&:focus': { bgcolor: '#00ADB5' },
                     },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
@@ -262,7 +282,7 @@ const SignUp = () => {
                     sx: {
                       bgcolor: '#393E46',
                       borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' }, // Change bg color on focus
+                      '&:focus': { bgcolor: '#00ADB5' },
                     },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
@@ -284,7 +304,7 @@ const SignUp = () => {
                     sx: {
                       bgcolor: '#393E46',
                       borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' }, // Change bg color on focus
+                      '&:focus': { bgcolor: '#00ADB5' },
                     },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
@@ -306,7 +326,7 @@ const SignUp = () => {
                     sx: {
                       bgcolor: '#393E46',
                       borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' }, // Change bg color on focus
+                      '&:focus': { bgcolor: '#00ADB5' },
                     },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
@@ -327,7 +347,7 @@ const SignUp = () => {
                     sx: {
                       bgcolor: '#393E46',
                       borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' }, // Change bg color on focus
+                      '&:focus': { bgcolor: '#00ADB5' },
                     },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
