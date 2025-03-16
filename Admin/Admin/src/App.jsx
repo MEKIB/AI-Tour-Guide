@@ -30,6 +30,7 @@ import BookingManagements from './components/SystemAdmin/BookingManagement';
 import PaymentMonitoring from './components/SystemAdmin/PaymentMonitoring';
 import SystemSettings from './components/SystemAdmin/SystemSettings';
 import ProfileSettings from './components/SystemAdmin/ProfileSettings';
+import HotelAdmin  from './components/SystemAdmin/HotelAdmin';
 
 import HomePage from './components/HomePage';
 import './App.css';
@@ -82,6 +83,7 @@ const App = () => {
             <Route path="user-management" element={<UserManagement />} />
             <Route path="hotel-management" element={<HotelManagement />} />
             <Route path="approve-hotel-admin" element={<ApproveHotelAdmin />} />
+            <Route path="hotel-admin" element={<HotelAdmin />} />
             <Route path="booking-management" element={<BookingManagements />} />
             <Route path="payment-monitoring" element={<PaymentMonitoring />} />
             <Route path="checkbooking" element={<CheckBooking />} />

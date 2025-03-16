@@ -44,6 +44,14 @@ const SideBar = () => {
           <ListItemText sx={{ color: '#00ADB5' }} primary="Approve Hotel Admin" />
         </ListItem>
 
+          {/* Approved Hotel Admins */}
+          <ListItem button component={Link} to="hotel-admin">
+          <ListItemIcon>
+            <ProfileIcon sx={{ color: '#00ADB5' }} />
+          </ListItemIcon>
+          <ListItemText sx={{ color: '#00ADB5' }} primary="Hotel Admins" />
+        </ListItem>
+
         {/* Hotel Management */}
         <ListItem button component={Link} to="hotel-management">
           <ListItemIcon>
