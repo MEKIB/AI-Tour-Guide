@@ -16,12 +16,22 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Chip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EventBusyIcon from '@mui/icons-material/EventBusy';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { addDays, isBefore, isEqual, parseISO, format, isToday } from 'date-fns';
+
+// Color palette
+const colors = {
+  dark: '#222831',
+  darkGray: '#393E46',
+  teal: '#00ADB5',
+  light: '#EEEEEE',
+};
 
 const RoomManagement = () => {
   const [rooms, setRooms] = useState([
@@ -32,15 +42,7 @@ const RoomManagement = () => {
       roomNumbers: [
         {
           number: 'R101',
-          availability: [
-            { date: '2023-10-01', available: false },
-            { date: '2023-10-02', available: false },
-            { date: '2025-01-31', available: false },
-            { date: '2025-02-01', available: false },
-            { date: '2025-02-02', available: false },
-            { date: '2025-02-03', available: false },
-            { date: '2025-02-04', available: false },
-          ],
+          availability: [], // Start with no unavailability
         },
       ],
     },
@@ -51,6 +53,9 @@ const RoomManagement = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [availabilityDialogOpen, setAvailabilityDialogOpen] = useState(false);
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState(null);
+  const [unavailabilityToDelete, setUnavailabilityToDelete] = useState(null);
 
   // Handle adding a new room type with room numbers
   const handleAddRoom = () => {
@@ -66,7 +71,7 @@ const RoomManagement = () => {
         rate: newRoom.rate,
         roomNumbers: roomNumbersArray.map((number) => ({
           number,
-          availability: [],
+          availability: [], // Start with no unavailability
         })),
       };
 
@@ -102,7 +107,7 @@ const RoomManagement = () => {
           currentDate = addDays(currentDate, 1);
         }
       } else {
-        datesToUpdate.push(dateString);
+        datesToUpdate.push(dateString); // Handle single date selection
       }
 
       setRooms((prevRooms) =>
@@ -115,8 +120,10 @@ const RoomManagement = () => {
                     ? {
                         ...rn,
                         availability: [
-                          ...rn.availability,
-                          ...datesToUpdate.map((date) => ({ date, available: false })),
+                          ...rn.availability.filter(
+                            (av) => !datesToUpdate.includes(av.date) // Remove existing entries for the same dates
+                          ),
+                          ...datesToUpdate.map((date) => ({ date, available: false })), // Add new unavailability
                         ],
                       }
                     : rn
@@ -128,29 +135,6 @@ const RoomManagement = () => {
 
       handleCloseAvailabilityDialog();
     }
-  };
-
-  // Toggle availability for a specific date
-  const toggleAvailability = (roomTypeId, roomNumber, date) => {
-    setRooms((prevRooms) =>
-      prevRooms.map((room) =>
-        room.id === roomTypeId
-          ? {
-              ...room,
-              roomNumbers: room.roomNumbers.map((rn) =>
-                rn.number === roomNumber
-                  ? {
-                      ...rn,
-                      availability: rn.availability.map((av) =>
-                        av.date === date ? { ...av, available: !av.available } : av
-                      ),
-                    }
-                  : rn
-              ),
-            }
-          : room
-      )
-    );
   };
 
   // Delete a room number
@@ -165,6 +149,7 @@ const RoomManagement = () => {
           : room
       )
     );
+    setDeleteConfirmationOpen(false);
   };
 
   // Remove specific unavailability entry
@@ -186,6 +171,7 @@ const RoomManagement = () => {
           : room
       )
     );
+    setDeleteConfirmationOpen(false);
   };
 
   // Group consecutive dates into ranges
@@ -218,8 +204,8 @@ const RoomManagement = () => {
     return ranges;
   };
 
-  // Check if the room is booked for the current date
-  const isRoomBookedToday = (roomNumber) => {
+  // Check if the room is unavailable for the current date
+  const isRoomUnavailableToday = (roomNumber) => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const room = rooms
       .flatMap((room) => room.roomNumbers)
@@ -232,10 +218,33 @@ const RoomManagement = () => {
     return false;
   };
 
+  // Open delete confirmation dialog
+  const openDeleteConfirmation = (roomTypeId, roomNumber, date = null) => {
+    setRoomToDelete({ roomTypeId, roomNumber });
+    setUnavailabilityToDelete(date);
+    setDeleteConfirmationOpen(true);
+  };
+
+  // Close delete confirmation dialog
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmationOpen(false);
+    setRoomToDelete(null);
+    setUnavailabilityToDelete(null);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirmation = () => {
+    if (unavailabilityToDelete) {
+      handleRemoveUnavailability(roomToDelete.roomTypeId, roomToDelete.roomNumber, unavailabilityToDelete);
+    } else {
+      handleDeleteRoomNumber(roomToDelete.roomTypeId, roomToDelete.roomNumber);
+    }
+  };
+
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
+      <Box sx={{ p: 3, backgroundColor: colors.dark, minHeight: '100vh', color: colors.light }}>
+        <Typography variant="h4" gutterBottom sx={{ color: colors.teal }}>
           Room Management
         </Typography>
         <Box component="form" sx={{ maxWidth: 600, mb: 4 }}>
@@ -246,6 +255,7 @@ const RoomManagement = () => {
             margin="normal"
             value={newRoom.type}
             onChange={(e) => setNewRoom({ ...newRoom, type: e.target.value })}
+            sx={{ backgroundColor: colors.light, borderRadius: 1 }}
           />
           <TextField
             fullWidth
@@ -255,6 +265,7 @@ const RoomManagement = () => {
             type="number"
             value={newRoom.rate}
             onChange={(e) => setNewRoom({ ...newRoom, rate: e.target.value })}
+            sx={{ backgroundColor: colors.light, borderRadius: 1 }}
           />
           <TextField
             fullWidth
@@ -264,23 +275,28 @@ const RoomManagement = () => {
             value={newRoom.roomNumbers}
             onChange={(e) => setNewRoom({ ...newRoom, roomNumbers: e.target.value })}
             placeholder="e.g., R101, R102, R103"
+            sx={{ backgroundColor: colors.light, borderRadius: 1 }}
           />
-          <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={handleAddRoom}>
+          <Button
+            variant="contained"
+            sx={{ mt: 2, backgroundColor: colors.teal, color: colors.light, '&:hover': { backgroundColor: colors.darkGray } }}
+            onClick={handleAddRoom}
+          >
             Add Room Type
           </Button>
         </Box>
 
         {/* Room Details Table */}
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={{ backgroundColor: colors.darkGray }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Room Type</TableCell>
-                <TableCell>Rate</TableCell>
-                <TableCell>Room Numbers</TableCell>
-                <TableCell>Availability</TableCell>
-                <TableCell>Booking Status (Today)</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell sx={{ color: colors.light }}>Room Type</TableCell>
+                <TableCell sx={{ color: colors.light }}>Rate</TableCell>
+                <TableCell sx={{ color: colors.light }}>Room Numbers</TableCell>
+                <TableCell sx={{ color: colors.light }}>Availability</TableCell>
+                <TableCell sx={{ color: colors.light }}>Booking Status (Today)</TableCell>
+                <TableCell sx={{ color: colors.light }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -290,15 +306,21 @@ const RoomManagement = () => {
                     <TableRow key={roomNumber.number}>
                       {index === 0 && (
                         <>
-                          <TableCell rowSpan={room.roomNumbers.length}>{room.type}</TableCell>
-                          <TableCell rowSpan={room.roomNumbers.length}>${room.rate}</TableCell>
+                          <TableCell rowSpan={room.roomNumbers.length} sx={{ color: colors.light }}>
+                            {room.type}
+                          </TableCell>
+                          <TableCell rowSpan={room.roomNumbers.length} sx={{ color: colors.light }}>
+                            ${room.rate}
+                          </TableCell>
                         </>
                       )}
-                      <TableCell>{roomNumber.number}</TableCell>
+                      <TableCell sx={{ color: colors.light }}>{roomNumber.number}</TableCell>
                       <TableCell>
                         <Button
                           variant="outlined"
+                          startIcon={<EventBusyIcon />}
                           onClick={() => handleOpenAvailabilityDialog(room.id, roomNumber.number)}
+                          sx={{ color: colors.teal, borderColor: colors.teal }}
                         >
                           Manage Availability
                         </Button>
@@ -312,19 +334,13 @@ const RoomManagement = () => {
                               key={idx}
                               sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                             >
-                              <Typography>
+                              <Typography sx={{ color: colors.light }}>
                                 {format(range.start, 'yyyy-MM-dd')} to {format(range.end, 'yyyy-MM-dd')}: Unavailable
                               </Typography>
                               <IconButton
                                 size="small"
-                                color="error"
-                                onClick={() => {
-                                  let currentDate = range.start;
-                                  while (isBefore(currentDate, range.end) || isEqual(currentDate, range.end)) {
-                                    handleRemoveUnavailability(room.id, roomNumber.number, format(currentDate, 'yyyy-MM-dd'));
-                                    currentDate = addDays(currentDate, 1);
-                                  }
-                                }}
+                                sx={{ color: colors.error }}
+                                onClick={() => openDeleteConfirmation(room.id, roomNumber.number, format(range.start, 'yyyy-MM-dd'))}
                               >
                                 <DeleteIcon fontSize="small" />
                               </IconButton>
@@ -333,12 +349,16 @@ const RoomManagement = () => {
                         </Box>
                       </TableCell>
                       <TableCell>
-                        {isRoomBookedToday(roomNumber.number) ? 'Booked' : 'Available'}
+                        <Chip
+                          label={isRoomUnavailableToday(roomNumber.number) ? 'Unavailable' : 'Available'}
+                          color={isRoomUnavailableToday(roomNumber.number) ? 'error' : 'success'}
+                          sx={{ backgroundColor: isRoomUnavailableToday(roomNumber.number) ? colors.error : colors.teal, color: colors.light }}
+                        />
                       </TableCell>
                       <TableCell>
                         <IconButton
-                          color="error"
-                          onClick={() => handleDeleteRoomNumber(room.id, roomNumber.number)}
+                          sx={{ color: colors.error }}
+                          onClick={() => openDeleteConfirmation(room.id, roomNumber.number)}
                         >
                           <DeleteIcon />
                         </IconButton>
@@ -355,6 +375,7 @@ const RoomManagement = () => {
         <Dialog
           open={availabilityDialogOpen}
           onClose={handleCloseAvailabilityDialog}
+          sx={{ '& .MuiPaper-root': { backgroundColor: colors.darkGray, color: colors.light } }}
         >
           <DialogTitle>Mark Unavailability</DialogTitle>
           <DialogContent>
@@ -362,20 +383,46 @@ const RoomManagement = () => {
               label="Start Date"
               value={startDate}
               onChange={(newValue) => setStartDate(newValue)}
-              renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
+              renderInput={(params) => <TextField {...params} fullWidth margin="normal" sx={{ backgroundColor: colors.light, borderRadius: 1 }} />}
             />
             <DatePicker
               label="End Date"
               value={endDate}
               onChange={(newValue) => setEndDate(newValue)}
-              renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
+              renderInput={(params) => <TextField {...params} fullWidth margin="normal" sx={{ backgroundColor: colors.light, borderRadius: 1 }} />}
               minDate={startDate}
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseAvailabilityDialog}>Cancel</Button>
-            <Button onClick={handleAddUnavailability} color="primary">
+            <Button onClick={handleCloseAvailabilityDialog} sx={{ color: colors.light }}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddUnavailability} sx={{ color: colors.teal }}>
               Mark Unavailable
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteConfirmationOpen}
+          onClose={closeDeleteConfirmation}
+          sx={{ '& .MuiPaper-root': { backgroundColor: colors.darkGray, color: colors.light } }}
+        >
+          <DialogTitle>Confirm Delete</DialogTitle>
+          <DialogContent>
+            <Typography>
+              {unavailabilityToDelete
+                ? `Are you sure you want to remove unavailability for ${unavailabilityToDelete}?`
+                : 'Are you sure you want to delete this room number?'}
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeDeleteConfirmation} sx={{ color: colors.light }}>
+              Cancel
+            </Button>
+            <Button onClick={handleDeleteConfirmation} sx={{ color: colors.error }}>
+              Delete
             </Button>
           </DialogActions>
         </Dialog>
