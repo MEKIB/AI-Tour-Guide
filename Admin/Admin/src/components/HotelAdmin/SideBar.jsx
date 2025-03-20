@@ -130,6 +130,15 @@ const SideBar = ({ collapsed }) => {
               {!collapsed && <ListItemText primary="Hotel Rules" sx={{ color: '#00ADB5' }} />}
             </ListItem>
 
+              {/* Hotel rooms */}
+              <ListItem button component={Link} to="hotel-room" sx={{ pl: collapsed ? 3 : 4, '&:hover': { bgcolor: '#222831' } }}>
+              <ListItemIcon>
+                <RulesIcon sx={{ color: '#00ADB5' }} /> {/* Updated icon for Hotel Rules */}
+              </ListItemIcon>
+              {!collapsed && <ListItemText primary="Available Rooms" sx={{ color: '#00ADB5' }} />}
+            </ListItem>
+            
+
             {/* Hotel Review */}
             <ListItem button component={Link} to="hotel-review" sx={{ pl: collapsed ? 3 : 4, '&:hover': { bgcolor: '#222831' } }}>
               <ListItemIcon>

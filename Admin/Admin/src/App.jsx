@@ -19,6 +19,7 @@ import Amenities from './components/HotelAdmin/Amenities';
 import HotelRulesDetail from './components/HotelAdmin/HotelRulesDetail';
 import Profile from './components/HotelAdmin/Profile';
 import Review from './components/HotelAdmin/Review';
+import AvailableRooms from './components/HotelAdmin/AvailableRooms';
 
 // System admin components
 import SystemAdminDashboard from './components/SystemAdmin/SystemAdminDashboard';
@@ -104,6 +105,7 @@ const App = () => {
             <Route path="hotel-details" element={<HotelDetail />} />
             <Route path="amenties-detail" element={<Amenities />} />
             <Route path="hotel-rule-detail" element={<HotelRulesDetail />} />
+            <Route path="hotel-room" element={<AvailableRooms />} />
             <Route path="hotel-review" element={<Review />} />
             <Route path="bookings" element={<BookingManagement />} />
             <Route path="check-booking" element={<CheckBooking />} />

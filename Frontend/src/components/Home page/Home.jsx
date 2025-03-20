@@ -12,7 +12,14 @@ import {
   Box,
   Button,
   ButtonGroup,
+  Icon,
 } from "@mui/material";
+
+// Icons for Why Book with Visit Amhara
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import LoyaltyIcon from "@mui/icons-material/Loyalty";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import PaymentIcon from "@mui/icons-material/Payment";
 
 // Testimonials Data with Unsplash Images
 const testimonials = [
@@ -156,51 +163,123 @@ const CallToAction = ({ title, buttonText, onClick }) => {
   );
 };
 
-// Split Section Component
-const SplitSection = () => {
+// Why Book with Visit Amhara Section
+const WhyBookWithUs = () => {
   return (
     <Box sx={{ bgcolor: "rgba(57, 62, 70, 0.8)", py: 6 }}>
       <Container>
-        <Grid container spacing={4} alignItems="center">
-          <Grid item xs={12} md={6}>
-            <Typography variant="h3" sx={{ mb: 3, color: "#00ADB5" }}>
-              Why Book with Visit Amhara?
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 2, color: "#EEEEEE" }}>
-              <strong>24/7 Customer Support:</strong> No matter the time zone, we’re here to help you with any queries or concerns.
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 2, color: "#EEEEEE" }}>
-              <strong>Earn Rewards:</strong> Explore, earn, and redeem rewards with our loyalty program. The more you travel, the more you gain!
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 2, color: "#EEEEEE" }}>
-              <strong>Millions of Reviews:</strong> Plan and book with confidence using reviews from fellow travelers who have experienced the magic of Amhara.
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 2, color: "#EEEEEE" }}>
-              <strong>Flexible Plans:</strong> Stay flexible with free cancellation and the option to reserve now and pay later at no additional cost.
-            </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              sx={{
-                bgcolor: "#00ADB5",
-                color: "#EEEEEE",
-                "&:hover": { bgcolor: "#00838F" },
-              }}
-            >
-              Learn More
-            </Button>
+        <Typography variant="h4" align="center" sx={{ mb: 4, color: "#00ADB5" }}>
+          Why Book with Visit Amhara?
+        </Typography>
+        <Grid container spacing={4} justifyContent="center">
+          <Grid item xs={12} sm={6} md={3}>
+            <Box sx={{ textAlign: "center" }}>
+              <SupportAgentIcon sx={{ fontSize: 50, color: "#00ADB5", mb: 2 }} />
+              <Typography variant="h6" sx={{ mb: 2, color: "#EEEEEE" }}>
+                24/7 Support
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#EEEEEE" }}>
+                We’re here for you anytime, anywhere.
+              </Typography>
+            </Box>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <CardMedia
-              component="img"
-              image="https://images.unsplash.com/photo-1621451537084-482c73073a0f" // Unsplash URL
-              alt="Amhara Landscape"
-              sx={{
-                borderRadius: "16px",
-                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
-              }}
-            />
+          <Grid item xs={12} sm={6} md={3}>
+            <Box sx={{ textAlign: "center" }}>
+              <LoyaltyIcon sx={{ fontSize: 50, color: "#00ADB5", mb: 2 }} />
+              <Typography variant="h6" sx={{ mb: 2, color: "#EEEEEE" }}>
+                Earn Rewards
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#EEEEEE" }}>
+                Travel more, earn more with our loyalty program.
+              </Typography>
+            </Box>
           </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Box sx={{ textAlign: "center" }}>
+              <ThumbUpIcon sx={{ fontSize: 50, color: "#00ADB5", mb: 2 }} />
+              <Typography variant="h6" sx={{ mb: 2, color: "#EEEEEE" }}>
+                Trusted Reviews
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#EEEEEE" }}>
+                Millions of verified reviews to guide your journey.
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Box sx={{ textAlign: "center" }}>
+              <PaymentIcon sx={{ fontSize: 50, color: "#00ADB5", mb: 2 }} />
+              <Typography variant="h6" sx={{ mb: 2, color: "#EEEEEE" }}>
+                Flexible Plans
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#EEEEEE" }}>
+                Free cancellation and pay-later options.
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
+  );
+};
+
+// Explore Hidden Gems Section
+const ExploreHiddenGems = () => {
+  const gems = [
+    {
+      name: "Simien Mountains",
+      description:
+        "A UNESCO World Heritage site, known for its dramatic landscapes and unique wildlife.",
+      image: "https://images.unsplash.com/photo-1621451537084-482c73073a0f", // Unsplash URL
+    },
+    {
+      name: "Fasil Ghebbi",
+      description:
+        "A fortress-city in Gondar, showcasing stunning Ethiopian architecture.",
+      image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791", // Unsplash URL
+    },
+    {
+      name: "Danakil Depression",
+      description:
+        "One of the hottest places on Earth, with surreal landscapes and active volcanoes.",
+      image: "https://images.unsplash.com/photo-1621451537084-482c73073a0f", // Unsplash URL
+    },
+  ];
+
+  return (
+    <Box sx={{ bgcolor: "rgba(57, 62, 70, 0.8)", py: 6 }}>
+      <Container>
+        <Typography variant="h4" align="center" sx={{ mb: 4, color: "#00ADB5" }}>
+          Explore Amhara’s Hidden Gems
+        </Typography>
+        <Grid container spacing={4}>
+          {gems.map((gem, index) => (
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <Card
+                sx={{
+                  bgcolor: "rgba(0, 173, 181, 0.8)",
+                  color: "#EEEEEE",
+                  borderRadius: "16px",
+                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+                  transition: "transform 0.3s ease-in-out",
+                  "&:hover": { transform: "scale(1.05)" },
+                }}
+              >
+                <CardMedia
+                  component="img"
+                  height="200"
+                  image={gem.image}
+                  alt={gem.name}
+                  sx={{ borderTopLeftRadius: "16px", borderTopRightRadius: "16px" }}
+                />
+                <CardContent>
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    {gem.name}
+                  </Typography>
+                  <Typography variant="body2">{gem.description}</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
         </Grid>
       </Container>
     </Box>
@@ -256,8 +335,11 @@ function Home({ location }) {
             </Typography>
           </Box>
 
-          {/* Split Section */}
-          <SplitSection />
+          {/* Why Book with Visit Amhara Section */}
+          <WhyBookWithUs />
+
+          {/* Explore Hidden Gems Section */}
+          <ExploreHiddenGems />
 
           {/* Filter Buttons */}
           <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 4, px: 2 }}>
