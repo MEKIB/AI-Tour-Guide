@@ -1,73 +1,70 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import MenuIcon from '@mui/icons-material/Menu'; // Import Menu Icon
+import MenuIcon from '@mui/icons-material/Menu';
 
 const Navbar = ({ userRole, userEmail, userName, setUserRole, collapsed, onToggleSidebar }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    setUserRole(null); // Clear the user role
-    navigate('/'); // Redirect to the home page
+    setUserRole(null);
+    localStorage.removeItem('token'); // Remove the token from local storage
+    navigate('/');
   };
 
-  // Determine the dashboard title based on the user role
-  const dashboardTitle = userRole === 'system-admin' 
-    ? 'System Admin Dashboard' 
-    : userRole === 'hotel-admin' 
-    ? 'Hotel Admin Dashboard' 
-    : 'AI-Based Touring Guide System';
+  const dashboardTitle =
+    userRole === 'system-admin'
+      ? 'System Admin Dashboard'
+      : userRole === 'hotel-admin'
+      ? 'Hotel Admin Dashboard'
+      : 'AI-Based Touring Guide System';
 
-  // Handle title click: navigate to homepage only if user is not logged in
   const handleTitleClick = () => {
     if (!userRole) {
-      navigate('/'); // Navigate to homepage only if user is not logged in
+      navigate('/');
     }
   };
 
   return (
     <AppBar
-      position="fixed" // Fix the Navbar at the top
+      position="fixed"
       sx={{
-        zIndex: (theme) => theme.zIndex.drawer + 1, // Ensure Navbar is above Sidebar
-        bgcolor: '#393E46', // Darker background for Navbar
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        bgcolor: '#393E46',
         boxShadow: 3,
       }}
     >
       <Toolbar>
-        {/* Menu Icon (only shown on dashboard pages) */}
         {userRole && (
           <IconButton
             color="inherit"
-            onClick={onToggleSidebar} // Toggle sidebar state
+            onClick={onToggleSidebar}
             sx={{ mr: 2, color: '#F37199' }}
           >
             <MenuIcon />
           </IconButton>
         )}
 
-        {/* Dashboard Title */}
         <Typography
           variant="h6"
           component="div"
-          onClick={handleTitleClick} // Conditionally handle click
-          sx={{ 
-            flexGrow: 1, 
-            fontWeight: 'bold', 
-            fontSize: '1.5rem', 
-            color: '#00ADB5', // Accent color
-            cursor: !userRole ? 'pointer' : 'default', // Change cursor if clickable
+          onClick={handleTitleClick}
+          sx={{
+            flexGrow: 1,
+            fontWeight: 'bold',
+            fontSize: '1.5rem',
+            color: '#00ADB5',
+            cursor: !userRole ? 'pointer' : 'default',
           }}
         >
           {dashboardTitle}
         </Typography>
 
-        {/* User Info and Logout Button */}
         <Box sx={{ display: 'flex', gap: 2 }}>
           {userRole ? (
             <>
               <Typography variant="body1" sx={{ mr: 2, color: '#EEEEEE' }}>
-                Welcome, {userName} {/* Display the user's name */}
+                Welcome, {userName}
               </Typography>
               <Button
                 color="inherit"
@@ -84,7 +81,6 @@ const Navbar = ({ userRole, userEmail, userName, setUserRole, collapsed, onToggl
                 onClick={() => navigate('/login')}
                 sx={{ fontWeight: 'bold', fontSize: '1rem', color: '#EEEEEE' }}
               >
-                
               </Button>
             </>
           )}

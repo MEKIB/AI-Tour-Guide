@@ -1,226 +1,279 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
   TextField,
+  Switch,
   Button,
-  Grid,
-  Checkbox,
   FormControlLabel,
 } from '@mui/material';
 import axios from 'axios';
 
 const HotelRules = () => {
-  const [checkInFrom, setCheckInFrom] = useState('14:00');
-  const [checkInTo, setCheckInTo] = useState('00:00');
-  const [checkOutFrom, setCheckOutFrom] = useState('07:00');
-  const [checkOutTo, setCheckOutTo] = useState('12:00');
-  const [cancellationPolicy, setCancellationPolicy] = useState(
-    'Cancellation and prepayment policies vary according to accommodation type. Please check what conditions may apply to each option when making your selection.'
-  );
-  const [childPolicies, setChildPolicies] = useState([
-    'Children of any age are welcome.',
-    'Children 12 years and above will be charged as adults at this property.',
-    'To see correct prices and occupancy information, please add the number of children in your group and their ages to your search.',
-  ]);
-  const [cotAndExtraBedPolicies, setCotAndExtraBedPolicies] = useState([
-    '0 - 2 years: Extra bed upon request: US$15 per child, per night. Cot upon request: Free',
-    '3 - 12 years: Extra bed upon request: US$15 per child, per night',
-    '13+ years: Extra bed upon request: US$20 per person, per night',
-    'Prices for cots and extra beds are not included in the total price, and will have to be paid for separately during your stay.',
-    'The number of extra beds and cots allowed is dependent on the option you choose. Please check your selected option for more information.',
-    'All cots and extra beds are subject to availability.',
-  ]);
-  const [noAgeRestriction, setNoAgeRestriction] = useState(true);
-  const [petsAllowed, setPetsAllowed] = useState(false);
-  const [acceptedCards, setAcceptedCards] = useState(['Visa', 'MasterCard', 'American Express']);
+  const [hotelRules, setHotelRules] = useState({
+    checkIn: '',
+    checkOut: '',
+    cancellationPolicy: '',
+    childPolicies: [],
+    cotAndExtraBedPolicies: [],
+    noAgeRestriction: false,
+    petsAllowed: false,
+    acceptedCards: [],
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post('http://localhost:2000/api/hotel-rules', { // Use your backend URL
-        checkIn: `From ${checkInFrom} to ${checkInTo}`,
-        checkOut: `From ${checkOutFrom} to ${checkOutTo}`,
-        cancellationPolicy,
-        childPolicies,
-        cotAndExtraBedPolicies,
-        noAgeRestriction,
-        petsAllowed,
-        acceptedCards,
+  const [newChildPolicy, setNewChildPolicy] = useState('');
+  const [newCotPolicy, setNewCotPolicy] = useState('');
+  const [newCard, setNewCard] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    const fetchHotelRules = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No token found in localStorage');
+          return;
+        }
+        const response = await axios.get('http://localhost:2000/api/hotel-rules', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.data.data) {
+          setHotelRules(response.data.data);
+          setIsEditing(true);
+        }
+      } catch (error) {
+        console.error('Error fetching hotel rules:', error.response?.data || error.message);
+      }
+    };
+
+    fetchHotelRules();
+  }, []);
+
+  const handleChange = (field) => (event) => {
+    setHotelRules({ ...hotelRules, [field]: event.target.value });
+  };
+
+  const handleSwitchChange = (field) => (event) => {
+    setHotelRules({ ...hotelRules, [field]: event.target.checked });
+  };
+
+  const addChildPolicy = () => {
+    if (newChildPolicy.trim()) {
+      setHotelRules({
+        ...hotelRules,
+        childPolicies: [...hotelRules.childPolicies, newChildPolicy],
       });
-      alert('Hotel rules saved successfully!');
+      setNewChildPolicy('');
+    }
+  };
+
+  const addCotPolicy = () => {
+    if (newCotPolicy.trim()) {
+      setHotelRules({
+        ...hotelRules,
+        cotAndExtraBedPolicies: [...hotelRules.cotAndExtraBedPolicies, newCotPolicy],
+      });
+      setNewCotPolicy('');
+    }
+  };
+
+  const addAcceptedCard = () => {
+    if (newCard.trim()) {
+      setHotelRules({
+        ...hotelRules,
+        acceptedCards: [...hotelRules.acceptedCards, newCard],
+      });
+      setNewCard('');
+    }
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found in localStorage');
+        return;
+      }
+      const response = await axios.post('http://localhost:2000/api/hotel-rules', hotelRules, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log(response.data.message);
+      setIsEditing(true);
     } catch (error) {
-      console.error('Error saving hotel rules:', error);
-      alert('Failed to save hotel rules.');
+      console.error('Error submitting hotel rules:', error.response?.data || error.message);
     }
   };
 
   return (
     <Box sx={{ padding: 3 }}>
       <Typography variant="h4" sx={{ color: '#00ADB5', fontWeight: 'bold', marginBottom: 3 }}>
-        Hotel Rules
+        Set Hotel Rules
       </Typography>
 
-      <form onSubmit={handleSubmit}>
-        <Grid container spacing={3}>
-          {/* Check-in/Check-out */}
-          <Grid item xs={12}>
-            <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
-              Check-in/Check-out
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Check-in From"
-                  variant="outlined"
-                  value={checkInFrom}
-                  onChange={(e) => setCheckInFrom(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Check-in To"
-                  variant="outlined"
-                  value={checkInTo}
-                  onChange={(e) => setCheckInTo(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Check-out From"
-                  variant="outlined"
-                  value={checkOutFrom}
-                  onChange={(e) => setCheckOutFrom(e.target.value)}
-                  required
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Check-out To"
-                  variant="outlined"
-                  value={checkOutTo}
-                  onChange={(e) => setCheckOutTo(e.target.value)}
-                  required
-                />
-              </Grid>
-            </Grid>
-          </Grid>
+      <Box sx={{ marginBottom: 4 }}>
+        <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
+          Check-in/Check-out
+        </Typography>
+        <TextField
+          label="Check-in Time"
+          value={hotelRules.checkIn}
+          onChange={handleChange('checkIn')}
+          fullWidth
+          multiline
+          rows={4}
+          sx={{ marginBottom: 2 }}
+        />
+        <TextField
+          label="Check-out Time"
+          value={hotelRules.checkOut}
+          onChange={handleChange('checkOut')}
+          fullWidth
+          multiline
+          rows={4}
+        />
+      </Box>
 
-          {/* Cancellation/Prepayment */}
-          <Grid item xs={12}>
-            <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
-              Cancellation/Prepayment
-            </Typography>
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              label="Cancellation/Prepayment Policy"
-              variant="outlined"
-              value={cancellationPolicy}
-              onChange={(e) => setCancellationPolicy(e.target.value)}
-              required
+      <Divider sx={{ backgroundColor: '#393E46', marginBottom: 4 }} />
+
+      <Box sx={{ marginBottom: 4 }}>
+        <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
+          Cancellation/Prepayment
+        </Typography>
+        <TextField
+          label="Cancellation Policy"
+          value={hotelRules.cancellationPolicy}
+          onChange={handleChange('cancellationPolicy')}
+          fullWidth
+          multiline
+          rows={4}
+        />
+      </Box>
+
+      <Divider sx={{ backgroundColor: '#393E46', marginBottom: 4 }} />
+
+      <Box sx={{ marginBottom: 4 }}>
+        <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
+          Children and Beds
+        </Typography>
+        <List>
+          {hotelRules.childPolicies.map((policy, index) => (
+            <ListItem key={index} sx={{ paddingLeft: 0 }}>
+              <ListItemText primary={policy} primaryTypographyProps={{ color: '#EEEEEE' }} />
+            </ListItem>
+          ))}
+        </List>
+        <TextField
+          label="Add Child Policy"
+          value={newChildPolicy}
+          onChange={(e) => setNewChildPolicy(e.target.value)}
+          fullWidth
+          multiline
+          rows={4}
+          sx={{ marginBottom: 2 }}
+        />
+        <Button variant="contained" onClick={addChildPolicy}>
+          Add Policy
+        </Button>
+      </Box>
+
+      <Divider sx={{ backgroundColor: '#393E46', marginBottom: 4 }} />
+
+      <Box sx={{ marginBottom: 4 }}>
+        <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
+          Cot and Extra Bed Policies
+        </Typography>
+        <List>
+          {hotelRules.cotAndExtraBedPolicies.map((policy, index) => (
+            <ListItem key={index} sx={{ paddingLeft: 0 }}>
+              <ListItemText primary={policy} primaryTypographyProps={{ color: '#EEEEEE' }} />
+            </ListItem>
+          ))}
+        </List>
+        <TextField
+          label="Add Cot/Extra Bed Policy"
+          value={newCotPolicy}
+          onChange={(e) => setNewCotPolicy(e.target.value)}
+          fullWidth
+          multiline
+          rows={4}
+          sx={{ marginBottom: 2 }}
+        />
+        <Button variant="contained" onClick={addCotPolicy}>
+          Add Policy
+        </Button>
+      </Box>
+
+      <Divider sx={{ backgroundColor: '#393E46', marginBottom: 4 }} />
+
+      <Box sx={{ marginBottom: 4 }}>
+        <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
+          No Age Restriction
+        </Typography>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={hotelRules.noAgeRestriction}
+              onChange={handleSwitchChange('noAgeRestriction')}
             />
-          </Grid>
+          }
+          label={hotelRules.noAgeRestriction ? 'Yes' : 'No'}
+          sx={{ color: '#EEEEEE' }}
+        />
+      </Box>
 
-          {/* Children and Beds */}
-          <Grid item xs={12}>
-            <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
-              Children and Beds
-            </Typography>
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              label="Child Policies"
-              variant="outlined"
-              value={childPolicies.join('\n')}
-              onChange={(e) => setChildPolicies(e.target.value.split('\n'))}
-              required
+      <Divider sx={{ backgroundColor: '#393E46', marginBottom: 4 }} />
+
+      <Box sx={{ marginBottom: 4 }}>
+        <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
+          Pets Allowed
+        </Typography>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={hotelRules.petsAllowed}
+              onChange={handleSwitchChange('petsAllowed')}
             />
-          </Grid>
+          }
+          label={hotelRules.petsAllowed ? 'Yes' : 'No'}
+          sx={{ color: '#EEEEEE' }}
+        />
+      </Box>
 
-          {/* Cot and Extra Bed Policies */}
-          <Grid item xs={12}>
-            <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
-              Cot and Extra Bed Policies
-            </Typography>
-            <TextField
-              fullWidth
-              multiline
-              rows={6}
-              label="Cot and Extra Bed Policies"
-              variant="outlined"
-              value={cotAndExtraBedPolicies.join('\n')}
-              onChange={(e) => setCotAndExtraBedPolicies(e.target.value.split('\n'))}
-              required
-            />
-          </Grid>
+      <Divider sx={{ backgroundColor: '#393E46', marginBottom: 4 }} />
 
-          {/* No Age Restriction */}
-          <Grid item xs={12}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={noAgeRestriction}
-                  onChange={(e) => setNoAgeRestriction(e.target.checked)}
-                  color="primary"
-                />
-              }
-              label="No Age Restriction"
-            />
-          </Grid>
+      <Box sx={{ marginBottom: 4 }}>
+        <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
+          Cards Accepted at this Hotel
+        </Typography>
+        <List>
+          {hotelRules.acceptedCards.map((card, index) => (
+            <ListItem key={index} sx={{ paddingLeft: 0 }}>
+              <ListItemText primary={card} primaryTypographyProps={{ color: '#EEEEEE' }} />
+            </ListItem>
+          ))}
+        </List>
+        <TextField
+          label="Add Accepted Card"
+          value={newCard}
+          onChange={(e) => setNewCard(e.target.value)}
+          fullWidth
+          multiline
+          rows={4}
+          sx={{ marginBottom: 2 }}
+        />
+        <Button variant="contained" onClick={addAcceptedCard}>
+          Add Card
+        </Button>
+      </Box>
 
-          {/* Pets Allowed */}
-          <Grid item xs={12}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={petsAllowed}
-                  onChange={(e) => setPetsAllowed(e.target.checked)}
-                  color="primary"
-                />
-              }
-              label="Pets Allowed"
-            />
-          </Grid>
-
-          {/* Cards Accepted */}
-          <Grid item xs={12}>
-            <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
-              Cards Accepted at this Hotel
-            </Typography>
-            <TextField
-              fullWidth
-              label="Accepted Cards (comma-separated)"
-              variant="outlined"
-              value={acceptedCards.join(', ')}
-              onChange={(e) => setAcceptedCards(e.target.value.split(',').map((card) => card.trim()))}
-              required
-            />
-          </Grid>
-
-          {/* Submit Button */}
-          <Grid item xs={12}>
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{
-                backgroundColor: '#00ADB5',
-                '&:hover': { backgroundColor: '#008B8B' },
-              }}
-            >
-              Save Hotel Rules
-            </Button>
-          </Grid>
-        </Grid>
-      </form>
+      <Button variant="contained" color="primary" onClick={handleSubmit}>
+        {isEditing ? 'Update Hotel Rules' : 'Save Hotel Rules'}
+      </Button>
     </Box>
   );
 };

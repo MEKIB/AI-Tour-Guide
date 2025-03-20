@@ -46,7 +46,12 @@ const ProfileManagement = ({ hotelId }) => {
 
   const fetchHotelData = async (id) => {
     try {
-      const response = await axios.get(`http://localhost:500/api/hotels/${id}`);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`http://localhost:2000/api/hotels/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const hotel = response.data;
       setHotelData({
         id: hotel._id,
@@ -153,13 +158,14 @@ const ProfileManagement = ({ hotelId }) => {
     });
 
     try {
-      const url = 'http://localhost:500/api/hotels';
-      const method = hotelData.id ? 'put' : 'post'; // Use PUT for update, POST for create
+      const token = localStorage.getItem('token');
+      const url = 'http://localhost:2000/api/hotels';
+      const method = 'post';
       const response = await axios({
         method,
         url,
         data: formData,
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` },
       });
 
       setMessage(response.data.message);
@@ -245,188 +251,187 @@ const ProfileManagement = ({ hotelId }) => {
                   '& fieldset': { borderColor: '#00ADB5' },
                   '&:hover fieldset': { borderColor: '#00ADB5' },
                 },
-              }}
-            />
-          </Grid>
-
-          {/* Facility Type */}
-          <Grid item xs={12} md={6}>
-            <InputLabel id="facility-type-label" sx={{ color: '#222831' }}>
-              Facility Type
-            </InputLabel>
-            <Select
-              fullWidth
-              labelId="facility-type-label"
-              name="facilityType"
-              value={hotelData.facilityType}
-              onChange={handleInputChange}
-              variant="outlined"
-              margin="normal"
-              required
-              sx={{
-                color: '#222831',
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#00ADB5',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#00ADB5',
-                },
-              }}
-            >
-              <MenuItem value="Hotels">Hotels</MenuItem>
-              <MenuItem value="Resorts">Resorts</MenuItem>
-              <MenuItem value="Villas">Villas</MenuItem>
-              <MenuItem value="Guest Houses">Guest Houses</MenuItem>
-            </Select>
-          </Grid>
-
-          {/* Latitude */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Latitude"
-              name="lat"
-              type="number"
-              value={hotelData.lat}
-              onChange={handleInputChange}
-              variant="outlined"
-              margin="normal"
-              required
-              inputProps={{ min: -90, max: 90, step: 0.000001 }} // Restrict input range
-              sx={{
-                '& .MuiInputBase-input': { color: '#222831' },
-                '& .MuiInputLabel-root': { color: '#222831' },
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: '#00ADB5' },
-                  '&:hover fieldset': { borderColor: '#00ADB5' },
-                },
-              }}
-            />
-          </Grid>
-
-          {/* Longitude */}
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Longitude"
-              name="long"
-              type="number"
-              value={hotelData.long}
-              onChange={handleInputChange}
-              variant="outlined"
-              margin="normal"
-              required
-              inputProps={{ min: -180, max: 180, step: 0.000001 }} // Restrict input range
-              sx={{
-                '& .MuiInputBase-input': { color: '#222831' },
-                '& .MuiInputLabel-root': { color: '#222831' },
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: '#00ADB5' },
-                  '&:hover fieldset': { borderColor: '#00ADB5' },
-                },
-              }}
-            />
-          </Grid>
-
-          {/* Description */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Description"
-              name="description"
-              value={hotelData.description}
-              onChange={handleInputChange}
-              variant="outlined"
-              margin="normal"
-              multiline
-              rows={6}
-              required
-              sx={{
-                '& .MuiInputBase-input': { color: '#222831' },
-                '& .MuiInputLabel-root': { color: '#222831' },
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: '#00ADB5' },
-                  '&:hover fieldset': { borderColor: '#00ADB5' },
-                },
-              }}
-            />
-          </Grid>
-
-          {/* Image Upload */}
-          <Grid item xs={12}>
-            <InputLabel sx={{ color: '#222831' }}>Upload Images</InputLabel>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageUpload}
-              style={{ display: 'none' }}
-              id="image-upload"
-            />
-            <label htmlFor="image-upload">
-              <Button
-                variant="contained"
-                component="span"
-                startIcon={<CloudUploadIcon />}
-                sx={{
-                  bgcolor: '#00ADB5',
-                  color: '#FFFFFF',
-                  '&:hover': { bgcolor: '#0097A7' },
-                }}
-              >
-                Upload Images
-              </Button>
-            </label>
-          </Grid>
-
-          {/* Image Preview */}
-          <Grid item xs={12}>
-            <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
-              {hotelData.images.map((image, index) => (
-                <Box key={index} sx={{ position: 'relative' }}>
-                  <Avatar
-                    src={image.url.startsWith('blob:') ? image.url : `http://localhost:2001${image.url}`} // Handle local preview vs backend URL
-                    alt={image.name}
-                    variant="rounded"
-                    sx={{ width: 100, height: 100 }}
-                  />
-                  <IconButton
+              }}/>
+              </Grid>
+    
+              {/* Facility Type */}
+              <Grid item xs={12} md={6}>
+                <InputLabel id="facility-type-label" sx={{ color: '#222831' }}>
+                  Facility Type
+                </InputLabel>
+                <Select
+                  fullWidth
+                  labelId="facility-type-label"
+                  name="facilityType"
+                  value={hotelData.facilityType}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                  margin="normal"
+                  required
+                  sx={{
+                    color: '#222831',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#00ADB5',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#00ADB5',
+                    },
+                  }}
+                >
+                  <MenuItem value="Hotels">Hotels</MenuItem>
+                  <MenuItem value="Resorts">Resorts</MenuItem>
+                  <MenuItem value="Villas">Villas</MenuItem>
+                  <MenuItem value="Guest Houses">Guest Houses</MenuItem>
+                </Select>
+              </Grid>
+    
+              {/* Latitude */}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Latitude"
+                  name="lat"
+                  type="number"
+                  value={hotelData.lat}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                  margin="normal"
+                  required
+                  inputProps={{ min: -90, max: 90, step: 0.000001 }} // Restrict input range
+                  sx={{
+                    '& .MuiInputBase-input': { color: '#222831' },
+                    '& .MuiInputLabel-root': { color: '#222831' },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: '#00ADB5' },
+                      '&:hover fieldset': { borderColor: '#00ADB5' },
+                    },
+                  }}
+                />
+              </Grid>
+    
+              {/* Longitude */}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Longitude"
+                  name="long"
+                  type="number"
+                  value={hotelData.long}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                  margin="normal"
+                  required
+                  inputProps={{ min: -180, max: 180, step: 0.000001 }} // Restrict input range
+                  sx={{
+                    '& .MuiInputBase-input': { color: '#222831' },
+                    '& .MuiInputLabel-root': { color: '#222831' },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: '#00ADB5' },
+                      '&:hover fieldset': { borderColor: '#00ADB5' },
+                    },
+                  }}
+                />
+              </Grid>
+    
+              {/* Description */}
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  name="description"
+                  value={hotelData.description}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                  margin="normal"
+                  multiline
+                  rows={6}
+                  required
+                  sx={{
+                    '& .MuiInputBase-input': { color: '#222831' },
+                    '& .MuiInputLabel-root': { color: '#222831' },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: '#00ADB5' },
+                      '&:hover fieldset': { borderColor: '#00ADB5' },
+                    },
+                  }}
+                />
+              </Grid>
+    
+              {/* Image Upload */}
+              <Grid item xs={12}>
+                <InputLabel sx={{ color: '#222831' }}>Upload Images</InputLabel>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                  id="image-upload"
+                />
+                <label htmlFor="image-upload">
+                  <Button
+                    variant="contained"
+                    component="span"
+                    startIcon={<CloudUploadIcon />}
                     sx={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
+                      bgcolor: '#00ADB5',
                       color: '#FFFFFF',
-                      bgcolor: '#FF0000',
-                      '&:hover': { bgcolor: '#CC0000' },
+                      '&:hover': { bgcolor: '#0097A7' },
                     }}
-                    onClick={() => handleImageDelete(index)}
                   >
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
-              ))}
-            </Stack>
-          </Grid>
-
-          {/* Submit Button */}
-          <Grid item xs={12}>
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{
-                bgcolor: '#00ADB5',
-                color: '#FFFFFF',
-                '&:hover': { bgcolor: '#0097A7' },
-                mt: 2,
-              }}
-            >
-              {hotelId ? 'Update Hotel' : 'Create Hotel'}
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
-    </Box>
-  );
-};
-
-export default ProfileManagement;
+                    Upload Images
+                  </Button>
+                </label>
+              </Grid>
+    
+              {/* Image Preview */}
+              <Grid item xs={12}>
+                <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
+                  {hotelData.images.map((image, index) => (
+                    <Box key={index} sx={{ position: 'relative' }}>
+                      <Avatar
+                        src={image.url.startsWith('blob:') ? image.url : `http://localhost:2000${image.url}`} // Handle local preview vs backend URL
+                        alt={image.name}
+                        variant="rounded"
+                        sx={{ width: 100, height: 100 }}
+                      />
+                      <IconButton
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          right: 0,
+                          color: '#FFFFFF',
+                          bgcolor: '#FF0000',
+                          '&:hover': { bgcolor: '#CC0000' },
+                        }}
+                        onClick={() => handleImageDelete(index)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Stack>
+              </Grid>
+    
+              {/* Submit Button */}
+              <Grid item xs={12}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  sx={{
+                    bgcolor: '#00ADB5',
+                    color: '#FFFFFF',
+                    '&:hover': { bgcolor: '#0097A7' },
+                    mt: 2,
+                  }}
+                >
+                  {hotelId ? 'Update Hotel' : 'Create Hotel'}
+                </Button>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Box>
+      );
+    };
+    
+    export default ProfileManagement;

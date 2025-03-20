@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 // HotelRules Schema
 const hotelRulesSchema = new mongoose.Schema({
+    hotelAdminId: {
+      type: String,
+      required: true,
+     },
     checkIn: String,
     checkOut: String,
     cancellationPolicy: String,

@@ -7,12 +7,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import bcrypt from 'bcrypt';
-import Hotel from './modules/Hotel.js'; // Ensure correct path
-import Amenity from './modules/Facilities.js'; // Ensure correct path
-import HotelRules from './modules/HotelRules.js'; // Ensure correct path
-import HotelAdminList from './modules/HotelAdminList.js'; // Ensure correct path
-import router from './Routes/Routes.js'; // Ensure correct path
+import jwt from 'jsonwebtoken'
+import Hotel from './modules/Hotel.js'; 
+import Amenity from './modules/Facilities.js'; 
+import HotelRules from './modules/HotelRules.js'; 
+import HotelAdminList from './modules/HotelAdminList.js'; 
+import router from './Routes/Routes.js'; 
 import ApprovedHotelAdmin from './modules/ApprovedHotelAdminLists.js';
+import SystemAdminModel from './modules/SystemAdminLists.js';
 dotenv.config();
 
 const app = express();
@@ -48,98 +50,228 @@ const upload = multer({
   },
 });
 
-// Create/Update Hotel
-app.post('/api/hotels', upload.array('images', 10), async (req, res) => {
-  try {
-    const { name, location, facilityType, description, lat, long, id } = req.body;
-    let images = [];
 
-    if (req.files && req.files.length > 0) {
-      images = req.files.map((file) => ({
-        name: file.filename,
-        url: `/uploads/${file.filename}`,
-      }));
-    }
 
-    if (id) {
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: 'Invalid hotel ID' });
-      }
-      await Hotel.findByIdAndUpdate(id, {
-        name,
-        location,
-        facilityType,
-        description,
-        lat,
-        long,
-        images,
-      });
-      res.json({ message: 'Hotel updated successfully' });
-    } else {
-      const newHotel = new Hotel({
-        name,
-        location,
-        facilityType,
-        description,
-        lat,
-        long,
-        images,
-      });
-      await newHotel.save();
-      res.json({ message: 'Hotel created successfully' });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
 
-// Get Hotel by ID
-app.get('/api/hotels/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid hotel ID' });
-    }
-    const hotel = await Hotel.findById(id);
-    if (!hotel) {
-      return res.status(404).json({ message: 'Hotel not found' });
-    }
-    res.json(hotel);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
 
-// Get all amenities
-app.get('/api/amenities', async (req, res) => {
-  try {
-    const amenities = await Amenity.find();
-    res.json(amenities);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+// Middleware to verify token
+const verifyToken = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'No token provided' });
 
-// Add a new amenity
-app.post('/api/amenities', async (req, res) => {
-  const amenity = new Amenity({
-    name: req.body.name,
-    description: req.body.description,
-    icon: req.body.icon,
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(403).json({ message: 'Invalid token' });
+    req.user = decoded;
+    next();
   });
-
+};
+// Create/Update Hotel (protected route)
+router.post('/api/hotels', verifyToken, upload.array('images', 10), async (req, res) => {
   try {
-    const newAmenity = await amenity.save();
-    res.status(201).json(newAmenity);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+      const { name, location, facilityType, description, lat, long, id } = req.body;
+      let images = [];
+
+      if (req.files && req.files.length > 0) {
+          images = req.files.map((file) => ({
+              name: file.filename,
+              url: `/uploads/${file.filename}`,
+          }));
+      }
+
+      // Access email from the decoded token
+      const email = req.user.email;
+
+      // Find the hotelAdminId from ApprovedHotelAdmin model
+      const approvedAdmin = await ApprovedHotelAdmin.findOne({ email: email });
+
+      if (!approvedAdmin) {
+          return res.status(404).json({ message: 'Hotel admin not found' });
+      }
+
+      const hotelAdminId = approvedAdmin.hotelAdminId; // Store only the ID
+
+      if (id) {
+          if (!mongoose.Types.ObjectId.isValid(id)) {
+              return res.status(400).json({ message: 'Invalid hotel ID' });
+          }
+          await Hotel.findByIdAndUpdate(id, {
+              HotelAdminId: hotelAdminId, // Store only the ID
+              name,
+              location,
+              facilityType,
+              description,
+              lat,
+              long,
+              images,
+          });
+          res.json({ message: 'Hotel updated successfully' });
+      } else {
+          const newHotel = new Hotel({
+              HotelAdminId: hotelAdminId, // Store only the ID
+              name,
+              location,
+              facilityType,
+              description,
+              lat,
+              long,
+              images,
+          });
+          await newHotel.save();
+          res.json({ message: 'Hotel created successfully' });
+      }
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Add/Update Hotel Rules
-app.post('/api/hotel-rules', async (req, res) => {
+
+
+
+router.get('/api/hotel/admin', verifyToken, async (req, res) => {
+  console.log('Request received at /api/hotel/admin');
+  try {
+      const email = req.user.email;
+
+      const approvedAdmin = await ApprovedHotelAdmin.findOne({ email: email });
+
+      if (!approvedAdmin) {
+          console.log('Hotel admin not found');
+          return res.status(404).json({ message: 'Hotel admin not found' });
+      }
+
+      const hotelAdminId = approvedAdmin.hotelAdminId;
+      console.log("HotelAdminId from ApprovedAdmin:", hotelAdminId);
+
+      const hotel = await Hotel.findOne({ HotelAdminId: hotelAdminId });
+
+      if (!hotel) {
+          console.log('Hotel not found for hotelAdminId:', hotelAdminId);
+          return res.status(404).json({ message: 'Hotel not found' });
+      }
+
+
+      res.json(hotel);
+  } catch (error) {
+      console.error('Error in /api/hotel/admin:', error);
+      res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// GET: Fetch Amenities for the Hotel Admin
+app.get('/api/amenities', verifyToken, async (req, res) => {
+  try {
+    const email = req.user.email;
+    const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
+    if (!approvedAdmin) {
+      return res.status(404).json({ message: 'Hotel admin not found' });
+    }
+
+    const hotelAdminId = approvedAdmin.hotelAdminId;
+    const amenityDoc = await Amenity.findOne({ hotelAdminId });
+    if (!amenityDoc || !amenityDoc.amenities.length) {
+      return res.status(200).json({ message: 'No amenities found', data: [] });
+    }
+
+    res.json({ message: 'Amenities fetched successfully', data: amenityDoc.amenities });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// POST: Add or Update Amenities
+app.post('/api/amenities', verifyToken, async (req, res) => {
+  try {
+    const { amenities } = req.body; // Expect an array of amenities
+
+    if (!Array.isArray(amenities)) {
+      return res.status(400).json({ message: 'Request body must contain an "amenities" array' });
+    }
+
+    // Validate each amenity object
+    for (const amenity of amenities) {
+      if (!amenity.name || !amenity.description || !amenity.icon) {
+        return res.status(400).json({
+          message: 'Each amenity must have name, description, and icon fields',
+        });
+      }
+    }
+
+    const email = req.user.email;
+    const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
+    if (!approvedAdmin) {
+      return res.status(404).json({ message: 'Hotel admin not found' });
+    }
+
+    const hotelAdminId = approvedAdmin.hotelAdminId;
+    const existingAmenityDoc = await Amenity.findOne({ hotelAdminId });
+
+    if (existingAmenityDoc) {
+      // Update existing amenities
+      const updatedAmenityDoc = await Amenity.findOneAndUpdate(
+        { hotelAdminId },
+        { amenities },
+        { new: true }
+      );
+      res.json({ message: 'Amenities updated successfully', data: updatedAmenityDoc.amenities });
+    } else {
+      // Create new amenities document
+      const newAmenityDoc = new Amenity({
+        hotelAdminId,
+        amenities,
+      });
+      await newAmenityDoc.save();
+      res.json({ message: 'Amenities created successfully', data: newAmenityDoc.amenities });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// POST: Add or Update Hotel Rules (Protected Route with Token Verification)
+app.post('/api/hotel-rules', verifyToken, async (req, res) => {
   try {
     const {
       checkIn,
@@ -152,10 +284,25 @@ app.post('/api/hotel-rules', async (req, res) => {
       acceptedCards,
     } = req.body;
 
-    const existingRules = await HotelRules.findOne({});
+    // Extract email from the decoded token
+    const email = req.user.email;
+
+    // Find the hotelAdminId from ApprovedHotelAdmin model
+    const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
+    if (!approvedAdmin) {
+      return res.status(404).json({ message: 'Hotel admin not found' });
+    }
+
+    const hotelAdminId = approvedAdmin.hotelAdminId;
+    console.log(`The approved hotel admin ID: ${hotelAdminId}`);
+
+    // Check if rules already exist for this hotelAdminId
+    const existingRules = await HotelRules.findOne({ hotelAdminId });
+
     if (existingRules) {
+      // Update existing rules
       await HotelRules.findOneAndUpdate(
-        {},
+        { hotelAdminId },
         {
           checkIn,
           checkOut,
@@ -165,11 +312,14 @@ app.post('/api/hotel-rules', async (req, res) => {
           noAgeRestriction,
           petsAllowed,
           acceptedCards,
-        }
+        },
+        { new: true } // Return the updated document
       );
       res.json({ message: 'Hotel rules updated successfully' });
     } else {
+      // Create new rules
       const newHotelRules = new HotelRules({
+        hotelAdminId,
         checkIn,
         checkOut,
         cancellationPolicy,
@@ -181,10 +331,38 @@ app.post('/api/hotel-rules', async (req, res) => {
       });
       await newHotelRules.save();
       res.json({ message: 'Hotel rules created successfully' });
+      console.log('Hotel rules created successfully');
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// GET: Fetch Hotel Rules (Protected Route with Token Verification)
+app.get('/api/hotel-rules', verifyToken, async (req, res) => {
+  try {
+    // Extract email from the decoded token
+    const email = req.user.email;
+
+    // Find the hotelAdminId from ApprovedHotelAdmin model
+    const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
+    if (!approvedAdmin) {
+      return res.status(404).json({ message: 'Hotel admin not found' });
+    }
+
+    const hotelAdminId = approvedAdmin.hotelAdminId;
+
+    // Fetch existing rules
+    const rules = await HotelRules.findOne({ hotelAdminId });
+    if (!rules) {
+      return res.status(200).json({ message: 'No rules found', data: null });
+    }
+
+    res.json({ message: 'Hotel rules fetched successfully', data: rules });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
@@ -317,6 +495,14 @@ app.post(
   }
 );
 
+
+
+
+
+
+
+
+
 // Get All Hotel Admins (only pending ones)
 app.get('/api/hotel-admins', async (req, res) => {
   try {
@@ -360,7 +546,6 @@ app.get('/api/hotel-admins/:id', async (req, res) => {
 
 
 
-
 // Approve Hotel Admin and Assign HotelAdminId
 app.post('/api/hotel-admins/approve/:id', async (req, res) => {
   try {
@@ -381,7 +566,7 @@ app.post('/api/hotel-admins/approve/:id', async (req, res) => {
     if (locationLower.includes('bahir dar')) {
       rangeStart = 100;
       rangeEnd = 200;
-    } else if (locationLower.includes('Gonder')) {
+    } else if (locationLower.includes('gonder')) {
       rangeStart = 300;
       rangeEnd = 400;
     } else if (locationLower.includes('lalibela')) {
@@ -391,20 +576,25 @@ app.post('/api/hotel-admins/approve/:id', async (req, res) => {
       return res.status(400).json({ message: 'Location not supported for hotel admin ID assignment' });
     }
 
-    // Find the highest existing hotelAdminId in the range
-    const existingAdmins = await ApprovedHotelAdmin.find({
+    // Find the highest existing hotelAdminId in the range (check both collections)
+    const existingApprovedAdmins = await ApprovedHotelAdmin.find({
       hotelAdminId: { $gte: rangeStart, $lte: rangeEnd },
     }).sort({ hotelAdminId: -1 }).limit(1);
 
-    hotelAdminId = existingAdmins.length > 0 ? existingAdmins[0].hotelAdminId + 1 : rangeStart;
+    const existingPendingAdmins = await HotelAdminList.find({
+      hotelAdminId: { $gte: rangeStart, $lte: rangeEnd },
+    }).sort({ hotelAdminId: -1 }).limit(1);
+
+    const highestId = Math.max(
+      existingApprovedAdmins.length > 0 ? existingApprovedAdmins[0].hotelAdminId : rangeStart - 1,
+      existingPendingAdmins.length > 0 ? existingPendingAdmins[0].hotelAdminId : rangeStart - 1
+    );
+
+    hotelAdminId = highestId + 1;
+
     if (hotelAdminId > rangeEnd) {
       return res.status(400).json({ message: `No available hotel admin IDs in range ${rangeStart}-${rangeEnd}` });
     }
-
-    // Update approval status and assign hotelAdminId
-    hotelAdmin.isApproved = true;
-    hotelAdmin.hotelAdminId = hotelAdminId;
-    await hotelAdmin.save();
 
     // Save to ApprovedHotelAdmin collection
     const approvedHotelAdmin = new ApprovedHotelAdmin({
@@ -413,6 +603,7 @@ app.post('/api/hotel-admins/approve/:id', async (req, res) => {
       lastName: hotelAdmin.lastName,
       location: hotelAdmin.location,
       email: hotelAdmin.email,
+      password:hotelAdmin.password,
       phoneNumber: hotelAdmin.phoneNumber,
       passportId: hotelAdmin.passportId,
       tradeLicense: hotelAdmin.tradeLicense,
@@ -422,12 +613,16 @@ app.post('/api/hotel-admins/approve/:id', async (req, res) => {
     });
     await approvedHotelAdmin.save();
 
+    // Optionally remove from HotelAdminList
+    await HotelAdminList.findByIdAndDelete(id);
+
     res.json({ message: `Hotel admin ${hotelAdmin.email} approved successfully with ID ${hotelAdminId}` });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
 
 // Get All Approved Hotel Admins
 app.get('/api/approved-hotel-admins', async (req, res) => {
@@ -440,6 +635,137 @@ app.get('/api/approved-hotel-admins', async (req, res) => {
   }
 });
 
+// Remove Approved Hotel Admin by ID
+app.delete('/api/approved-hotel-admins/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid hotel admin ID' });
+    }
+    const result = await ApprovedHotelAdmin.findByIdAndDelete(id);
+    if (!result) {
+      return res.status(404).json({ message: 'Hotel admin not found' });
+    }
+    res.json({ message: 'Hotel admin removed successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+
+
+
+
+
+
+// Login Route (with JWT Authorization)
+app.post('/api/login', async (req, res) => {
+  try {
+      const { email, password } = req.body;
+
+      const userAdmin = await ApprovedHotelAdmin.findOne({ email });
+
+      console.log('User:', userAdmin);
+      if (!userAdmin) {
+          return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      console.log('User Password:', userAdmin.password);
+      console.log('Password from Request:', password);
+
+      const isPasswordValid = await bcrypt.compare(password, userAdmin.password);
+
+      if (!isPasswordValid) {
+          return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      const token = jwt.sign(
+          { userId: userAdmin._id, email: userAdmin.email, role: 'hotel-admin' },
+          process.env.JWT_SECRET,
+          { expiresIn: '1h' }
+      );
+
+      const { password: hashedPassword, ...userData } = userAdmin.toObject();
+
+      res.json({
+          message: 'Login successful',
+          user: userData,
+          token: token,
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// System Admin Signup Route
+app.post('/api/system-admin/signup', async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ message: 'All required fields must be provided' });
+    }
+
+    // Check if email already exists
+    const existingUser = await SystemAdminModel.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already in use' });
+    }
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create new system admin
+    const newSystemAdmin = new SystemAdminModel({
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+    });
+
+    await newSystemAdmin.save();
+    res.status(201).json({ message: 'System admin account created successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+
+
+// System Admin Login Route
+app.post('/api/system-admin/login', async (req, res) => {
+  try {
+      const { email, password } = req.body;
+
+      const systemAdmin = await SystemAdminModel.findOne({ email });
+
+      console.log('System Admin:', systemAdmin);
+      if (!systemAdmin) {
+          return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      console.log('System Admin Password:', systemAdmin.password);
+      console.log('Password from Request:', password);
+
+      const isPasswordValid = await bcrypt.compare(password, systemAdmin.password);
+
+      if (!isPasswordValid) {
+          return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      const { password: hashedPassword, ...userData } = systemAdmin.toObject();
+
+      res.json({ message: 'Login successful', user: userData });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
 
 
@@ -453,10 +779,34 @@ app.get('/api/approved-hotel-admins', async (req, res) => {
 
 
 
+// System Admin Login Route
+app.post('/api/system-admin/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
+    // Find the system admin by email
+    const systemAdmin = await SystemAdminModel.findOne({ email });
 
+    if (!systemAdmin) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
 
+    // Compare passwords
+    const isPasswordValid = await bcrypt.compare(password, systemAdmin.password);
 
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // Send back user data (excluding password)
+    const { password: hashedPassword, ...userData } = systemAdmin.toObject();
+
+    res.json({ message: 'Login successful', user: userData });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
 
 

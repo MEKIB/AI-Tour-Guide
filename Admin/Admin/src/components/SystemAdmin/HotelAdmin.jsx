@@ -18,7 +18,11 @@ import {
   DialogActions,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import image from "../../assets/13.jpg";
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:2000/api',
+});
 
 const HotelAdmin = () => {
   const [hotelAdmins, setHotelAdmins] = useState([]);
@@ -26,64 +30,57 @@ const HotelAdmin = () => {
   const [openImageModal, setOpenImageModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [adminToRemove, setAdminToRemove] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1); // Track the current page
-  const adminsPerPage = 10; // Number of admins to display per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const adminsPerPage = 10;
 
-  // Mock data for hotel admins
   useEffect(() => {
-    const mockHotelAdmins = [
-      // Add more than 10 admins to test pagination
-      ...Array.from({ length: 15 }, (_, i) => ({
-        id: i + 1,
-        name: `Hotel Admin ${i + 1}`,
-        passportImage: image,
-        location: 'Addis Ababa, Ethiopia',
-        phoneNumber: '+251 912 345 678',
-        email: `hoteladmin${i + 1}@example.com`,
-        hotelName: `Hotel ${i + 1}`,
-        tradeLicenseImage: image,
-      })),
-    ];
-    setHotelAdmins(mockHotelAdmins);
+    fetchHotelAdmins();
   }, []);
 
-  // Handle image click
+  const fetchHotelAdmins = async () => {
+    try {
+      const response = await api.get('/approved-hotel-admins');
+      setHotelAdmins(response.data);
+    } catch (error) {
+      console.error('Error fetching hotel admins:', error);
+    }
+  };
+
   const handleImageClick = (imageUrl) => {
     setSelectedImage(imageUrl);
     setOpenImageModal(true);
   };
 
-  // Close the image modal
   const handleCloseImageModal = () => {
     setOpenImageModal(false);
     setSelectedImage(null);
   };
 
-  // Handle remove admin button click
   const handleRemoveAdminClick = (adminId) => {
     setAdminToRemove(adminId);
     setOpenConfirmModal(true);
   };
 
-  // Confirm removal of admin
-  const confirmRemoveAdmin = () => {
-    setHotelAdmins((prevAdmins) => prevAdmins.filter((admin) => admin.id !== adminToRemove));
-    setOpenConfirmModal(false);
-    setAdminToRemove(null);
+  const confirmRemoveAdmin = async () => {
+    try {
+      await api.delete(`/approved-hotel-admins/${adminToRemove}`);
+      fetchHotelAdmins();
+      setOpenConfirmModal(false);
+      setAdminToRemove(null);
+    } catch (error) {
+      console.error('Error removing hotel admin:', error);
+    }
   };
 
-  // Close the confirmation modal
   const handleCloseConfirmModal = () => {
     setOpenConfirmModal(false);
     setAdminToRemove(null);
   };
 
-  // Pagination logic
   const indexOfLastAdmin = currentPage * adminsPerPage;
   const indexOfFirstAdmin = indexOfLastAdmin - adminsPerPage;
   const currentAdmins = hotelAdmins.slice(indexOfFirstAdmin, indexOfLastAdmin);
 
-  // Change page
   const nextPage = () => {
     if (currentPage < Math.ceil(hotelAdmins.length / adminsPerPage)) {
       setCurrentPage(currentPage + 1);
@@ -115,7 +112,7 @@ const HotelAdmin = () => {
           textAlign: 'center',
         }}
       >
-        Hotel Admin Details
+        Approved Hotel Admin Details
       </Typography>
       <TableContainer
         component={Paper}
@@ -130,45 +127,56 @@ const HotelAdmin = () => {
           <TableHead>
             <TableRow>
               <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>ID</TableCell>
-              <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Name</TableCell>
+              <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>First Name</TableCell>
+              <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Middle Name</TableCell>
+              <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Last Name</TableCell>
               <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Passport/ID</TableCell>
               <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Location</TableCell>
               <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Phone Number</TableCell>
               <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Email</TableCell>
-              <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Hotel Name</TableCell>
               <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Trade License</TableCell>
+              <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Manager ID</TableCell>
               <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {currentAdmins.map((admin) => (
-              <TableRow key={admin.id}>
-                <TableCell sx={{ color: '#EEEEEE' }}>{admin.id}</TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>{admin.name}</TableCell>
+            {hotelAdmins.map((admin) => (
+              <TableRow key={admin._id}>
+                <TableCell sx={{ color: '#EEEEEE' }}>{admin.hotelAdminId}</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>{admin.firstName}</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>{admin.middleName}</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>{admin.lastName}</TableCell>
                 <TableCell>
                   <Avatar
-                    src={admin.passportImage}
+                    src={admin.passportId.url}
                     alt="Passport/ID"
                     sx={{ width: 60, height: 60, cursor: 'pointer' }}
-                    onClick={() => handleImageClick(admin.passportImage)}
+                    onClick={() => handleImageClick(admin.passportId.url)}
                   />
                 </TableCell>
                 <TableCell sx={{ color: '#EEEEEE' }}>{admin.location}</TableCell>
                 <TableCell sx={{ color: '#EEEEEE' }}>{admin.phoneNumber}</TableCell>
                 <TableCell sx={{ color: '#EEEEEE' }}>{admin.email}</TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>{admin.hotelName}</TableCell>
                 <TableCell>
                   <Avatar
-                    src={admin.tradeLicenseImage}
+                    src={admin.tradeLicense.url}
                     alt="Trade License"
                     sx={{ width: 60, height: 60, cursor: 'pointer' }}
-                    onClick={() => handleImageClick(admin.tradeLicenseImage)}
+                    onClick={() => handleImageClick(admin.tradeLicense.url)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Avatar
+                    src={admin.managerId.url}
+                    alt="Manager ID"
+                    sx={{ width: 60, height: 60, cursor: 'pointer' }}
+                    onClick={() => handleImageClick(admin.managerId.url)}
                   />
                 </TableCell>
                 <TableCell>
                   <Button
                     variant="contained"
-                    onClick={() => handleRemoveAdminClick(admin.id)}
+                    onClick={() => handleRemoveAdminClick(admin._id)}
                     sx={{
                       backgroundColor: '#FF5252',
                       color: '#EEEEEE',
@@ -186,7 +194,6 @@ const HotelAdmin = () => {
         </Table>
       </TableContainer>
 
-      {/* Pagination Controls */}
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
         <Button
           variant="contained"
@@ -219,7 +226,6 @@ const HotelAdmin = () => {
         </Button>
       </Box>
 
-      {/* Modal for displaying the enlarged image */}
       <Dialog open={openImageModal} onClose={handleCloseImageModal} maxWidth="sm" fullWidth>
         <DialogContent
           sx={{
@@ -271,11 +277,10 @@ const HotelAdmin = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirmation modal for removing admin */}
       <Dialog open={openConfirmModal} onClose={handleCloseConfirmModal}>
-        <DialogTitle>Are you sure?</DialogTitle>
+        <DialogTitle>Remove Hotel Admin?</DialogTitle>
         <DialogContent>
-          <Typography>This action will remove the admin permanently.</Typography>
+          <Typography>Are you sure you want to remove this hotel admin?</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseConfirmModal} color="primary">
