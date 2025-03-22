@@ -18,7 +18,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import InputBase from "@mui/material/InputBase";
 import ReactCountryFlag from "react-country-flag";
 
-// Define the color palette
 const colors = {
   primary: "#222831",
   secondary: "#393E46",
@@ -26,7 +25,6 @@ const colors = {
   background: "#EEEEEE",
 };
 
-// Styled components
 const StyledLanguageButton = styled(IconButton)(({ theme }) => ({
   padding: theme.spacing(0.5, 1),
   borderRadius: theme.shape.borderRadius,
@@ -108,7 +106,6 @@ export default function ButtonAppBar() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
-  // Handle dropdown open
   const handleOpenTourist = (event) => {
     setAnchorElTourist(event.currentTarget);
   };
@@ -194,7 +191,6 @@ export default function ButtonAppBar() {
             </Link>
           </Typography>
           <Box sx={{ display: "flex", gap: 4, alignItems: "center" }}>
-            {/* Search Icon and Search Box */}
             {searchBoxOpen ? (
               <SearchBox onBlur={handleSearchBoxClose}>
                 <form onSubmit={handleSearchSubmit}>
@@ -215,8 +211,6 @@ export default function ButtonAppBar() {
                 <SearchIcon />
               </IconButton>
             )}
-
-            {/* Destinations Menu */}
             <Box
               onMouseEnter={handleOpenDestination}
               onMouseLeave={handleCloseDestination}
@@ -258,7 +252,7 @@ export default function ButtonAppBar() {
                 </MenuItem>
                 <MenuItem onClick={handleCloseDestination}>
                   <Link
-                    to="/nationalparks"
+                    to="/national-parks" // Changed from "/nationalparks" to match route
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     National Parks and Community Protected Area
@@ -290,8 +284,6 @@ export default function ButtonAppBar() {
                 </MenuItem>
               </StyledMenu>
             </Box>
-
-            {/* Tourist Facilities Menu */}
             <Box
               onMouseEnter={handleOpenTourist}
               onMouseLeave={handleCloseTourist}
@@ -339,16 +331,12 @@ export default function ButtonAppBar() {
                 </MenuItem>
               </StyledMenu>
             </Box>
-
-            {/* Events Link */}
             <Link
               to="/events"
               style={{ textDecoration: "none", color: colors.background }}
             >
               Events
             </Link>
-
-            {/* Language Modal */}
             <StyledLanguageButton
               id="language-button"
               onClick={handleOpenLanguageModal}
@@ -414,8 +402,6 @@ export default function ButtonAppBar() {
                 </LanguageButtonContainer>
               </LanguageModalContent>
             </LanguageModal>
-
-            {/* Account Button - Redirects to Login Page */}
             <StyledAccountButton
               id="account-button"
               onClick={handleAccountClick}
@@ -423,12 +409,7 @@ export default function ButtonAppBar() {
             >
               <AccountCircle />
             </StyledAccountButton>
-
-            {/* About Menu */}
-            <Box
-              onMouseEnter={handleOpenAbout}
-              onMouseLeave={handleCloseAbout}
-            >
+            <Box onMouseEnter={handleOpenAbout} onMouseLeave={handleCloseAbout}>
               <Button
                 id="about-button"
                 aria-haspopup="true"
@@ -485,9 +466,7 @@ export default function ButtonAppBar() {
           </Box>
         </Toolbar>
       </AppBar>
-
-      {/* Add padding to prevent content overlap */}
-      <Box sx={{ paddingTop: "64px" }}>{/* Page content goes here */}</Box>
+      <Box sx={{ paddingTop: "64px" }}></Box>
     </Box>
   );
 }

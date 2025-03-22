@@ -27,7 +27,13 @@ import LakesAndWaterfallHome from "./components/Destinations/Lakes,waterfall/Lak
 import NationalParksHome from "./components/Destinations/National Parks and Community Protected Area/NationalParksHome";
 import HotelsLodges from "./components/Tourist Facilities/Hotels and Lodges/HotelsLodges";
 import HOMEPage from "./components/Home page/HOMEPage";
-
+import AbuneYosephPage from "./components/Destinations/National Parks and Community Protected Area/AbuneYosephPage";
+import SemienMountainsPage from "./components/Destinations/National Parks and Community Protected Area/SemienMountainsPage";
+import GunaMountainPage from "./components/Destinations/National Parks and Community Protected Area/GunaMountainPage";
+import ChokeMountainPage from "./components/Destinations/National Parks and Community Protected Area/ChokeMountainPage";
+import BorenaSayintPage from "./components/Destinations/National Parks and Community Protected Area/BorenaSayintPage";
+import MenzGuassaPage from "./components/Destinations/National Parks and Community Protected Area/MenzGuassaPage";
+import AlitashPage from "./components/Destinations/National Parks and Community Protected Area/AlitashPage";
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
@@ -65,7 +71,7 @@ function App() {
   return (
     <Box
       sx={{
-        marginLeft: '-8px', // Remove default margin
+        marginLeft: "-8px", // Remove default margin
         // marginBottom:'20px',
         padding: 2, // Remove default padding
         width: "100%", // Ensure full width
@@ -81,7 +87,32 @@ function App() {
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
         <Route path="/religioussites" element={<ReligiousHome />} />
-        <Route path="/nationalparks" element={<NationalParksHome />} />
+        <Route path="/national-parks" element={<NationalParksHome />} />
+        <Route
+          path="/national-parks/abune-yoseph"
+          element={<AbuneYosephPage />}
+        />
+        <Route
+          path="/national-parks/semien-mountains"
+          element={<SemienMountainsPage />}
+        />
+        <Route
+          path="/national-parks/guna-mountain"
+          element={<GunaMountainPage />}
+        />
+        <Route
+          path="/national-parks/choke-mountain"
+          element={<ChokeMountainPage />}
+        />
+        <Route
+          path="/national-parks/borena-sayint"
+          element={<BorenaSayintPage />}
+        />
+        <Route
+          path="/national-parks/menz-guassa"
+          element={<MenzGuassaPage />}
+        />
+        <Route path="/national-parks/alitash" element={<AlitashPage />} />
         <Route path="/lakeAndWaterfall" element={<LakesAndWaterfallHome />} />
         <Route path="/historicalLandmarks" element={<HistoricalHome />} />
         <Route path="/" element={<HOMEPage location={userLocation} />} />
