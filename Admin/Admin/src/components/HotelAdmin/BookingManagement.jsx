@@ -238,6 +238,20 @@ const BookingManagement = () => {
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             sx={{ backgroundColor: '#393E46', color: '#EEEEEE', width: '150px' }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  backgroundColor: '#2D2D2D', // Dropdown modal background color
+                  color: '#EEEEEE', // Dropdown text color
+                  '& .MuiMenuItem-root': {
+                    color: '#EEEEEE', // Menu item text color
+                    '&:hover': {
+                      backgroundColor: '#393E46', // Hover background color
+                    },
+                  },
+                },
+              },
+            }}
           >
             <MenuItem value="date">By Date</MenuItem>
             <MenuItem value="today">Today</MenuItem>
@@ -247,38 +261,43 @@ const BookingManagement = () => {
           </Select>
 
           {filterType === 'date' && (
-  <DatePicker
-    label="Select Date"
-    value={selectedDate}
-    onChange={(newValue) => setSelectedDate(newValue)}
-    renderInput={(params) => (
-      <TextField
-        {...params}
-        sx={{
-          backgroundColor: '#FF0000', // Light background for visibility
-          borderRadius: 1,
-          '& .MuiInputBase-input': {
-            color: '#FF0000', // Red text for contrast
-          },
-          '& .MuiInputLabel-root': {
-            color: '#FF0000', // Red label for contrast
-          },
-          '& .MuiOutlinedInput-root': {
-            '& fieldset': {
-              borderColor: '#FF0000', // Red border for visibility
-            },
-            '&:hover fieldset': {
-              borderColor: '#FF0000', // Red border on hover
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#FF0000', // Red border when focused
-            },
-          },
-        }}
-      />
-    )}
-  />
-)}
+            <DatePicker
+              label="Select Date"
+              value={selectedDate}
+              onChange={(newValue) => setSelectedDate(newValue)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  sx={{
+                    backgroundColor: '#00ADB5 !important', // Background color of the input field
+                    borderRadius: 1,
+                    '& .MuiInputBase-input': {
+                      color: '#EEEEEE !important', // Text color for the date input
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: '#EEEEEE !important', // Label color
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#00ADB5 !important', // Border color
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#00ADB5 !important', // Hover border color
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#00ADB5 !important', // Focus border color
+                      },
+                    },
+                    '& .MuiSvgIcon-root': {
+                      color: '#EEEEEE !important', // Calendar icon color
+                    },
+                  }}
+                />
+              )}
+            />
+          )}
+
           {/* Status Filter Buttons */}
           <Button
             variant={statusFilter === 'all' ? 'contained' : 'outlined'}
@@ -368,13 +387,13 @@ const BookingManagement = () => {
               onChange={(event, page) => setCurrentPage(page)}
               sx={{
                 '& .MuiPaginationItem-root': {
-                  color: '#EEEEEE', // Default text color for all pagination items
+                  color: '#EEEEEE !important', // Default text color for all pagination items
                 },
                 '& .Mui-selected': {
-                  backgroundColor: '#00ADB5', // Background color for the active page
-                  color: '#EEEEEE', // Text color for the active page
+                  backgroundColor: '#00ADB5 !important', // Background color for the active page
+                  color: '#EEEEEE !important', // Text color for the active page
                   '&:hover': {
-                    backgroundColor: '#00ADB5', // Hover background color for the active page
+                    backgroundColor: '#00ADB5 !important', // Hover background color for the active page
                   },
                 },
               }}

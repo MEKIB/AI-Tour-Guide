@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Box } from "@mui/material"; // Import Box component
-import ButtonAppBar from "./components/Navbar/Navbar";
+import ButtonAppBar from "./components/Navbar/Navbar"; // Your navbar component
 import Home from "./components/Home page/Home";
 import News from "./components/News/News";
 import EventsBoth from "./components/Events/EventsBoth";
@@ -14,7 +14,7 @@ import FilteredHotels from "./components/Tourist Facilities/Hotels and Lodges/Fi
 import HotelDetails from "./components/Tourist Facilities/Hotels and Lodges/HotelDetails";
 import Footer from "./components/Footer/Footer";
 import SignupPage from "./components/account/Signup";
-import LoginPage from "./components/account/Login";
+import LoginPage from "./components/account/Login"; // Your Login component
 import ForgotPasswordPage from "./components/account/ForgotPassword";
 import ResetPasswordPage from "./components/account/ResetPassword";
 import ChatbotLogic from "./components/Chatbot/ChatbotLogic";
@@ -28,9 +28,12 @@ import NationalParksHome from "./components/Destinations/National Parks and Comm
 import HotelsLodges from "./components/Tourist Facilities/Hotels and Lodges/HotelsLodges";
 import HOMEPage from "./components/Home page/HOMEPage";
 
+import Bookings from "./components/profile/Bookings";
+
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Manage login state
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -62,11 +65,20 @@ function App() {
     setUserLocation(event.target.value);
   };
 
+  // Handle login
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+  };
+
   return (
     <Box
       sx={{
-        marginLeft: '-8px', // Remove default margin
-        // marginBottom:'20px',
+        marginLeft: "-8px", // Remove default margin
         padding: 2, // Remove default padding
         width: "100%", // Ensure full width
         minHeight: "100vh", // Ensure full height
@@ -75,7 +87,7 @@ function App() {
       }}
     >
       {/* Navbar */}
-      <ButtonAppBar />
+      <ButtonAppBar isLoggedIn={isLoggedIn} onLogout={handleLogout} />
 
       {/* Routes */}
       <Routes>
@@ -94,13 +106,17 @@ function App() {
         <Route path="/hoteldetails" element={<HotelDetails />} />
         <Route path="/hotel/:id" element={<HotelsLodges />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/login"
+          element={<LoginPage onLogin={handleLogin} />} // Pass handleLogin to LoginPage
+        />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/amhara" element={<AmharaBoth />} />
         <Route path="/bureau" element={<Bureau />} />
         <Route path="/mandate" element={<Merge />} />
         <Route path="/managment" element={<Managment />} />
+        <Route path="/bookings" element={<Bookings />} /> {/* Add Bookings route */}
       </Routes>
 
       {/* Chatbot */}
