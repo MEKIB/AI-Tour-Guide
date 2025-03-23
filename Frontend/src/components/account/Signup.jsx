@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link,useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Container,
   Box,
@@ -8,47 +8,81 @@ import {
   TextField,
   InputAdornment,
   IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Button,
   Grid,
   LinearProgress,
-  FormHelperText
-} from '@mui/material';
-import { Visibility, VisibilityOff, LocationOn } from '@mui/icons-material';
-import axios from 'axios'
+  FormControlLabel,
+  Checkbox,
+  FormHelperText,
+  Snackbar,
+  CssBaseline, // Add this import
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { Email, Lock, Person, Phone, Description } from "@mui/icons-material"; // Import icons
+
+// Define the color palette for dark theme
+const colors = {
+  primary: "#00ADB5", // Teal
+  secondary: "#393E46", // Medium gray
+  background: "#222831", // Dark gray
+  text: "#EEEEEE", // Light gray
+};
+
+// Custom dark theme for consistent styling
+const theme = createTheme({
+  palette: {
+    mode: "dark", // Enable dark mode
+    primary: {
+      main: colors.primary,
+    },
+    secondary: {
+      main: colors.secondary,
+    },
+    background: {
+      default: colors.background,
+      paper: colors.secondary,
+    },
+    text: {
+      primary: colors.text,
+    },
+  },
+  typography: {
+    fontFamily: "Roboto, sans-serif",
+    h4: {
+      fontWeight: 600,
+      color: colors.text,
+    },
+  },
+});
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
-    username: '',
-    firstName: '',
-    lastName: '',
-    location: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    passportOrId: null,
     showPassword: false,
-    showConfirmPassword: false
+    showConfirmPassword: false,
+    acceptedTerms: false,
   });
-  const [alert, setAlert] = useState(null);
-  const navigate=useNavigate()
 
+  const [alert, setAlert] = useState(null);
   const [validation, setValidation] = useState({
     minLength: false,
     hasNumber: false,
     hasSpecialChar: false,
     hasUpperCase: false,
     hasLowerCase: false,
-    passwordsMatch: false
+    passwordsMatch: false,
   });
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
-
-  const locations = ['New York', 'London', 'Tokyo', 'Paris', 'Dubai', 'Sydney', 'Other'];
 
   const validatePassword = (password, confirmPassword) => {
     const newValidation = {
@@ -57,310 +91,396 @@ const SignupPage = () => {
       hasSpecialChar: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
       hasUpperCase: /[A-Z]/.test(password),
       hasLowerCase: /[a-z]/.test(password),
-      passwordsMatch: password === confirmPassword && password !== ''
+      passwordsMatch: password === confirmPassword && password !== "",
     };
     setValidation(newValidation);
     return newValidation;
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+    const { name, value, files } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: files ? files[0] : value,
     }));
 
-    if (name === 'password' || name === 'confirmPassword') {
+    if (name === "password" || name === "confirmPassword") {
       validatePassword(
-        name === 'password' ? value : formData.password,
-        name === 'confirmPassword' ? value : formData.confirmPassword
+        name === "password" ? value : formData.password,
+        name === "confirmPassword" ? value : formData.confirmPassword
       );
     }
 
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const handleBlur = (e) => {
     const { name } = e.target;
-    setTouched(prev => ({ ...prev, [name]: true }));
+    setTouched((prev) => ({ ...prev, [name]: true }));
   };
 
   const getStrengthColor = () => {
     const strength = Object.values(validation).filter(Boolean).length;
-    if (strength < 2) return 'error';
-    if (strength < 4) return 'warning';
-    return 'success';
+    if (strength < 2) return "error";
+    if (strength < 4) return "warning";
+    return "success";
   };
 
-
-
-
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
     const phoneRegex = /^\+?[0-9]{7,15}$/;
-  
-    if (!formData.username.trim()) newErrors.username = 'Username is required';
-    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!formData.location) newErrors.location = 'Location is required';
-    if (!emailRegex.test(formData.email)) newErrors.email = 'Invalid email format';
-    if (!phoneRegex.test(formData.phone)) newErrors.phone = 'Invalid phone number';
-  
+
+    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!emailRegex.test(formData.email)) newErrors.email = "Invalid email format";
+    if (!phoneRegex.test(formData.phone)) newErrors.phone = "Invalid phone number";
+    if (!formData.passportOrId) newErrors.passportOrId = "Passport or ID is required";
+    if (!formData.acceptedTerms) newErrors.acceptedTerms = "You must accept the terms and conditions";
+
     const passwordValid = Object.values(validation).every(Boolean);
-    if (!passwordValid) newErrors.password = 'Password does not meet requirements';
-  
+    if (!passwordValid) newErrors.password = "Password does not meet requirements";
+
     setErrors(newErrors);
-  
+
     if (Object.keys(newErrors).length === 0) {
-      try {
-          const response = await axios.post('http://localhost:2000/register', formData);
-          console.log('Registration successful:', response.data);
-          setAlert({ type: 'success', message: 'Registration successful!' });
-          navigate('/login'); // Or wherever you want to redirect
-      } catch (error) {
-          console.error('Registration failed:', error.response); // Log the full response
-          if (error.response && error.response.data && error.response.data.message) {
-              setErrors({ general: error.response.data.message }); // Display backend message
-          } else {
-              setAlert({ type: 'error', message: 'Registration failed. Please try again.' });
-              setErrors({ general: 'Registration failed. Please try again.' });
-          }
-      }
-  }
+      setAlert({ type: "success", message: "Form submitted successfully!" });
+      console.log("Form Data:", formData); // Log form data for debugging
+    }
   };
- 
-  
+
   return (
-    <Container maxWidth="md" sx={{ mt: 8, mb: 4 }}>
-      <Box sx={{ p: 4, boxShadow: 3, borderRadius: 2 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 4 }}>
-          Create Account
-        </Typography>
-
-
-
-
-      {/* Display the Alert component here */}
-      {alert && <Alert severity={alert.type} sx={{ mb: 2 }}>{alert.message}</Alert>}
-
-        
-        
-        
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            {/* Username */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Username"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={!!errors.username && touched.username}
-                helperText={touched.username && errors.username}
-              />
-            </Grid>
-
-            {/* Name Fields */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="First Name"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={!!errors.firstName && touched.firstName}
-                helperText={touched.firstName && errors.firstName}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Last Name"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={!!errors.lastName && touched.lastName}
-                helperText={touched.lastName && errors.lastName}
-              />
-            </Grid>
-
-            {/* Location */}
-            <Grid item xs={12}>
-              <FormControl fullWidth error={!!errors.location && touched.location}>
-                <InputLabel>Location</InputLabel>
-                <Select
-                  name="location"
-                  value={formData.location}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <LocationOn color="action" />
-                    </InputAdornment>
-                  }
-                >
-                  {locations.map((location) => (
-                    <MenuItem key={location} value={location}>
-                      {location}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.location && touched.location && (
-                  <FormHelperText>{errors.location}</FormHelperText>
-                )}
-              </FormControl>
-            </Grid>
-
-            {/* Contact Info */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={!!errors.email && touched.email}
-                helperText={touched.email && errors.email}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Phone Number"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={!!errors.phone && touched.phone}
-                helperText={touched.phone && errors.phone}
-              />
-            </Grid>
-
-            {/* Password */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Password"
-                name="password"
-                type={formData.showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={!!errors.password && touched.password}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setFormData(prev => ({
-                          ...prev,
-                          showPassword: !prev.showPassword
-                        }))}
-                      >
-                        {formData.showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
-              />
-              <Box sx={{ mt: 2 }}>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={Object.values(validation).filter(Boolean).length * 20} 
-                  color={getStrengthColor()}
-                  sx={{ height: 8, borderRadius: 4 }}
-                />
-                <Box sx={{ mt: 1, pl: 1 }}>
-                  <Typography variant="caption" color={validation.minLength ? 'success.main' : 'error.main'}>
-                    ✓ 8+ characters
-                  </Typography>
-                  <Typography variant="caption" display="block" color={validation.hasUpperCase ? 'success.main' : 'error.main'}>
-                    ✓ Uppercase letter
-                  </Typography>
-                  <Typography variant="caption" display="block" color={validation.hasLowerCase ? 'success.main' : 'error.main'}>
-                    ✓ Lowercase letter
-                  </Typography>
-                  <Typography variant="caption" display="block" color={validation.hasNumber ? 'success.main' : 'error.main'}>
-                    ✓ Number
-                  </Typography>
-                  <Typography variant="caption" display="block" color={validation.hasSpecialChar ? 'success.main' : 'error.main'}>
-                    ✓ Special character
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-
-            {/* Confirm Password */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Confirm Password"
-                name="confirmPassword"
-                type={formData.showConfirmPassword ? 'text' : 'password'}
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={!!errors.password && touched.confirmPassword}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setFormData(prev => ({
-                          ...prev,
-                          showConfirmPassword: !prev.showConfirmPassword
-                        }))}
-                      >
-                        {formData.showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
-              />
-              <Box sx={{ mt: 2, pl: 1 }}>
-                <Typography variant="caption" color={validation.passwordsMatch ? 'success.main' : 'error.main'}>
-                  {validation.passwordsMatch ? '✓ Passwords match' : '✗ Passwords do not match'}
-                </Typography>
-              </Box>
-            </Grid>
-
-            {/* Submit Button */}
-            <Grid item xs={12}>
-              <Button
-                fullWidth
-                variant="contained"
-                size="large"
-                type="submit"
-                sx={{ mt: 2 }}
-              >
-                Sign Up
-              </Button>
-            </Grid>
-
-            {/* Login Link */}
-            <Grid item xs={12}>
-            <Typography variant="body2" align="center">
-                Already have an account?{' '}
-                <Link to="/login" style={{ textDecoration: 'none' }}>
-                    <Typography variant="body2" color="primary" component="span">
-                       Log in
-                    </Typography>
-                </Link>
+    <ThemeProvider theme={theme}>
+      <CssBaseline /> {/* Add CssBaseline here */}
+      <Box
+        sx={{
+          background: `linear-gradient(135deg, ${colors.background}, ${colors.secondary})`,
+          minHeight: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          p: 2,
+        }}
+      >
+        <Container maxWidth="md">
+          <Box
+            sx={{
+              p: 4,
+              borderRadius: 4,
+              boxShadow: 3,
+              background: `linear-gradient(145deg, ${colors.secondary}, ${colors.background})`,
+              color: colors.text,
+            }}
+          >
+            <Typography
+              variant="h4"
+              component="h1"
+              gutterBottom
+              align="center"
+              sx={{ mb: 4, color: colors.primary, fontWeight: 600 }}
+            >
+              Create Account
             </Typography>
-            </Grid>
-          </Grid>
-        </form>
+
+            {alert && (
+              <Alert severity={alert.type} sx={{ mb: 2 }}>
+                {alert.message}
+              </Alert>
+            )}
+
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={3}>
+                {/* Name Fields */}
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="First Name"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={!!errors.firstName && touched.firstName}
+                    helperText={touched.firstName && errors.firstName}
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      startAdornment: <Person sx={{ color: colors.text, mr: 1 }} />,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Middle Name"
+                    name="middleName"
+                    value={formData.middleName}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      startAdornment: <Person sx={{ color: colors.text, mr: 1 }} />,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Last Name"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={!!errors.lastName && touched.lastName}
+                    helperText={touched.lastName && errors.lastName}
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      startAdornment: <Person sx={{ color: colors.text, mr: 1 }} />,
+                    }}
+                  />
+                </Grid>
+
+                {/* Contact Info */}
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={!!errors.email && touched.email}
+                    helperText={touched.email && errors.email}
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      startAdornment: <Email sx={{ color: colors.text, mr: 1 }} />,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Phone Number"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={!!errors.phone && touched.phone}
+                    helperText={touched.phone && errors.phone}
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      startAdornment: <Phone sx={{ color: colors.text, mr: 1 }} />,
+                    }}
+                  />
+                </Grid>
+
+                {/* Password */}
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Password"
+                    name="password"
+                    type={formData.showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={!!errors.password && touched.password}
+                    InputProps={{
+                      startAdornment: <Lock sx={{ color: colors.text, mr: 1 }} />,
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                showPassword: !prev.showPassword,
+                              }))
+                            }
+                          >
+                            {formData.showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{ mb: 2 }}
+                  />
+                  <Box sx={{ mt: 2 }}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={Object.values(validation).filter(Boolean).length * 20}
+                      color={getStrengthColor()}
+                      sx={{ height: 8, borderRadius: 4 }}
+                    />
+                    <Box sx={{ mt: 1, pl: 1 }}>
+                      <Typography variant="caption" color={validation.minLength ? "success.main" : "error.main"}>
+                        ✓ 8+ characters
+                      </Typography>
+                      <Typography variant="caption" display="block" color={validation.hasUpperCase ? "success.main" : "error.main"}>
+                        ✓ Uppercase letter
+                      </Typography>
+                      <Typography variant="caption" display="block" color={validation.hasLowerCase ? "success.main" : "error.main"}>
+                        ✓ Lowercase letter
+                      </Typography>
+                      <Typography variant="caption" display="block" color={validation.hasNumber ? "success.main" : "error.main"}>
+                        ✓ Number
+                      </Typography>
+                      <Typography variant="caption" display="block" color={validation.hasSpecialChar ? "success.main" : "error.main"}>
+                        ✓ Special character
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                {/* Confirm Password */}
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Confirm Password"
+                    name="confirmPassword"
+                    type={formData.showConfirmPassword ? "text" : "password"}
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={!!errors.password && touched.confirmPassword}
+                    InputProps={{
+                      startAdornment: <Lock sx={{ color: colors.text, mr: 1 }} />,
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                showConfirmPassword: !prev.showConfirmPassword,
+                              }))
+                            }
+                          >
+                            {formData.showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{ mb: 2 }}
+                  />
+                  <Box sx={{ mt: 2, pl: 1 }}>
+                    <Typography variant="caption" color={validation.passwordsMatch ? "success.main" : "error.main"}>
+                      {validation.passwordsMatch ? "✓ Passwords match" : "✗ Passwords do not match"}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                {/* Passport or ID Upload */}
+                <Grid item xs={12}>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body1" sx={{ color: colors.text, mb: 1 }}>
+                      Passport / ID (Image or PDF)
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      type="file"
+                      name="passportOrId"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      error={!!errors.passportOrId && touched.passportOrId}
+                      helperText={touched.passportOrId && errors.passportOrId}
+                      inputProps={{ accept: "image/*, application/pdf" }}
+                      sx={{ mb: 2 }}
+                      InputProps={{
+                        startAdornment: <Description sx={{ color: colors.text, mr: 1 }} />,
+                      }}
+                    />
+                  </Box>
+                </Grid>
+
+                {/* Terms and Conditions */}
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        name="acceptedTerms"
+                        checked={formData.acceptedTerms}
+                        onChange={handleChange}
+                        sx={{ color: colors.primary }}
+                      />
+                    }
+                    label={
+                      <Typography variant="body2">
+                        I accept the{" "}
+                        <a
+                          href="https://example.com/terms" // Replace with your actual terms URL
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: colors.primary, textDecoration: "none" }}
+                        >
+                          Terms and Conditions
+                        </a>
+                      </Typography>
+                    }
+                  />
+                  {errors.acceptedTerms && (
+                    <FormHelperText error>{errors.acceptedTerms}</FormHelperText>
+                  )}
+                </Grid>
+
+                {/* Submit Button */}
+                <Grid item xs={12}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    size="large"
+                    type="submit"
+                    sx={{
+                      mt: 2,
+                      py: 1.5,
+                      fontSize: "1rem",
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      background: `linear-gradient(45deg, ${colors.primary}, ${colors.secondary})`,
+                      "&:hover": {
+                        transform: "scale(1.02)",
+                        transition: "transform 0.2s",
+                      },
+                    }}
+                  >
+                    Sign Up
+                  </Button>
+                </Grid>
+
+                {/* Login Link */}
+                <Grid item xs={12}>
+                  <Typography variant="body2" align="center" sx={{ color: colors.text }}>
+                    Already have an account?{" "}
+                    <Link
+                      to="/login"
+                      style={{
+                        color: colors.primary,
+                        textDecoration: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Log in
+                    </Link>
+                  </Typography>
+                </Grid>
+              </Grid>
+            </form>
+          </Box>
+        </Container>
       </Box>
-    </Container>
+
+      {/* Success and Error Messages */}
+      <Snackbar
+        open={!!alert}
+        autoHideDuration={3000}
+        onClose={() => setAlert(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity={alert?.type} sx={{ width: "100%" }}>
+          {alert?.message}
+        </Alert>
+      </Snackbar>
+    </ThemeProvider>
   );
 };
 

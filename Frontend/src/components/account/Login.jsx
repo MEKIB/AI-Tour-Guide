@@ -1,191 +1,223 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState } from "react";
 import {
   Container,
-  Box,
   Typography,
   TextField,
-  InputAdornment,
-  IconButton,
   Button,
-  Grid,
-  Checkbox,
-  FormControlLabel,
-  CircularProgress,
-} from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+  Box,
+  Card,
+  CardContent,
+  CssBaseline,
+  Snackbar,
+  Alert,
+} from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { useNavigate, Link } from "react-router-dom";
+import { Email, Lock } from "@mui/icons-material"; // Import icons
 
-const LoginPage = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    showPassword: false,
-    rememberMe: false,
-  });
+// Define the color palette for dark theme
+const colors = {
+  primary: "#00ADB5", // Teal
+  secondary: "#393E46", // Medium gray
+  background: "#222831", // Dark gray
+  text: "#EEEEEE", // Light gray
+};
 
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
-  const [loading, setLoading] = useState(false);
+// Custom dark theme for consistent styling
+const theme = createTheme({
+  palette: {
+    mode: "dark", // Enable dark mode
+    primary: {
+      main: colors.primary,
+    },
+    secondary: {
+      main: colors.secondary,
+    },
+    background: {
+      default: colors.background,
+      paper: colors.secondary,
+    },
+    text: {
+      primary: colors.text,
+    },
+  },
+  typography: {
+    fontFamily: "Roboto, sans-serif",
+    h4: {
+      fontWeight: 600,
+      color: colors.text,
+    },
+  },
+});
+
+// Predefined user account for login
+const userAccount = {
+  email: "user@example.com",
+  password: "pass",
+};
+
+const LoginPage = ({ onLogin }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const handleBlur = (e) => {
-    const { name } = e.target;
-    setTouched((prev) => ({ ...prev, [name]: true }));
-  };
-
-  const handleSubmit = async (e) => {
+  // Handle login form submission
+  const handleLogin = (e) => {
     e.preventDefault();
-    const newErrors = {};
 
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.password.trim()) newErrors.password = 'Password is required';
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      setLoading(true);
-      try {
-        const response = await axios.post('http://localhost:2000/login', {
-          email: formData.email,
-          password: formData.password,
-        });
-
-        console.log('Login successful:', response.data);
-        // Store user data or token securely here (e.g., localStorage, sessionStorage)
-        // Example: localStorage.setItem('token', response.data.token);
-        navigate('/');
-      } catch (error) {
-        console.error('Login failed:', error.response ? error.response.data : error.message);
-        setErrors({ general: 'Invalid email or password' });
-      } finally {
-        setLoading(false);
-      }
+    // Hardcoded validation
+    if (email === userAccount.email && password === userAccount.password) {
+      setSuccess("Login successful!");
+      setError("");
+      onLogin(); // Call the onLogin function passed from App.jsx
+      navigate("/"); // Redirect to home page
+    } else {
+      setError("Invalid email or password.");
+      setSuccess("");
     }
   };
 
   return (
-    <Container maxWidth="xs" sx={{ mt: 8, mb: 4 }}>
-      <Box sx={{ p: 4, boxShadow: 3, borderRadius: 2 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 4 }}>
-          Welcome Back
-        </Typography>
-
-        {errors.general && (
-          <Typography color="error" align="center">
-            {errors.general}
-          </Typography>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={!!errors.email && touched.email}
-                helperText={touched.email && errors.email}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Password"
-                name="password"
-                type={formData.showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={!!errors.password && touched.password}
-                helperText={touched.password && errors.password}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            showPassword: !prev.showPassword,
-                          }))
-                        }
-                      >
-                        {formData.showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-
-            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    name="rememberMe"
-                    checked={formData.rememberMe}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        rememberMe: e.target.checked,
-                      }))
-                    }
-                    color="primary"
-                  />
-                }
-                label="Remember me"
-              />
-              <Link to="/forgot-password" style={{ textDecoration: 'none' }}>
-                <Typography variant="body2" color="inherit" component="span">
-                  Forgot Password?
-                </Typography>
-              </Link>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Button
-                fullWidth
-                variant="contained"
-                size="large"
-                type="submit"
-                sx={{ mt: 2 }}
-                disabled={loading}
-              >
-                {loading ? <CircularProgress size={24} /> : 'Sign In'}
-              </Button>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Typography variant="body2" align="center">
-                Don't have an account?{' '}
-                <Link to="/signup" style={{ textDecoration: 'none' }}>
-                  <Typography variant="body2" color="primary" component="span">
-                    Sign Up
-                  </Typography>
-                </Link>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box
+        sx={{
+          background: `linear-gradient(135deg, ${colors.background}, ${colors.secondary})`,
+          minHeight: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          p: 2,
+        }}
+      >
+        <Container maxWidth="sm">
+          <Card
+            sx={{
+              width: "100%",
+              maxWidth: 500,
+              p: 4,
+              borderRadius: 3,
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+              background: `linear-gradient(145deg, ${colors.secondary}, ${colors.background})`,
+            }}
+          >
+            <CardContent>
+              <Typography variant="h4" gutterBottom align="center" sx={{ mb: 4 }}>
+                Login
               </Typography>
-            </Grid>
-          </Grid>
-        </form>
+              <form onSubmit={handleLogin}>
+                <TextField
+                  label="Email"
+                  type="email"
+                  variant="outlined"
+                  fullWidth
+                  margin="normal"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  sx={{ mb: 2 }}
+                  InputProps={{
+                    startAdornment: <Email sx={{ color: colors.text, mr: 1 }} />,
+                  }}
+                />
+                <TextField
+                  label="Password"
+                  type="password"
+                  variant="outlined"
+                  fullWidth
+                  margin="normal"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  sx={{ mb: 3 }}
+                  InputProps={{
+                    startAdornment: <Lock sx={{ color: colors.text, mr: 1 }} />,
+                  }}
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  fullWidth
+                  sx={{
+                    mt: 2,
+                    py: 1.5,
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                    borderRadius: 2,
+                    background: `linear-gradient(45deg, ${colors.primary}, ${colors.secondary})`,
+                    "&:hover": {
+                      transform: "scale(1.02)",
+                      transition: "transform 0.2s",
+                    },
+                  }}
+                >
+                  Login
+                </Button>
+              </form>
+
+              {/* "Forgot Password" Link */}
+              <Box sx={{ mt: 2, textAlign: "center" }}>
+                <Typography variant="body2" sx={{ color: colors.text }}>
+                  <Link
+                    to="/forgot-password" // Replace with your forgot password route
+                    style={{
+                      color: colors.primary,
+                      textDecoration: "none",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Forgot Password?
+                  </Link>
+                </Typography>
+              </Box>
+
+              {/* "Don't have an account? Sign up" Link */}
+              <Box sx={{ mt: 3, textAlign: "center" }}>
+                <Typography variant="body2" sx={{ color: colors.text }}>
+                  Don't have an account?{" "}
+                  <Link
+                    to="/signup"
+                    style={{
+                      color: colors.primary,
+                      textDecoration: "none",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Sign up
+                  </Link>
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Container>
       </Box>
-    </Container>
+
+      {/* Success and Error Messages */}
+      <Snackbar
+        open={!!success}
+        autoHideDuration={3000}
+        onClose={() => setSuccess("")}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="success" sx={{ width: "100%" }}>
+          {success}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={3000}
+        onClose={() => setError("")}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="error" sx={{ width: "100%" }}>
+          {error}
+        </Alert>
+      </Snackbar>
+    </ThemeProvider>
   );
 };
 

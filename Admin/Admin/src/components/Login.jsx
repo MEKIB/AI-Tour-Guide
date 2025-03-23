@@ -1,7 +1,23 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, Container, Alert, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Container,
+  Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Card,
+  CardContent,
+  CardActionArea,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import HotelIcon from '@mui/icons-material/Hotel';
 
 const Login = ({ setUserRole, setUserEmail, setUserName }) => {
   const navigate = useNavigate();
@@ -30,14 +46,14 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
 
     try {
       const response = await axios.post(apiUrl, { email, password });
-      const { user, token } = response.data; // Destructure token from response.data
+      const { user, token } = response.data;
 
       console.log('Logged in as:', user.role || role);
       setUserRole(user.role || role);
       setUserEmail(user.email);
       setUserName(`${user.firstName || ''} ${user.lastName || ''}`.trim());
-      localStorage.setItem('token', token); // Store the token in local storage
-      console.log(token)
+      localStorage.setItem('token', token);
+      console.log(token);
       navigate(`/${user.role || role}-dashboard`);
     } catch (err) {
       if (err.response && err.response.data && err.response.data.message) {
@@ -58,9 +74,9 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        marginTop: '80PX',
         p: 3,
-        transform: 'translateX(400px)',
+        my:10,
+        marginLeft:'400px',
       }}
     >
       <Container maxWidth="sm">
@@ -72,6 +88,7 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
             justifyContent: 'center',
             width: '100%',
             maxWidth: '400px',
+           
             mx: 'auto',
           }}
         >
@@ -90,20 +107,56 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
           )}
 
           {showRoleSelection && (
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel id="role-select-label" sx={{ color: '#EEEEEE' }}>Role</InputLabel>
-              <Select
-                labelId="role-select-label"
-                id="role-select"
-                value={role}
-                label="Role"
-                onChange={(e) => handleRoleSelect(e.target.value)}
-                sx={{ bgcolor: '#393E46', borderRadius: 1, color: '#EEEEEE' }}
+            <Box sx={{ width: '100%', textAlign: 'center' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: '#EEEEEE' }}>
+                Select Your Role
+              </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  justifyContent: 'center',
+                  flexWrap: 'wrap',
+                }}
               >
-                <MenuItem value="system-admin">System Admin</MenuItem>
-                <MenuItem value="hotel-admin">Hotel Admin</MenuItem>
-              </Select>
-            </FormControl>
+                <Card
+                  sx={{
+                    width: 150,
+                    bgcolor: '#393E46',
+                    borderRadius: 2,
+                    transition: 'transform 0.2s',
+                    '&:hover': { transform: 'scale(1.05)' },
+                  }}
+                >
+                  <CardActionArea onClick={() => handleRoleSelect('system-admin')}>
+                    <CardContent>
+                      <AdminPanelSettingsIcon sx={{ fontSize: 50, color: '#00ADB5' }} />
+                      <Typography variant="h6" sx={{ mt: 1, color: '#EEEEEE' }}>
+                        System Admin
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
+                </Card>
+                <Card
+                  sx={{
+                    width: 150,
+                    bgcolor: '#393E46',
+                    borderRadius: 2,
+                    transition: 'transform 0.2s',
+                    '&:hover': { transform: 'scale(1.05)' },
+                  }}
+                >
+                  <CardActionArea onClick={() => handleRoleSelect('hotel-admin')}>
+                    <CardContent>
+                      <HotelIcon sx={{ fontSize: 50, color: '#00ADB5' }} />
+                      <Typography variant="h6" sx={{ mt: 1, color: '#EEEEEE' }}>
+                        Hotel Admin
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
+                </Card>
+              </Box>
+            </Box>
           )}
 
           {showLoginForm && (
@@ -146,13 +199,15 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
               >
                 Login
               </Button>
-              <Button
-                fullWidth
-                sx={{ mt: 2, color: '#00ADB5' }}
-                onClick={() => navigate('/signup')}
-              >
-                Don't have an account? Sign Up
-              </Button>
+              {role !== 'system-admin' && (
+                <Button
+                  fullWidth
+                  sx={{ mt: 2, color: '#00ADB5' }}
+                  onClick={() => navigate('/signup')}
+                >
+                  Don't have an account? Sign Up
+                </Button>
+              )}
             </Box>
           )}
         </Box>

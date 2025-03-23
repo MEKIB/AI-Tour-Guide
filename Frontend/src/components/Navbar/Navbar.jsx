@@ -7,16 +7,28 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import LanguageIcon from "@mui/icons-material/Language";
 import { styled } from "@mui/material/styles";
 import Modal from "@mui/material/Modal";
 import CloseIcon from "@mui/icons-material/Close";
 import AccountCircle from "@mui/icons-material/AccountCircle";
+import ArrowDropDown from "@mui/icons-material/ArrowDropDown"; // Added drop-down icon
 import SearchIcon from "@mui/icons-material/Search";
 import InputBase from "@mui/material/InputBase";
 import ReactCountryFlag from "react-country-flag";
+import {
+  Help as HelpIcon,
+  Login as LoginIcon,
+  Book as BookIcon,
+  CardGiftcard as RewardsIcon,
+  NewReleases as NewIcon,
+  Favorite as WishlistIcon,
+  Person as ProfileIcon,
+  Logout as LogoutIcon,
+} from "@mui/icons-material";
+import { debounce } from "lodash"; // For debouncing the search input
 
 // Define the color palette
 const colors = {
@@ -24,6 +36,7 @@ const colors = {
   secondary: "#393E46",
   accent: "#00ADB5",
   background: "#EEEEEE",
+  searchModalBackground: "#393E46", // Updated search modal background color
 };
 
 // Styled components
@@ -84,6 +97,7 @@ const SearchBox = styled(Box)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
   padding: theme.spacing(0.5, 1),
   marginRight: theme.spacing(2),
+  position: "relative",
 }));
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
@@ -98,7 +112,38 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
   },
 }));
 
-export default function ButtonAppBar() {
+const SearchResultsDropdown = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  top: "100%",
+  left: 0,
+  right: 0,
+  backgroundColor: colors.searchModalBackground, // Updated background color
+  border: `1px solid ${colors.secondary}`,
+  borderRadius: theme.shape.borderRadius,
+  boxShadow: theme.shadows[5],
+  zIndex: 1,
+  maxHeight: 300,
+  overflowY: "auto",
+}));
+
+const SearchResultItem = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(1, 2),
+  color: colors.background,
+  "&:hover": {
+    backgroundColor: colors.accent,
+    color: colors.background,
+  },
+}));
+
+// List of supported languages
+const languages = [
+  { name: "English", code: "US" },
+  { name: "Amharic", code: "ET" },
+  { name: "French", code: "FR" },
+  { name: "Spanish", code: "ES" },
+];
+
+export default function ButtonAppBar({ isLoggedIn, onLogout }) {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
@@ -106,25 +151,61 @@ export default function ButtonAppBar() {
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [searchBoxOpen, setSearchBoxOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [anchorElUser, setAnchorElUser] = useState(null);
   const navigate = useNavigate();
 
-  // Handle dropdown open
-  const handleOpenTourist = (event) => {
-    setAnchorElTourist(event.currentTarget);
+  // Expanded search data to include all searchable items
+  const searchData = [
+    { name: "Hotels and Locations", path: "/hotelslocation" },
+    { name: "Filtered Hotels", path: "/filtered-hotels" },
+    { name: "Hotel Details", path: "/hoteldetails" },
+    { name: "Unison Hotel", path: "/hotel/1" }, // Example hotel with ID 1
+    { name: "Leoages Lodge", path: "/hotel/2" }, // Example lodge with ID 2
+    { name: "Sign Up", path: "/signup" },
+  ];
+
+  // Debounced search function
+  const handleSearch = debounce((query) => {
+    if (query.trim() === "") {
+      setSearchResults([]);
+      return;
+    }
+    const results = searchData.filter((item) =>
+      item.name.toLowerCase().includes(query.toLowerCase())
+    );
+    setSearchResults(results);
+  }, 300);
+
+  // Handle search input change
+  const handleSearchInputChange = (event) => {
+    const query = event.target.value;
+    setSearchQuery(query);
+    handleSearch(query);
   };
 
-  const handleCloseTourist = () => {
-    setAnchorElTourist(null);
+  // Handle search result click
+  const handleSearchResultClick = (path) => {
+    navigate(path);
+    setSearchBoxOpen(false);
+    setSearchQuery("");
+    setSearchResults([]);
   };
 
-  const handleOpenAbout = (event) => {
-    setAnchorElAbout(event.currentTarget);
-  };
+  // Close search box when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchBoxOpen && !event.target.closest(".search-box")) {
+        setSearchBoxOpen(false);
+        setSearchQuery("");
+        setSearchResults([]);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [searchBoxOpen]);
 
-  const handleCloseAbout = () => {
-    setAnchorElAbout(null);
-  };
-
+  // Handlers for Destinations menu
   const handleOpenDestination = (event) => {
     setAnchorElDestination(event.currentTarget);
   };
@@ -133,6 +214,34 @@ export default function ButtonAppBar() {
     setAnchorElDestination(null);
   };
 
+  // Handlers for Tourist Facilities menu
+  const handleOpenTourist = (event) => {
+    setAnchorElTourist(event.currentTarget);
+  };
+
+  const handleCloseTourist = () => {
+    setAnchorElTourist(null);
+  };
+
+  // Handlers for About menu
+  const handleOpenAbout = (event) => {
+    setAnchorElAbout(event.currentTarget);
+  };
+
+  const handleCloseAbout = () => {
+    setAnchorElAbout(null);
+  };
+
+  // Handlers for User menu
+  const handleOpenUserMenu = (event) => {
+    setAnchorElUser(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setAnchorElUser(null);
+  };
+
+  // Handlers for Language modal
   const handleOpenLanguageModal = () => {
     setLanguageModalOpen(true);
   };
@@ -146,36 +255,10 @@ export default function ButtonAppBar() {
     handleCloseLanguageModal();
   };
 
-  const languages = [
-    { name: "English", code: "US" },
-    { name: "Amharic", code: "ET" },
-    { name: "Arabic", code: "SA" },
-    { name: "Russian", code: "RU" },
-    { name: "Oromiffa", code: "ET" },
-    { name: "French", code: "FR" },
-    { name: "Spanish", code: "ES" },
-    { name: "German", code: "DE" },
-  ];
-
-  const handleSearchBoxToggle = () => {
-    setSearchBoxOpen(true);
-  };
-
-  const handleSearchBoxClose = () => {
-    setSearchBoxOpen(false);
-  };
-
-  const handleSearchInputChange = (event) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handleSearchSubmit = (event) => {
-    event.preventDefault();
-    console.log("Search Query:", searchQuery);
-  };
-
-  const handleAccountClick = () => {
-    navigate("/login");
+  // Handler for logout
+  const handleLogout = () => {
+    onLogout();
+    handleCloseUserMenu();
   };
 
   return (
@@ -195,9 +278,9 @@ export default function ButtonAppBar() {
           </Typography>
           <Box sx={{ display: "flex", gap: 4, alignItems: "center" }}>
             {/* Search Icon and Search Box */}
-            {searchBoxOpen ? (
-              <SearchBox onBlur={handleSearchBoxClose}>
-                <form onSubmit={handleSearchSubmit}>
+            <Box className="search-box">
+              {searchBoxOpen ? (
+                <SearchBox>
                   <InputBase
                     placeholder="Search…"
                     inputProps={{ "aria-label": "search" }}
@@ -205,16 +288,28 @@ export default function ButtonAppBar() {
                     onChange={handleSearchInputChange}
                     autoFocus
                   />
-                  <IconButton type="submit" aria-label="search">
-                    <SearchIcon />
+                  <IconButton onClick={() => setSearchBoxOpen(false)}>
+                    <CloseIcon />
                   </IconButton>
-                </form>
-              </SearchBox>
-            ) : (
-              <IconButton color="inherit" onClick={handleSearchBoxToggle}>
-                <SearchIcon />
-              </IconButton>
-            )}
+                </SearchBox>
+              ) : (
+                <IconButton color="inherit" onClick={() => setSearchBoxOpen(true)}>
+                  <SearchIcon />
+                </IconButton>
+              )}
+              {searchBoxOpen && searchResults.length > 0 && (
+                <SearchResultsDropdown>
+                  {searchResults.map((result, index) => (
+                    <SearchResultItem
+                      key={index}
+                      onClick={() => handleSearchResultClick(result.path)}
+                    >
+                      {result.name}
+                    </SearchResultItem>
+                  ))}
+                </SearchResultsDropdown>
+              )}
+            </Box>
 
             {/* Destinations Menu */}
             <Box
@@ -415,14 +510,70 @@ export default function ButtonAppBar() {
               </LanguageModalContent>
             </LanguageModal>
 
-            {/* Account Button - Redirects to Login Page */}
-            <StyledAccountButton
-              id="account-button"
-              onClick={handleAccountClick}
-              color="inherit"
-            >
-              <AccountCircle />
-            </StyledAccountButton>
+            {/* Account Button - Redirects to Login Page or Opens User Menu */}
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <StyledAccountButton
+                id="account-button"
+                onClick={handleOpenUserMenu}
+                color="inherit"
+              >
+                <AccountCircle />
+                <ArrowDropDown /> {/* Added drop-down icon */}
+              </StyledAccountButton>
+              <StyledMenu
+                id="user-menu"
+                anchorEl={anchorElUser}
+                open={Boolean(anchorElUser)}
+                onClose={handleCloseUserMenu}
+                MenuListProps={{
+                  "aria-labelledby": "account-button",
+                }}
+              >
+                {isLoggedIn ? (
+                  <>
+                    <MenuItem onClick={() => navigate("/bookings")}>
+                      <BookIcon sx={{ mr: 2 }} />
+                      Bookings
+                    </MenuItem>
+                    <MenuItem onClick={() => navigate("/rewards")}>
+                      <RewardsIcon sx={{ mr: 2 }} />
+                      Viator Rewards
+                    </MenuItem>
+                    <MenuItem onClick={() => navigate("/new")}>
+                      <NewIcon sx={{ mr: 2 }} />
+                      New!
+                    </MenuItem>
+                    <MenuItem onClick={() => navigate("/wishlists")}>
+                      <WishlistIcon sx={{ mr: 2 }} />
+                      Wishlists
+                    </MenuItem>
+                    <MenuItem onClick={() => navigate("/profile")}>
+                      <ProfileIcon sx={{ mr: 2 }} />
+                      Profile
+                    </MenuItem>
+                    <MenuItem onClick={() => navigate("/help")}>
+                      <HelpIcon sx={{ mr: 2 }} />
+                      Help
+                    </MenuItem>
+                    <MenuItem onClick={handleLogout}>
+                      <LogoutIcon sx={{ mr: 2 }} />
+                      Log out
+                    </MenuItem>
+                  </>
+                ) : (
+                  <>
+                    <MenuItem onClick={() => navigate("/help")}>
+                      <HelpIcon sx={{ mr: 2 }} />
+                      Help
+                    </MenuItem>
+                    <MenuItem onClick={() => navigate("/login")}>
+                      <LoginIcon sx={{ mr: 2 }} />
+                      Login/Sign Up
+                    </MenuItem>
+                  </>
+                )}
+              </StyledMenu>
+            </Box>
 
             {/* About Menu */}
             <Box
@@ -466,7 +617,7 @@ export default function ButtonAppBar() {
                 </MenuItem>
                 <MenuItem onClick={handleCloseAbout}>
                   <Link
-                    to="/managment"
+                    to="/management"
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     Our Management
@@ -487,7 +638,7 @@ export default function ButtonAppBar() {
       </AppBar>
 
       {/* Add padding to prevent content overlap */}
-      <Box sx={{ paddingTop: "64px" }}>{/* Page content goes here */}</Box>
+      <Box sx={{ paddingTop: "64px" }}></Box>
     </Box>
   );
 }

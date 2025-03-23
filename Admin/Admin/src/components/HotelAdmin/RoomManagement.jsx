@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -11,19 +11,14 @@ import {
   TableHead,
   TableRow,
   Paper,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Chip,
+  Autocomplete,
+  Snackbar,
+  Alert,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EventBusyIcon from '@mui/icons-material/EventBusy';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { addDays, isBefore, isEqual, parseISO, format, isToday } from 'date-fns';
+import * as MuiIcons from '@mui/icons-material'; // Import all Material Icons
+import { debounce } from 'lodash'; // For debouncing the search input
+import axios from 'axios'; // For making HTTP requests
 
 // Color palette
 const colors = {
@@ -31,7 +26,19 @@ const colors = {
   darkGray: '#393E46',
   teal: '#00ADB5',
   light: '#EEEEEE',
+  background: '#1A1A1A', // Darker background for contrast
+  inputBackground: '#2D2D2D', // Darker background for input fields
+  inputText: '#EEEEEE', // Light text color for input fields
+  inputBorder: '#00ADB5', // Teal border for input fields
+  success: '#00C853', // Green for success
+  error: '#FF4444', // Red for errors
 };
+
+// Get all Material Icons as an array of { name, icon }
+const materialIcons = Object.keys(MuiIcons).map((iconName) => ({
+  name: iconName,
+  icon: MuiIcons[iconName], // Dynamically get the icon component
+}));
 
 const RoomManagement = () => {
   const [rooms, setRooms] = useState([
@@ -49,13 +56,32 @@ const RoomManagement = () => {
   ]);
 
   const [newRoom, setNewRoom] = useState({ type: '', rate: '', roomNumbers: '' });
-  const [selectedRoom, setSelectedRoom] = useState(null);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [availabilityDialogOpen, setAvailabilityDialogOpen] = useState(false);
-  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
-  const [roomToDelete, setRoomToDelete] = useState(null);
-  const [unavailabilityToDelete, setUnavailabilityToDelete] = useState(null);
+  const [newDetailedRoom, setNewDetailedRoom] = useState({
+    type: '',
+    bathrooms: '',
+    size: '',
+  });
+  const [amenities, setAmenities] = useState([]);
+  const [newAmenity, setNewAmenity] = useState({ name: '', icon: '' });
+  const [searchIcon, setSearchIcon] = useState('');
+  const [success, setSuccess] = useState(''); // Success message
+  const [error, setError] = useState(''); // Error message
+
+  // Debounced search function
+  const handleSearch = useCallback(
+    debounce((value) => {
+      setSearchIcon(value);
+    }, 300),
+    []
+  );
+
+  // Filtered icons based on search input
+  const filteredIcons = useMemo(() => {
+    if (!searchIcon) return materialIcons.slice(0, 10); // Show first 10 icons by default
+    return materialIcons
+      .filter((icon) => icon.name.toLowerCase().includes(searchIcon.toLowerCase()))
+      .slice(0, 10); // Limit to 10 results
+  }, [searchIcon]);
 
   // Handle adding a new room type with room numbers
   const handleAddRoom = () => {
@@ -80,354 +106,321 @@ const RoomManagement = () => {
     }
   };
 
-  // Open the availability dialog for a specific room number
-  const handleOpenAvailabilityDialog = (roomTypeId, roomNumber) => {
-    setSelectedRoom({ roomTypeId, roomNumber });
-    setAvailabilityDialogOpen(true);
+  // Handle adding a new detailed room type
+  const handleAddDetailedRoom = () => {
+    if (newDetailedRoom.type && newDetailedRoom.bathrooms && newDetailedRoom.size && amenities.length > 0) {
+      const newDetailedRoomType = {
+        id: rooms.length + 1,
+        type: newDetailedRoom.type,
+        details: {
+          bathrooms: newDetailedRoom.bathrooms,
+          size: newDetailedRoom.size,
+          amenities: amenities,
+        },
+      };
+
+      setRooms([...rooms, newDetailedRoomType]);
+      setNewDetailedRoom({
+        type: '',
+        bathrooms: '',
+        size: '',
+      });
+      setAmenities([]); // Clear amenities after adding
+    }
   };
 
-  // Close the availability dialog
-  const handleCloseAvailabilityDialog = () => {
-    setAvailabilityDialogOpen(false);
-    setSelectedRoom(null);
-    setStartDate(null);
-    setEndDate(null);
+  // Handle adding a new amenity
+  const handleAddAmenity = () => {
+    if (newAmenity.name.trim() !== '' && newAmenity.icon) {
+      setAmenities((prev) => [...prev, newAmenity]);
+      setNewAmenity({ name: '', icon: '' }); // Reset form
+    }
   };
 
-  // Add unavailability for a specific date or range of dates
-  const handleAddUnavailability = () => {
-    if (selectedRoom && startDate) {
-      const dateString = startDate.toISOString().split('T')[0];
+  // Handle removing an amenity
+  const handleRemoveAmenity = (index) => {
+    setAmenities((prev) => prev.filter((_, i) => i !== index));
+  };
 
-      const datesToUpdate = [];
-      if (endDate) {
-        let currentDate = startDate;
-        while (isBefore(currentDate, endDate) || isEqual(currentDate, endDate)) {
-          datesToUpdate.push(currentDate.toISOString().split('T')[0]);
-          currentDate = addDays(currentDate, 1);
+  // Handle uploading all amenities at once
+  const handleUploadAmenities = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found in localStorage');
+        return;
+      }
+      const response = await axios.post(
+        'http://localhost:2000/api/amenities/upload',
+        { amenities }, // Send the entire list of amenities
+        {
+          headers: { Authorization: `Bearer ${token}` },
         }
-      } else {
-        datesToUpdate.push(dateString); // Handle single date selection
-      }
-
-      setRooms((prevRooms) =>
-        prevRooms.map((room) =>
-          room.id === selectedRoom.roomTypeId
-            ? {
-                ...room,
-                roomNumbers: room.roomNumbers.map((rn) =>
-                  rn.number === selectedRoom.roomNumber
-                    ? {
-                        ...rn,
-                        availability: [
-                          ...rn.availability.filter(
-                            (av) => !datesToUpdate.includes(av.date) // Remove existing entries for the same dates
-                          ),
-                          ...datesToUpdate.map((date) => ({ date, available: false })), // Add new unavailability
-                        ],
-                      }
-                    : rn
-                ),
-              }
-            : room
-        )
       );
-
-      handleCloseAvailabilityDialog();
+      console.log(response.data.message);
+      setSuccess('All amenities uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading amenities:', error.response?.data || error.message);
+      setError('Failed to upload amenities');
     }
   };
 
-  // Delete a room number
-  const handleDeleteRoomNumber = (roomTypeId, roomNumber) => {
-    setRooms((prevRooms) =>
-      prevRooms.map((room) =>
-        room.id === roomTypeId
-          ? {
-              ...room,
-              roomNumbers: room.roomNumbers.filter((rn) => rn.number !== roomNumber),
-            }
-          : room
-      )
-    );
-    setDeleteConfirmationOpen(false);
-  };
-
-  // Remove specific unavailability entry
-  const handleRemoveUnavailability = (roomTypeId, roomNumber, date) => {
-    setRooms((prevRooms) =>
-      prevRooms.map((room) =>
-        room.id === roomTypeId
-          ? {
-              ...room,
-              roomNumbers: room.roomNumbers.map((rn) =>
-                rn.number === roomNumber
-                  ? {
-                      ...rn,
-                      availability: rn.availability.filter((av) => av.date !== date),
-                    }
-                  : rn
-              ),
-            }
-          : room
-      )
-    );
-    setDeleteConfirmationOpen(false);
-  };
-
-  // Group consecutive dates into ranges
-  const groupDatesIntoRanges = (dates) => {
-    if (dates.length === 0) return [];
-
-    const sortedDates = dates
-      .map((date) => parseISO(date))
-      .sort((a, b) => a - b);
-
-    const ranges = [];
-    let startDate = sortedDates[0];
-    let endDate = sortedDates[0];
-
-    for (let i = 1; i < sortedDates.length; i++) {
-      const currentDate = sortedDates[i];
-      const previousDate = sortedDates[i - 1];
-
-      if (isEqual(currentDate, addDays(previousDate, 1))) {
-        endDate = currentDate;
-      } else {
-        ranges.push({ start: startDate, end: endDate });
-        startDate = currentDate;
-        endDate = currentDate;
-      }
-    }
-
-    ranges.push({ start: startDate, end: endDate });
-
-    return ranges;
-  };
-
-  // Check if the room is unavailable for the current date
-  const isRoomUnavailableToday = (roomNumber) => {
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const room = rooms
-      .flatMap((room) => room.roomNumbers)
-      .find((rn) => rn.number === roomNumber);
-
-    if (room) {
-      const availability = room.availability.find((av) => av.date === today);
-      return availability ? !availability.available : false;
-    }
-    return false;
-  };
-
-  // Open delete confirmation dialog
-  const openDeleteConfirmation = (roomTypeId, roomNumber, date = null) => {
-    setRoomToDelete({ roomTypeId, roomNumber });
-    setUnavailabilityToDelete(date);
-    setDeleteConfirmationOpen(true);
-  };
-
-  // Close delete confirmation dialog
-  const closeDeleteConfirmation = () => {
-    setDeleteConfirmationOpen(false);
-    setRoomToDelete(null);
-    setUnavailabilityToDelete(null);
-  };
-
-  // Handle delete confirmation
-  const handleDeleteConfirmation = () => {
-    if (unavailabilityToDelete) {
-      handleRemoveUnavailability(roomToDelete.roomTypeId, roomToDelete.roomNumber, unavailabilityToDelete);
-    } else {
-      handleDeleteRoomNumber(roomToDelete.roomTypeId, roomToDelete.roomNumber);
-    }
+  // Custom styles for input fields
+  const inputStyles = {
+    backgroundColor: colors.inputBackground,
+    color: colors.inputText,
+    borderRadius: 1,
+    '& .MuiOutlinedInput-root': {
+      '& fieldset': {
+        borderColor: colors.inputBorder,
+      },
+      '&:hover fieldset': {
+        borderColor: colors.teal,
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: colors.teal,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: colors.inputText,
+    },
+    '& .MuiInputBase-input': {
+      color: colors.inputText,
+    },
   };
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box sx={{ p: 3, backgroundColor: colors.dark, minHeight: '100vh', color: colors.light }}>
-        <Typography variant="h4" gutterBottom sx={{ color: colors.teal }}>
-          Room Management
+    <Box sx={{ p: 3, backgroundColor: colors.background, minHeight: '90vh', color: colors.light }}>
+      <Typography variant="h4" gutterBottom sx={{ color: colors.teal, fontWeight: 'bold' }}>
+        Room Management
+      </Typography>
+
+      {/* Form for adding new room type */}
+      <Box component="form" sx={{ maxWidth: 600, mb: 4, backgroundColor: colors.darkGray, p: 3, borderRadius: 2 }}>
+        <Typography variant="h6" gutterBottom sx={{ color: colors.teal, fontWeight: 'bold' }}>
+          Add New Room Type
         </Typography>
-        <Box component="form" sx={{ maxWidth: 600, mb: 4 }}>
+        <TextField
+          fullWidth
+          label="Room Type"
+          variant="outlined"
+          margin="normal"
+          value={newRoom.type}
+          onChange={(e) => setNewRoom({ ...newRoom, type: e.target.value })}
+          sx={inputStyles}
+        />
+        <TextField
+          fullWidth
+          label="Rate"
+          variant="outlined"
+          margin="normal"
+          type="number"
+          value={newRoom.rate}
+          onChange={(e) => setNewRoom({ ...newRoom, rate: e.target.value })}
+          sx={inputStyles}
+        />
+        <TextField
+          fullWidth
+          label="Room Numbers (comma-separated)"
+          variant="outlined"
+          margin="normal"
+          value={newRoom.roomNumbers}
+          onChange={(e) => setNewRoom({ ...newRoom, roomNumbers: e.target.value })}
+          placeholder="e.g., R101, R102, R103"
+          sx={inputStyles}
+        />
+        <Button
+          variant="contained"
+          sx={{ mt: 2, backgroundColor: colors.teal, color: colors.light, '&:hover': { backgroundColor: colors.darkGray } }}
+          onClick={handleAddRoom}
+        >
+          Add Room Type
+        </Button>
+      </Box>
+
+      {/* Form for adding detailed room type */}
+      <Box component="form" sx={{ maxWidth: 600, mb: 4, backgroundColor: colors.darkGray, p: 3, borderRadius: 2 }}>
+        <Typography variant="h6" gutterBottom sx={{ color: colors.teal, fontWeight: 'bold' }}>
+          Add Detailed Room Type (Single/Double)
+        </Typography>
+        <TextField
+          fullWidth
+          label="Room Type (Single/Double)"
+          variant="outlined"
+          margin="normal"
+          value={newDetailedRoom.type}
+          onChange={(e) => setNewDetailedRoom({ ...newDetailedRoom, type: e.target.value })}
+          sx={inputStyles}
+        />
+        <TextField
+          fullWidth
+          label="Bathrooms"
+          variant="outlined"
+          margin="normal"
+          value={newDetailedRoom.bathrooms}
+          onChange={(e) => setNewDetailedRoom({ ...newDetailedRoom, bathrooms: e.target.value })}
+          placeholder="e.g., 2"
+          sx={inputStyles}
+        />
+        <TextField
+          fullWidth
+          label="Size"
+          variant="outlined"
+          margin="normal"
+          value={newDetailedRoom.size}
+          onChange={(e) => setNewDetailedRoom({ ...newDetailedRoom, size: e.target.value })}
+          placeholder="e.g., 110 m²"
+          sx={inputStyles}
+        />
+        <Button
+          variant="contained"
+          sx={{ mt: 2, backgroundColor: colors.teal, color: colors.light, '&:hover': { backgroundColor: colors.darkGray } }}
+          onClick={handleAddDetailedRoom}
+        >
+          Add Detailed Room Type
+        </Button>
+      </Box>
+
+      {/* Separate Amenities Section */}
+      <Box sx={{ maxWidth: 600, mb: 4, backgroundColor: colors.darkGray, p: 3, borderRadius: 2 }}>
+        <Typography variant="h6" gutterBottom sx={{ color: colors.teal, fontWeight: 'bold' }}>
+          Add Amenities
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           <TextField
             fullWidth
-            label="Room Type"
+            label="Amenity Name"
             variant="outlined"
-            margin="normal"
-            value={newRoom.type}
-            onChange={(e) => setNewRoom({ ...newRoom, type: e.target.value })}
-            sx={{ backgroundColor: colors.light, borderRadius: 1 }}
+            value={newAmenity.name}
+            onChange={(e) => setNewAmenity({ ...newAmenity, name: e.target.value })}
+            sx={inputStyles}
           />
-          <TextField
+          <Autocomplete
             fullWidth
-            label="Rate"
-            variant="outlined"
-            margin="normal"
-            type="number"
-            value={newRoom.rate}
-            onChange={(e) => setNewRoom({ ...newRoom, rate: e.target.value })}
-            sx={{ backgroundColor: colors.light, borderRadius: 1 }}
-          />
-          <TextField
-            fullWidth
-            label="Room Numbers (comma-separated)"
-            variant="outlined"
-            margin="normal"
-            value={newRoom.roomNumbers}
-            onChange={(e) => setNewRoom({ ...newRoom, roomNumbers: e.target.value })}
-            placeholder="e.g., R101, R102, R103"
-            sx={{ backgroundColor: colors.light, borderRadius: 1 }}
+            options={filteredIcons}
+            getOptionLabel={(option) => option.name}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Search Icon"
+                variant="outlined"
+                onChange={(e) => handleSearch(e.target.value)}
+                sx={inputStyles}
+              />
+            )}
+            renderOption={(props, option) => (
+              <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {React.createElement(option.icon)} {/* Dynamically render the icon */}
+                {option.name}
+              </Box>
+            )}
+            onChange={(_, value) => setNewAmenity({ ...newAmenity, icon: value?.name || '' })}
           />
           <Button
             variant="contained"
-            sx={{ mt: 2, backgroundColor: colors.teal, color: colors.light, '&:hover': { backgroundColor: colors.darkGray } }}
-            onClick={handleAddRoom}
+            sx={{ backgroundColor: colors.teal, color: colors.light, '&:hover': { backgroundColor: colors.darkGray } }}
+            onClick={handleAddAmenity}
           >
-            Add Room Type
+            Add Amenity
           </Button>
         </Box>
-
-        {/* Room Details Table */}
-        <TableContainer component={Paper} sx={{ backgroundColor: colors.darkGray }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ color: colors.light }}>Room Type</TableCell>
-                <TableCell sx={{ color: colors.light }}>Rate</TableCell>
-                <TableCell sx={{ color: colors.light }}>Room Numbers</TableCell>
-                <TableCell sx={{ color: colors.light }}>Availability</TableCell>
-                <TableCell sx={{ color: colors.light }}>Booking Status (Today)</TableCell>
-                <TableCell sx={{ color: colors.light }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rooms.map((room) => (
-                <React.Fragment key={room.id}>
-                  {room.roomNumbers.map((roomNumber, index) => (
-                    <TableRow key={roomNumber.number}>
-                      {index === 0 && (
-                        <>
-                          <TableCell rowSpan={room.roomNumbers.length} sx={{ color: colors.light }}>
-                            {room.type}
-                          </TableCell>
-                          <TableCell rowSpan={room.roomNumbers.length} sx={{ color: colors.light }}>
-                            ${room.rate}
-                          </TableCell>
-                        </>
-                      )}
-                      <TableCell sx={{ color: colors.light }}>{roomNumber.number}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outlined"
-                          startIcon={<EventBusyIcon />}
-                          onClick={() => handleOpenAvailabilityDialog(room.id, roomNumber.number)}
-                          sx={{ color: colors.teal, borderColor: colors.teal }}
-                        >
-                          Manage Availability
-                        </Button>
-                        <Box sx={{ mt: 1 }}>
-                          {groupDatesIntoRanges(
-                            roomNumber.availability
-                              .filter((av) => !av.available)
-                              .map((av) => av.date)
-                          ).map((range, idx) => (
-                            <Box
-                              key={idx}
-                              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                            >
-                              <Typography sx={{ color: colors.light }}>
-                                {format(range.start, 'yyyy-MM-dd')} to {format(range.end, 'yyyy-MM-dd')}: Unavailable
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                sx={{ color: colors.error }}
-                                onClick={() => openDeleteConfirmation(room.id, roomNumber.number, format(range.start, 'yyyy-MM-dd'))}
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Box>
-                          ))}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={isRoomUnavailableToday(roomNumber.number) ? 'Unavailable' : 'Available'}
-                          color={isRoomUnavailableToday(roomNumber.number) ? 'error' : 'success'}
-                          sx={{ backgroundColor: isRoomUnavailableToday(roomNumber.number) ? colors.error : colors.teal, color: colors.light }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <IconButton
-                          sx={{ color: colors.error }}
-                          onClick={() => openDeleteConfirmation(room.id, roomNumber.number)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </React.Fragment>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {/* Availability Dialog */}
-        <Dialog
-          open={availabilityDialogOpen}
-          onClose={handleCloseAvailabilityDialog}
-          sx={{ '& .MuiPaper-root': { backgroundColor: colors.darkGray, color: colors.light } }}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {amenities.map((amenity, index) => {
+            const IconComponent = MuiIcons[amenity.icon]; // Dynamically get the icon component
+            return (
+              <Chip
+                key={index}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {IconComponent ? React.createElement(IconComponent) : null} {/* Render the icon */}
+                    {amenity.name}
+                  </Box>
+                }
+                onDelete={() => handleRemoveAmenity(index)}
+                sx={{ backgroundColor: colors.teal, color: colors.light }}
+              />
+            );
+          })}
+        </Box>
+        {/* Upload All Amenities Button */}
+        <Button
+          variant="contained"
+          onClick={handleUploadAmenities}
+          sx={{
+            mt: 2,
+            backgroundColor: colors.success,
+            color: colors.light,
+            '&:hover': { backgroundColor: '#008B8B' },
+          }}
         >
-          <DialogTitle>Mark Unavailability</DialogTitle>
-          <DialogContent>
-            <DatePicker
-              label="Start Date"
-              value={startDate}
-              onChange={(newValue) => setStartDate(newValue)}
-              renderInput={(params) => <TextField {...params} fullWidth margin="normal" sx={{ backgroundColor: colors.light, borderRadius: 1 }} />}
-            />
-            <DatePicker
-              label="End Date"
-              value={endDate}
-              onChange={(newValue) => setEndDate(newValue)}
-              renderInput={(params) => <TextField {...params} fullWidth margin="normal" sx={{ backgroundColor: colors.light, borderRadius: 1 }} />}
-              minDate={startDate}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseAvailabilityDialog} sx={{ color: colors.light }}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddUnavailability} sx={{ color: colors.teal }}>
-              Mark Unavailable
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Delete Confirmation Dialog */}
-        <Dialog
-          open={deleteConfirmationOpen}
-          onClose={closeDeleteConfirmation}
-          sx={{ '& .MuiPaper-root': { backgroundColor: colors.darkGray, color: colors.light } }}
-        >
-          <DialogTitle>Confirm Delete</DialogTitle>
-          <DialogContent>
-            <Typography>
-              {unavailabilityToDelete
-                ? `Are you sure you want to remove unavailability for ${unavailabilityToDelete}?`
-                : 'Are you sure you want to delete this room number?'}
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={closeDeleteConfirmation} sx={{ color: colors.light }}>
-              Cancel
-            </Button>
-            <Button onClick={handleDeleteConfirmation} sx={{ color: colors.error }}>
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
+          Upload All Amenities
+        </Button>
       </Box>
-    </LocalizationProvider>
+
+      {/* Display the list of rooms */}
+      <TableContainer component={Paper} sx={{ mt: 4, backgroundColor: colors.darkGray, borderRadius: 2 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ color: colors.teal, fontWeight: 'bold' }}>Room Type</TableCell>
+              <TableCell sx={{ color: colors.teal, fontWeight: 'bold' }}>Details</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rooms.map((room) => (
+              <TableRow key={room.id}>
+                <TableCell sx={{ color: colors.light }}>{room.type}</TableCell>
+                <TableCell sx={{ color: colors.light }}>
+                  {room.details ? (
+                    <Box>
+                      <Typography>Bathrooms: {room.details.bathrooms}</Typography>
+                      <Typography>Size: {room.details.size}</Typography>
+                      <Typography>
+                        Amenities:{' '}
+                        {room.details.amenities.map((amenity, index) => {
+                          const IconComponent = MuiIcons[amenity.icon]; // Dynamically get the icon component
+                          return (
+                            <span key={index}>
+                              {IconComponent ? React.createElement(IconComponent) : null} {/* Render the icon */}
+                              {amenity.name}
+                              {index < room.details.amenities.length - 1 ? ', ' : ''}
+                            </span>
+                          );
+                        })}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    'No details'
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Snackbar for Success and Error Messages */}
+      <Snackbar
+        open={!!success}
+        autoHideDuration={3000}
+        onClose={() => setSuccess('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert severity="success" sx={{ width: '100%' }}>
+          {success}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={3000}
+        onClose={() => setError('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 };
 
