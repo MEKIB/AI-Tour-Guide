@@ -4,7 +4,7 @@ import { Box, CssBaseline } from '@mui/material';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
-
+import VerifyEmail from './components/VerifyEmail';
 // Hotel admin components
 import HotelAdminDashboard from './components/HotelAdmin/HotelAdminDashboard';
 import Dashboard from './components/HotelAdmin/Dashboard';
@@ -31,7 +31,7 @@ import BookingManagements from './components/SystemAdmin/BookingManagement';
 import PaymentMonitoring from './components/SystemAdmin/PaymentMonitoring';
 import SystemSettings from './components/SystemAdmin/SystemSettings';
 import ProfileSettings from './components/SystemAdmin/ProfileSettings';
-import HotelAdmin  from './components/SystemAdmin/HotelAdmin';
+import HotelAdmin from './components/SystemAdmin/HotelAdmin';
 
 import HomePage from './components/HomePage';
 import './App.css';
@@ -74,6 +74,7 @@ const App = () => {
             }
           />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/verify-email" element={<VerifyEmail />} /> {/* Moved to top-level */}
 
           {/* System Admin Routes */}
           <Route
@@ -110,6 +111,7 @@ const App = () => {
             <Route path="bookings" element={<BookingManagement />} />
             <Route path="check-booking" element={<CheckBooking />} />
             <Route path="profile" element={<Profile />} />
+            {/* Removed /verify-email from here */}
           </Route>
         </Routes>
       </Box>
