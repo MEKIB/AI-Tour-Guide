@@ -1,5 +1,5 @@
-import React from "react";
-import { useLocation, useNavigate, Link as RouterLink } from "react-router-dom";
+import React from 'react';
+import { useLocation, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -10,42 +10,24 @@ import {
   Breadcrumbs,
   Link,
   Rating,
-} from "@mui/material";
+} from '@mui/material';
 
 const FilteredHotels = () => {
   const location = useLocation();
   const filteredHotels = location.state?.filteredHotels || [];
   const navigate = useNavigate();
 
-  // Sort hotels by rating in descending order
-  const sortedHotels = [...filteredHotels].sort((a, b) => b.rating - a.rating);
+  const sortedHotels = [...filteredHotels].sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
   const handleHotelClick = (hotel) => {
-    navigate(`/hotel/${hotel.id}`, { state: { hotel: hotel } });
+    navigate(`/hotel/${hotel.id}`, { state: { hotel } }); // Use hotel._id for URL
   };
 
   const breadcrumbItems = [
-    <Link
-      component={RouterLink}
-      to="/"
-      key="home"
-      underline="hover"
-      color="#EEEEEE"
-      sx={{ fontSize: "1rem", "&:hover": { color: "#00ADB5" } }}
-    >
+    <Link component={RouterLink} to="/" key="home" underline="hover" color="#EEEEEE" sx={{ fontSize: '1rem', '&:hover': { color: '#00ADB5' } }}>
       Home
     </Link>,
-    <Link
-      component={RouterLink}
-      to="/hotelslocation"
-      key="hotels-locations"
-      underline="hover"
-      color="#EEEEEE"
-      sx={{ fontSize: "1rem", "&:hover": { color: "#00ADB5" } }}
-    >
-      Hotels and Locations
-    </Link>,
-    <Typography key="filtered-hotels" color="#00ADB5" sx={{ fontSize: "1rem" }}>
+    <Typography key="filtered-hotels" color="#00ADB5" sx={{ fontSize: '1rem' }}>
       Filtered Hotels
     </Typography>,
   ];
@@ -53,31 +35,15 @@ const FilteredHotels = () => {
   return (
     <Box
       sx={{
-        backgroundImage: `url(https://images.unsplash.com/photo-1564501049412-61c2a3083791)`, // Unsplash URL
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        minHeight: "100vh",
+        backgroundImage: `url(https://images.unsplash.com/photo-1564501049412-61c2a3083791)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        minHeight: '100vh',
         p: 3,
       }}
     >
-      {/* Semi-transparent overlay */}
-      <Box
-        sx={{
-          background: "rgba(34, 40, 49, 0.8)", // Dark overlay for better readability
-          minHeight: "100vh",
-          p: 3,
-        }}
-      >
-        <Breadcrumbs
-          separator="›"
-          aria-label="breadcrumb"
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            marginBottom: "30px",
-            color: "#EEEEEE",
-          }}
-        >
+      <Box sx={{ background: 'rgba(34, 40, 49, 0.8)', minHeight: '100vh', p: 3 }}>
+        <Breadcrumbs separator="›" aria-label="breadcrumb" sx={{ mb: 3, color: '#EEEEEE' }}>
           {breadcrumbItems}
         </Breadcrumbs>
 
@@ -87,16 +53,13 @@ const FilteredHotels = () => {
               <Card
                 onClick={() => handleHotelClick(hotel)}
                 sx={{
-                  cursor: "pointer",
-                  bgcolor: "#393E46",
-                  color: "#EEEEEE",
-                  borderRadius: "16px",
-                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
-                  transition: "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
-                  "&:hover": {
-                    transform: "scale(1.05)",
-                    boxShadow: "0 8px 30px rgba(0, 0, 0, 0.5)",
-                  },
+                  cursor: 'pointer',
+                  bgcolor: '#393E46',
+                  color: '#EEEEEE',
+                  borderRadius: '16px',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+                  transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+                  '&:hover': { transform: 'scale(1.05)', boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)' },
                 }}
               >
                 <CardMedia
@@ -104,29 +67,25 @@ const FilteredHotels = () => {
                   height="200"
                   image={hotel.image}
                   alt={hotel.name}
-                  sx={{
-                    borderTopLeftRadius: "16px",
-                    borderTopRightRadius: "16px",
-                  }}
+                  sx={{ borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}
                 />
                 <CardContent>
-                  <Typography variant="h6" component="h3" sx={{ color: "#00ADB5" }}>
+                  <Typography variant="h6" component="h3" sx={{ color: '#00ADB5' }}>
                     {hotel.name}
                   </Typography>
                   <Typography variant="body2" color="#EEEEEE">
                     {hotel.location}
                   </Typography>
-                  {/* Rating Component */}
-                  <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                     <Rating
                       name="read-only"
-                      value={hotel.rating}
+                      value={hotel.rating || 0}
                       precision={0.1}
                       readOnly
-                      sx={{ color: "#00ADB5" }}
+                      sx={{ color: '#00ADB5' }}
                     />
                     <Typography variant="body2" color="#EEEEEE" sx={{ ml: 1 }}>
-                      ({hotel.rating})
+                      ({hotel.rating || 'N/A'})
                     </Typography>
                   </Box>
                 </CardContent>
@@ -135,12 +94,7 @@ const FilteredHotels = () => {
           ))}
           {sortedHotels.length === 0 && (
             <Grid item xs={12}>
-              <Typography
-                variant="h6"
-                color="#EEEEEE"
-                align="center"
-                sx={{ mt: 4 }}
-              >
+              <Typography variant="h6" color="#EEEEEE" align="center" sx={{ mt: 4 }}>
                 No hotels found matching your criteria.
               </Typography>
             </Grid>
