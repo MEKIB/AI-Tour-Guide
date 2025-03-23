@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   FormControl,
   InputLabel,
@@ -10,34 +11,58 @@ import {
   Paper,
   styled,
 } from '@mui/material';
+import axios from 'axios';
 
 const ALL_LOCATIONS = 'All Locations';
 const ALL_FACILITY_TYPES = 'All Facility Types';
 
-// New background image (replace with your own image URL)
 const backgroundImage = 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&q=80';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   borderRadius: 16,
   backdropFilter: 'blur(10px)',
-  backgroundColor: 'rgba(57, 62, 70, 0.8)', // Semi-transparent dark background
-  border: '1px solid rgba(238, 238, 238, 0.1)', // Light border for glassmorphism effect
+  backgroundColor: 'rgba(57, 62, 70, 0.8)',
+  border: '1px solid rgba(238, 238, 238, 0.1)',
   boxShadow: '0px 8px 32px rgba(0, 0, 0, 0.2)',
-  color: '#EEEEEE', // Light text color
+  color: '#EEEEEE',
 }));
 
-const HotelFilter = ({ onApply = () => {} }) => {
+const HotelFilter = () => {
   const locations = [ALL_LOCATIONS, 'Bahir Dar', 'Gondar', 'Lalibela'];
   const facilityTypes = [ALL_FACILITY_TYPES, 'Hotels', 'Lodges', 'Restaurants'];
 
   const [selectedLocation, setSelectedLocation] = useState(ALL_LOCATIONS);
   const [selectedFacilityType, setSelectedFacilityType] = useState(ALL_FACILITY_TYPES);
+  const navigate = useNavigate();
 
   const handleLocationChange = (event) => setSelectedLocation(event.target.value);
   const handleFacilityTypeChange = (event) => setSelectedFacilityType(event.target.value);
 
-  const handleApplyFilters = () => onApply(selectedLocation, selectedFacilityType);
+  const handleApplyFilters = async () => {
+    try {
+      const response = await axios.get('http://localhost:2000/api/hotels', {
+        params: {
+          location: selectedLocation === ALL_LOCATIONS ? '' : selectedLocation,
+          facilityType: selectedFacilityType === ALL_FACILITY_TYPES ? '' : selectedFacilityType,
+        },
+      });
+
+      const filteredHotels = response.data.data.map((hotel) => ({
+        id: hotel._id,
+        name: hotel.name,
+        location: hotel.location,
+        image: hotel.images[0]?.url || '/placeholder.jpg',
+        rating: 4.5, // Adjust if backend provides this
+        HotelAdminId: hotel.HotelAdminId, // Ensure this is included
+      }));
+
+      navigate('/filtered-hotels', { state: { filteredHotels } });
+    } catch (error) {
+      console.error('Error fetching hotels:', error.response?.data || error.message);
+      navigate('/filtered-hotels', { state: { filteredHotels: [] } });
+    }
+  };
 
   return (
     <Box
@@ -53,7 +78,6 @@ const HotelFilter = ({ onApply = () => {} }) => {
     >
       <StyledPaper>
         <Box sx={{ minWidth: 300, maxWidth: 400 }}>
-          {/* Title */}
           <Typography
             variant="h4"
             gutterBottom
@@ -62,19 +86,11 @@ const HotelFilter = ({ onApply = () => {} }) => {
             Find Your Perfect Stay
           </Typography>
 
-          {/* Location Filter */}
-          <Typography
-            variant="subtitle1"
-            gutterBottom
-            sx={{ mb: 1, color: '#EEEEEE', fontWeight: '500' }}
-          >
+          <Typography variant="subtitle1" gutterBottom sx={{ mb: 1, color: '#EEEEEE', fontWeight: '500' }}>
             Location
           </Typography>
           <FormControl fullWidth sx={{ mb: 3 }}>
-            <InputLabel
-              id="location-filter-label"
-              sx={{ color: '#EEEEEE' }}
-            >
+            <InputLabel id="location-filter-label" sx={{ color: '#EEEEEE' }}>
               Select Location
             </InputLabel>
             <Select
@@ -82,44 +98,29 @@ const HotelFilter = ({ onApply = () => {} }) => {
               id="location-filter"
               value={selectedLocation}
               onChange={handleLocationChange}
-              displayEmpty
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': { borderColor: '#00ADB5' },
                   '&:hover fieldset': { borderColor: '#00ADB5' },
                   '&.Mui-focused fieldset': { borderColor: '#00ADB5' },
                 },
-                '& .MuiSelect-icon': {
-                  color: '#EEEEEE',
-                },
+                '& .MuiSelect-icon': { color: '#EEEEEE' },
                 color: '#EEEEEE',
               }}
             >
               {locations.map((location) => (
-                <MenuItem
-                  key={location}
-                  value={location}
-                  sx={{ color: '#222831' }}
-                >
+                <MenuItem key={location} value={location} sx={{ color: '#222831' }}>
                   {location}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
-          {/* Facility Type Filter */}
-          <Typography
-            variant="subtitle1"
-            gutterBottom
-            sx={{ mb: 1, color: '#EEEEEE', fontWeight: '500' }}
-          >
+          <Typography variant="subtitle1" gutterBottom sx={{ mb: 1, color: '#EEEEEE', fontWeight: '500' }}>
             Facility Type
           </Typography>
           <FormControl fullWidth sx={{ mb: 3 }}>
-            <InputLabel
-              id="facility-type-filter-label"
-              sx={{ color: '#EEEEEE' }}
-            >
+            <InputLabel id="facility-type-filter-label" sx={{ color: '#EEEEEE' }}>
               Select Facility Type
             </InputLabel>
             <Select
@@ -127,32 +128,24 @@ const HotelFilter = ({ onApply = () => {} }) => {
               id="facility-type-filter"
               value={selectedFacilityType}
               onChange={handleFacilityTypeChange}
-              displayEmpty
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': { borderColor: '#00ADB5' },
                   '&:hover fieldset': { borderColor: '#00ADB5' },
                   '&.Mui-focused fieldset': { borderColor: '#00ADB5' },
                 },
-                '& .MuiSelect-icon': {
-                  color: '#EEEEEE',
-                },
+                '& .MuiSelect-icon': { color: '#EEEEEE' },
                 color: '#EEEEEE',
               }}
             >
               {facilityTypes.map((type) => (
-                <MenuItem
-                  key={type}
-                  value={type}
-                  sx={{ color: '#222831' }}
-                >
+                <MenuItem key={type} value={type} sx={{ color: '#222831' }}>
                   {type}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
-          {/* Apply Button */}
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>
             <Button
               variant="contained"
