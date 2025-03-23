@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-
 import {
   Box,
   Typography,
@@ -19,11 +18,6 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import HotelIcon from '@mui/icons-material/Hotel';
-
-import { Box, Typography, TextField, Button, Container, Alert, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
 
 const Login = ({ setUserRole, setUserEmail, setUserName }) => {
   const navigate = useNavigate();
@@ -55,9 +49,6 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
 
       const { user, token } = response.data;
 
-      const { user, token } = response.data; // Destructure token from response.data
-
-
       console.log('Logged in as:', user.role || role);
       setUserRole(user.role || role);
       setUserEmail(user.email);
@@ -65,9 +56,6 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
 
       localStorage.setItem('token', token);
       console.log(token);
-
-      localStorage.setItem('token', token); // Store the token in local storage
-      console.log(token)
 
       navigate(`/${user.role || role}-dashboard`);
     } catch (err) {
@@ -90,8 +78,8 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
         justifyContent: 'center',
         textAlign: 'center',
         p: 3,
-        my:10,
-        marginLeft:'400px',
+        my: 10,
+        marginLeft: '400px',
       }}
     >
       <Container maxWidth="sm">
@@ -103,7 +91,6 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
             justifyContent: 'center',
             width: '100%',
             maxWidth: '400px',
-
             mx: 'auto',
           }}
         >
@@ -122,7 +109,6 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
           )}
 
           {showRoleSelection && (
-
             <Box sx={{ width: '100%', textAlign: 'center' }}>
               <Typography variant="h6" sx={{ mb: 3, color: '#EEEEEE' }}>
                 Select Your Role
@@ -173,22 +159,6 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
                 </Card>
               </Box>
             </Box>
-
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel id="role-select-label" sx={{ color: '#EEEEEE' }}>Role</InputLabel>
-              <Select
-                labelId="role-select-label"
-                id="role-select"
-                value={role}
-                label="Role"
-                onChange={(e) => handleRoleSelect(e.target.value)}
-                sx={{ bgcolor: '#393E46', borderRadius: 1, color: '#EEEEEE' }}
-              >
-                <MenuItem value="system-admin">System Admin</MenuItem>
-                <MenuItem value="hotel-admin">Hotel Admin</MenuItem>
-              </Select>
-            </FormControl>
-
           )}
 
           {showLoginForm && (
@@ -241,14 +211,6 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
                   Don't have an account? Sign Up
                 </Button>
               )}
-      <Button
-                fullWidth
-                sx={{ mt: 2, color: '#00ADB5' }}
-                onClick={() => navigate('/signup')}
-              >
-                Don't have an account? Sign Up
-              </Button>
-
             </Box>
           )}
         </Box>
