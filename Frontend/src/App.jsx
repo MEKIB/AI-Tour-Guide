@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
-import { Box } from "@mui/material"; // Import Box component
-import ButtonAppBar from "./components/Navbar/Navbar"; // Your navbar component
+import { Box } from "@mui/material";
+import ButtonAppBar from "./components/Navbar/Navbar";
 import Home from "./components/Home page/Home";
 import News from "./components/News/News";
 import EventsBoth from "./components/Events/EventsBoth";
@@ -14,7 +14,7 @@ import FilteredHotels from "./components/Tourist Facilities/Hotels and Lodges/Fi
 import HotelDetails from "./components/Tourist Facilities/Hotels and Lodges/HotelDetails";
 import Footer from "./components/Footer/Footer";
 import SignupPage from "./components/account/Signup";
-import LoginPage from "./components/account/Login"; // Your Login component
+import LoginPage from "./components/account/Login";
 import ForgotPasswordPage from "./components/account/ForgotPassword";
 import ResetPasswordPage from "./components/account/ResetPassword";
 import ChatbotLogic from "./components/Chatbot/ChatbotLogic";
@@ -27,13 +27,27 @@ import LakesAndWaterfallHome from "./components/Destinations/Lakes,waterfall/Lak
 import NationalParksHome from "./components/Destinations/National Parks and Community Protected Area/NationalParksHome";
 import HotelsLodges from "./components/Tourist Facilities/Hotels and Lodges/HotelsLodges";
 import HOMEPage from "./components/Home page/HOMEPage";
-
 import Bookings from "./components/profile/Bookings";
 
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Manage login state
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("token"));
+
+  // Clear token on page load/refresh
+  useEffect(() => {
+    localStorage.removeItem("token"); // Remove token on refresh
+    setIsAuthenticated(false); // Reset authentication state
+  }, []); // Empty dependency array means this runs once on mount
+
+  const handleLogin = () => {
+    setIsAuthenticated(true); // Update state on login
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Remove token on logout
+    setIsAuthenticated(false); // Update state on logout
+  };
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -41,13 +55,10 @@ function App() {
         const { latitude, longitude } = position.coords;
         // Simple location detection (replace with actual coordinates)
         if (latitude >= 12.5 && latitude <= 12.7) {
-          // Lalibela
           setUserLocation("Lalibela");
         } else if (latitude >= 12.3 && latitude <= 12.5) {
-          // Gondar
           setUserLocation("Gondar");
         } else if (latitude >= 11.5 && latitude <= 11.7) {
-          // Bahir Dar
           setUserLocation("BahirDar");
         }
         setPermissionGranted(true);
@@ -65,29 +76,19 @@ function App() {
     setUserLocation(event.target.value);
   };
 
-  // Handle login
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-  };
-
-  // Handle logout
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-  };
-
   return (
     <Box
       sx={{
-        marginLeft: "-8px", // Remove default margin
-        padding: 2, // Remove default padding
-        width: "100%", // Ensure full width
-        minHeight: "100vh", // Ensure full height
-        backgroundColor: "#393E46", // Set background color
-        overflowX: "hidden", // Prevent horizontal overflow
+        marginLeft: "-8px",
+        padding: 2,
+        width: "100%",
+        minHeight: "100vh",
+        backgroundColor: "#393E46",
+        overflowX: "hidden",
       }}
     >
       {/* Navbar */}
-      <ButtonAppBar isLoggedIn={isLoggedIn} onLogout={handleLogout} />
+      <ButtonAppBar isLoggedIn={isAuthenticated} onLogout={handleLogout} />
 
       {/* Routes */}
       <Routes>
@@ -108,7 +109,7 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route
           path="/login"
-          element={<LoginPage onLogin={handleLogin} />} // Pass handleLogin to LoginPage
+          element={<LoginPage onLogin={handleLogin} onLogout={handleLogout} />}
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -116,7 +117,7 @@ function App() {
         <Route path="/bureau" element={<Bureau />} />
         <Route path="/mandate" element={<Merge />} />
         <Route path="/managment" element={<Managment />} />
-        <Route path="/bookings" element={<Bookings />} /> {/* Add Bookings route */}
+        <Route path="/bookings" element={<Bookings />} />
       </Routes>
 
       {/* Chatbot */}

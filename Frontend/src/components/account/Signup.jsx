@@ -15,48 +15,37 @@ import {
   Checkbox,
   FormHelperText,
   Snackbar,
-  CssBaseline, // Add this import
+  CssBaseline,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { Email, Lock, Person, Phone, Description } from "@mui/icons-material"; // Import icons
+import { Email, Lock, Person, Phone, Description } from "@mui/icons-material";
 
 // Define the color palette for dark theme
 const colors = {
-  primary: "#00ADB5", // Teal
-  secondary: "#393E46", // Medium gray
-  background: "#222831", // Dark gray
-  text: "#EEEEEE", // Light gray
+  primary: "#00ADB5",
+  secondary: "#393E46",
+  background: "#222831",
+  text: "#EEEEEE",
 };
 
 // Custom dark theme for consistent styling
 const theme = createTheme({
   palette: {
-    mode: "dark", // Enable dark mode
-    primary: {
-      main: colors.primary,
-    },
-    secondary: {
-      main: colors.secondary,
-    },
-    background: {
-      default: colors.background,
-      paper: colors.secondary,
-    },
-    text: {
-      primary: colors.text,
-    },
+    mode: "dark",
+    primary: { main: colors.primary },
+    secondary: { main: colors.secondary },
+    background: { default: colors.background, paper: colors.secondary },
+    text: { primary: colors.text },
   },
   typography: {
     fontFamily: "Roboto, sans-serif",
-    h4: {
-      fontWeight: 600,
-      color: colors.text,
-    },
+    h4: { fontWeight: 600, color: colors.text },
   },
 });
 
 const SignupPage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -83,6 +72,7 @@ const SignupPage = () => {
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const validatePassword = (password, confirmPassword) => {
     const newValidation = {
@@ -98,10 +88,10 @@ const SignupPage = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
+    const { name, value, files, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: files ? files[0] : value,
+      [name]: type === "checkbox" ? checked : files ? files[0] : value,
     }));
 
     if (name === "password" || name === "confirmPassword") {
@@ -128,8 +118,10 @@ const SignupPage = () => {
     return "success";
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
     const newErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
     const phoneRegex = /^\+?[0-9]{7,15}$/;
@@ -139,7 +131,7 @@ const SignupPage = () => {
     if (!emailRegex.test(formData.email)) newErrors.email = "Invalid email format";
     if (!phoneRegex.test(formData.phone)) newErrors.phone = "Invalid phone number";
     if (!formData.passportOrId) newErrors.passportOrId = "Passport or ID is required";
-    if (!formData.acceptedTerms) newErrors.acceptedTerms = "You must accept the terms and conditions";
+    if (!formData.acceptedTerms) newErrors.acceptedTerms = "You must accept the terms";
 
     const passwordValid = Object.values(validation).every(Boolean);
     if (!passwordValid) newErrors.password = "Password does not meet requirements";
@@ -147,14 +139,42 @@ const SignupPage = () => {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      setAlert({ type: "success", message: "Form submitted successfully!" });
-      console.log("Form Data:", formData); // Log form data for debugging
+      try {
+        const formDataToSend = new FormData();
+        formDataToSend.append("firstName", formData.firstName);
+        formDataToSend.append("middleName", formData.middleName);
+        formDataToSend.append("lastName", formData.lastName);
+        formDataToSend.append("email", formData.email);
+        formDataToSend.append("phone", formData.phone);
+        formDataToSend.append("password", formData.password);
+        formDataToSend.append("confirmPassword", formData.confirmPassword);
+        formDataToSend.append("passportOrId", formData.passportOrId);
+        formDataToSend.append("acceptedTerms", formData.acceptedTerms);
+
+        const response = await fetch("http://localhost:2000/register", {
+          method: "POST",
+          body: formDataToSend,
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setAlert({ type: "success", message: "Registration successful!" });
+          localStorage.setItem("token", data.token); // Store JWT token
+          setTimeout(() => navigate("/home"), 2000); // Redirect after 2 seconds
+        } else {
+          setAlert({ type: "error", message: data.message || "Registration failed" });
+        }
+      } catch (error) {
+        setAlert({ type: "error", message: "Server error. Please try again later." });
+      }
     }
+    setLoading(false);
   };
 
   return (
     <ThemeProvider theme={theme}>
-      <CssBaseline /> {/* Add CssBaseline here */}
+      <CssBaseline />
       <Box
         sx={{
           background: `linear-gradient(135deg, ${colors.background}, ${colors.secondary})`,
@@ -193,7 +213,6 @@ const SignupPage = () => {
 
             <form onSubmit={handleSubmit}>
               <Grid container spacing={3}>
-                {/* Name Fields */}
                 <Grid item xs={12} md={4}>
                   <TextField
                     fullWidth
@@ -241,7 +260,6 @@ const SignupPage = () => {
                   />
                 </Grid>
 
-                {/* Contact Info */}
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
@@ -276,7 +294,6 @@ const SignupPage = () => {
                   />
                 </Grid>
 
-                {/* Password */}
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
@@ -333,7 +350,6 @@ const SignupPage = () => {
                   </Box>
                 </Grid>
 
-                {/* Confirm Password */}
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
@@ -370,7 +386,6 @@ const SignupPage = () => {
                   </Box>
                 </Grid>
 
-                {/* Passport or ID Upload */}
                 <Grid item xs={12}>
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="body1" sx={{ color: colors.text, mb: 1 }}>
@@ -393,7 +408,6 @@ const SignupPage = () => {
                   </Box>
                 </Grid>
 
-                {/* Terms and Conditions */}
                 <Grid item xs={12}>
                   <FormControlLabel
                     control={
@@ -408,7 +422,7 @@ const SignupPage = () => {
                       <Typography variant="body2">
                         I accept the{" "}
                         <a
-                          href="https://example.com/terms" // Replace with your actual terms URL
+                          href="https://example.com/terms"
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ color: colors.primary, textDecoration: "none" }}
@@ -423,13 +437,13 @@ const SignupPage = () => {
                   )}
                 </Grid>
 
-                {/* Submit Button */}
                 <Grid item xs={12}>
                   <Button
                     fullWidth
                     variant="contained"
                     size="large"
                     type="submit"
+                    disabled={loading}
                     sx={{
                       mt: 2,
                       py: 1.5,
@@ -443,11 +457,10 @@ const SignupPage = () => {
                       },
                     }}
                   >
-                    Sign Up
+                    {loading ? "Signing Up..." : "Sign Up"}
                   </Button>
                 </Grid>
 
-                {/* Login Link */}
                 <Grid item xs={12}>
                   <Typography variant="body2" align="center" sx={{ color: colors.text }}>
                     Already have an account?{" "}
@@ -469,7 +482,6 @@ const SignupPage = () => {
         </Container>
       </Box>
 
-      {/* Success and Error Messages */}
       <Snackbar
         open={!!alert}
         autoHideDuration={3000}

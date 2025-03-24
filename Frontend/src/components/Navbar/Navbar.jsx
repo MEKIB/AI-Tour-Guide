@@ -14,7 +14,7 @@ import { styled } from "@mui/material/styles";
 import Modal from "@mui/material/Modal";
 import CloseIcon from "@mui/icons-material/Close";
 import AccountCircle from "@mui/icons-material/AccountCircle";
-import ArrowDropDown from "@mui/icons-material/ArrowDropDown"; // Added drop-down icon
+import ArrowDropDown from "@mui/icons-material/ArrowDropDown";
 import SearchIcon from "@mui/icons-material/Search";
 import InputBase from "@mui/material/InputBase";
 import ReactCountryFlag from "react-country-flag";
@@ -28,7 +28,9 @@ import {
   Person as ProfileIcon,
   Logout as LogoutIcon,
 } from "@mui/icons-material";
-import { debounce } from "lodash"; // For debouncing the search input
+import { debounce } from "lodash";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 
 // Define the color palette
 const colors = {
@@ -36,7 +38,7 @@ const colors = {
   secondary: "#393E46",
   accent: "#00ADB5",
   background: "#EEEEEE",
-  searchModalBackground: "#393E46", // Updated search modal background color
+  searchModalBackground: "#393E46",
 };
 
 // Styled components
@@ -117,7 +119,7 @@ const SearchResultsDropdown = styled(Box)(({ theme }) => ({
   top: "100%",
   left: 0,
   right: 0,
-  backgroundColor: colors.searchModalBackground, // Updated background color
+  backgroundColor: colors.searchModalBackground,
   border: `1px solid ${colors.secondary}`,
   borderRadius: theme.shape.borderRadius,
   boxShadow: theme.shadows[5],
@@ -143,6 +145,16 @@ const languages = [
   { name: "Spanish", code: "ES" },
 ];
 
+// Original handleLogout outside the component
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  setIsLoggedIn(false);
+  setSuccess("Logged out successfully!");
+  setError("");
+  onLogout();
+  navigate("/login");
+};
+
 export default function ButtonAppBar({ isLoggedIn, onLogout }) {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
@@ -153,15 +165,23 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [anchorElUser, setAnchorElUser] = useState(null);
+  const [isLoggedInState, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  // Sync local state with prop
+  useEffect(() => {
+    setIsLoggedIn(isLoggedIn); // Sync with prop from App.jsx
+  }, [isLoggedIn]);
 
   // Expanded search data to include all searchable items
   const searchData = [
     { name: "Hotels and Locations", path: "/hotelslocation" },
     { name: "Filtered Hotels", path: "/filtered-hotels" },
     { name: "Hotel Details", path: "/hoteldetails" },
-    { name: "Unison Hotel", path: "/hotel/1" }, // Example hotel with ID 1
-    { name: "Leoages Lodge", path: "/hotel/2" }, // Example lodge with ID 2
+    { name: "Unison Hotel", path: "/hotel/1" },
+    { name: "Leoages Lodge", path: "/hotel/2" },
     { name: "Sign Up", path: "/signup" },
   ];
 
@@ -255,9 +275,14 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
     handleCloseLanguageModal();
   };
 
-  // Handler for logout
-  const handleLogout = () => {
+  // Handle logout inside the component
+  const handleLogoutInside = () => {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    setSuccess("Logged out successfully!");
+    setError("");
     onLogout();
+    navigate("/login");
     handleCloseUserMenu();
   };
 
@@ -518,7 +543,7 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
                 color="inherit"
               >
                 <AccountCircle />
-                <ArrowDropDown /> {/* Added drop-down icon */}
+                <ArrowDropDown />
               </StyledAccountButton>
               <StyledMenu
                 id="user-menu"
@@ -555,7 +580,7 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
                       <HelpIcon sx={{ mr: 2 }} />
                       Help
                     </MenuItem>
-                    <MenuItem onClick={handleLogout}>
+                    <MenuItem onClick={handleLogoutInside}>
                       <LogoutIcon sx={{ mr: 2 }} />
                       Log out
                     </MenuItem>
@@ -639,6 +664,28 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
 
       {/* Add padding to prevent content overlap */}
       <Box sx={{ paddingTop: "64px" }}></Box>
+
+      {/* Success and Error Messages */}
+      <Snackbar
+        open={!!success}
+        autoHideDuration={3000}
+        onClose={() => setSuccess("")}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="success" sx={{ width: "100%" }}>
+          {success}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={3000}
+        onClose={() => setError("")}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="error" sx={{ width: "100%" }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

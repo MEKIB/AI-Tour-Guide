@@ -13,69 +13,69 @@ import {
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate, Link } from "react-router-dom";
-import { Email, Lock } from "@mui/icons-material"; // Import icons
+import { Email, Lock } from "@mui/icons-material";
 
 // Define the color palette for dark theme
 const colors = {
-  primary: "#00ADB5", // Teal
-  secondary: "#393E46", // Medium gray
-  background: "#222831", // Dark gray
-  text: "#EEEEEE", // Light gray
+  primary: "#00ADB5",
+  secondary: "#393E46",
+  background: "#222831",
+  text: "#EEEEEE",
 };
 
 // Custom dark theme for consistent styling
 const theme = createTheme({
   palette: {
-    mode: "dark", // Enable dark mode
-    primary: {
-      main: colors.primary,
-    },
-    secondary: {
-      main: colors.secondary,
-    },
-    background: {
-      default: colors.background,
-      paper: colors.secondary,
-    },
-    text: {
-      primary: colors.text,
-    },
+    mode: "dark",
+    primary: { main: colors.primary },
+    secondary: { main: colors.secondary },
+    background: { default: colors.background, paper: colors.secondary },
+    text: { primary: colors.text },
   },
   typography: {
     fontFamily: "Roboto, sans-serif",
-    h4: {
-      fontWeight: 600,
-      color: colors.text,
-    },
+    h4: { fontWeight: 600, color: colors.text },
   },
 });
-
-// Predefined user account for login
-const userAccount = {
-  email: "user@example.com",
-  password: "pass",
-};
 
 const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   // Handle login form submission
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
-    // Hardcoded validation
-    if (email === userAccount.email && password === userAccount.password) {
-      setSuccess("Login successful!");
-      setError("");
-      onLogin(); // Call the onLogin function passed from App.jsx
-      navigate("/"); // Redirect to home page
-    } else {
-      setError("Invalid email or password.");
-      setSuccess("");
+    try {
+      const response = await fetch("http://localhost:2000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess("Login successful!");
+        localStorage.setItem("token", data.token); // Store JWT token
+        onLogin(); // Call the onLogin function passed from App.jsx
+        setTimeout(() => navigate("/"), 2000); // Redirect to home page after 2 seconds
+      } else {
+        setError(data.message || "Login failed");
+      }
+    } catch (err) {
+      setError("Server error. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -142,6 +142,7 @@ const LoginPage = ({ onLogin }) => {
                   color="primary"
                   size="large"
                   fullWidth
+                  disabled={loading}
                   sx={{
                     mt: 2,
                     py: 1.5,
@@ -155,7 +156,7 @@ const LoginPage = ({ onLogin }) => {
                     },
                   }}
                 >
-                  Login
+                  {loading ? "Logging In..." : "Login"}
                 </Button>
               </form>
 
@@ -163,7 +164,7 @@ const LoginPage = ({ onLogin }) => {
               <Box sx={{ mt: 2, textAlign: "center" }}>
                 <Typography variant="body2" sx={{ color: colors.text }}>
                   <Link
-                    to="/forgot-password" // Replace with your forgot password route
+                    to="/forgot-password"
                     style={{
                       color: colors.primary,
                       textDecoration: "none",
