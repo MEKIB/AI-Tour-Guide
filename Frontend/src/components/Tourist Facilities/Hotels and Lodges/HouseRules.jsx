@@ -1,14 +1,18 @@
-import React from 'react'
-import Rules from './Rules'
-import HotelFAQs from './HotelsFAQ'
+import React from 'react';
+import Rules from './Rules';
+import HotelFAQs from './HotelsFAQ';
 
-function HouseRules() {
+function HouseRules({ hotelAdminId }) {
   return (
- <>
- <Rules/>
- <HotelFAQs/>
- </>
-)
+    <>
+      <Rules hotelAdminId={hotelAdminId} />
+      <HotelFAQs />
+    </>
+  );
 }
 
-export default HouseRules
+HouseRules.defaultProps = {
+  hotelAdminId: null, // Default to null if not provided
+};
+
+export default HouseRules;

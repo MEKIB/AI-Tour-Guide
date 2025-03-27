@@ -34,8 +34,27 @@ import Profile from "./components/profile/Profile";
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
+
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("token"));
+
+  // Clear token on page load/refresh
+  useEffect(() => {
+    localStorage.removeItem("token"); // Remove token on refresh
+    setIsAuthenticated(false); // Reset authentication state
+  }, []); // Empty dependency array means this runs once on mount
+
+  const handleLogin = () => {
+    setIsAuthenticated(true); // Update state on login
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Remove token on logout
+    setIsAuthenticated(false); // Update state on logout
+  };
+
 
   useEffect(() => {
     // Check for existing user session
@@ -70,6 +89,7 @@ function App() {
     setUserLocation(event.target.value);
   };
 
+
   const handleLogin = (userData) => {
     setIsLoggedIn(true);
     setUser(userData);
@@ -82,6 +102,7 @@ function App() {
     localStorage.removeItem('user');
   };
 
+
   return (
     <Box
       sx={{
@@ -93,11 +114,16 @@ function App() {
         overflowX: "hidden",
       }}
     >
+
       <ButtonAppBar 
         isLoggedIn={isLoggedIn} 
         onLogout={handleLogout} 
         user={user} 
       />
+
+      {/* Navbar */}
+      <ButtonAppBar isLoggedIn={isAuthenticated} onLogout={handleLogout} />
+
 
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
@@ -115,7 +141,14 @@ function App() {
         <Route path="/hoteldetails" element={<HotelDetails />} />
         <Route path="/hotel/:id" element={<HotelsLodges />} />
         <Route path="/signup" element={<SignupPage />} />
+
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+
+        <Route
+          path="/login"
+          element={<LoginPage onLogin={handleLogin} onLogout={handleLogout} />}
+        />
+
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/amhara" element={<AmharaBoth />} />
@@ -123,8 +156,10 @@ function App() {
         <Route path="/mandate" element={<Merge />} />
         <Route path="/managment" element={<Managment />} />
         <Route path="/bookings" element={<Bookings />} />
+
         <Route path="/reserve" element={<Reserve />} />
         <Route path="/profile" element={<Profile />} />
+
       </Routes>
 
       <ChatbotLogic />

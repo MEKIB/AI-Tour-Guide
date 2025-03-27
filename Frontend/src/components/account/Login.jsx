@@ -14,7 +14,10 @@ import {
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate, Link } from "react-router-dom";
 import { Email, Lock } from "@mui/icons-material";
+
 import Img from "../../assets/11.png";
+=======
+
 
 // Define the color palette for dark theme
 const colors = {
@@ -27,6 +30,7 @@ const colors = {
 const theme = createTheme({
   palette: {
     mode: "dark",
+
     primary: {
       main: colors.primary,
     },
@@ -40,15 +44,19 @@ const theme = createTheme({
     text: {
       primary: colors.text,
     },
+
+    primary: { main: colors.primary },
+    secondary: { main: colors.secondary },
+    background: { default: colors.background, paper: colors.secondary },
+    text: { primary: colors.text },
+
   },
   typography: {
     fontFamily: "Roboto, sans-serif",
-    h4: {
-      fontWeight: 600,
-      color: colors.text,
-    },
+    h4: { fontWeight: 600, color: colors.text },
   },
 });
+
 
 // Predefined user account with profile image
 const userAccount = {
@@ -58,15 +66,37 @@ const userAccount = {
   name: "John Doe" // Added name for the user menu
 };
 
+
 const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+
   const handleLogin = (e) => {
+
+  // Handle login form submission
+  const handleLogin = async (e) => {
+
     e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch("http://localhost:2000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
 
     if (email === userAccount.email && password === userAccount.password) {
       setSuccess("Login successful!");
@@ -76,6 +106,20 @@ const LoginPage = ({ onLogin }) => {
     } else {
       setError("Invalid email or password.");
       setSuccess("");
+
+      if (response.ok) {
+        setSuccess("Login successful!");
+        localStorage.setItem("token", data.token); // Store JWT token
+        onLogin(); // Call the onLogin function passed from App.jsx
+        setTimeout(() => navigate("/"), 2000); // Redirect to home page after 2 seconds
+      } else {
+        setError(data.message || "Login failed");
+      }
+    } catch (err) {
+      setError("Server error. Please try again later.");
+    } finally {
+      setLoading(false);
+
     }
   };
 
@@ -142,6 +186,7 @@ const LoginPage = ({ onLogin }) => {
                   color="primary"
                   size="large"
                   fullWidth
+                  disabled={loading}
                   sx={{
                     mt: 2,
                     py: 1.5,
@@ -155,7 +200,7 @@ const LoginPage = ({ onLogin }) => {
                     },
                   }}
                 >
-                  Login
+                  {loading ? "Logging In..." : "Login"}
                 </Button>
               </form>
 

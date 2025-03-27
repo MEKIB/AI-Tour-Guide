@@ -14,45 +14,40 @@ const SignUp = () => {
     password: '',
     confirmPassword: '',
     phoneNumber: '',
-    passportId: null, // Store Passport/ID file
-    tradeLicense: null, // Store Hotel Trade License file
-    managerId: null, // Store Manager ID file
-    agreedToTerms: false, // Store agreement checkbox state
+    passportId: null,
+    tradeLicense: null,
+    managerId: null,
+    agreedToTerms: false,
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [filePreview, setFilePreview] = useState(null); // For Passport/ID preview
+  const [filePreview, setFilePreview] = useState(null);
 
-  // Predefined agreement file (stored in the system or a URL)
-  const agreementFile = '/path/to/agreement.pdf'; // Replace with the actual path or URL to your agreement file
+  const agreementFile = '/path/to/agreement.pdf'; // Replace with actual path or URL
 
   const handleSignUp = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Validate password and confirm password
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
       return;
     }
 
-    // Validate file uploads
     if (!formData.passportId || !formData.tradeLicense || !formData.managerId) {
       setError('Please upload all required documents');
       setLoading(false);
       return;
     }
 
-    // Validate agreement checkbox
     if (!formData.agreedToTerms) {
       setError('You must agree to the terms and conditions');
       setLoading(false);
       return;
     }
 
-    // Prepare form data for API request
     const data = new FormData();
     data.append('firstName', formData.firstName);
     data.append('middleName', formData.middleName);
@@ -71,11 +66,11 @@ const SignUp = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setLoading(false);
-      alert(response.data.message); // "Account created successfully"
-      navigate('/login');
+      alert(response.data.message); // "Verification code sent to your email"
+      navigate('/verify-email', { state: { email: formData.email } }); // Pass email to verification page
     } catch (err) {
       setLoading(false);
-      setError(err.response?.data?.message || 'Failed to create account');
+      setError(err.response?.data?.message || 'Failed to send verification code');
     }
   };
 
@@ -94,8 +89,6 @@ const SignUp = () => {
         ...prevData,
         [fieldName]: file,
       }));
-
-      // Create a preview URL for Passport/ID (optional)
       if (fieldName === 'passportId') {
         const previewURL = URL.createObjectURL(file);
         setFilePreview(previewURL);
@@ -103,7 +96,6 @@ const SignUp = () => {
     }
   };
 
-  // Open the agreement file in a new tab
   const handleViewAgreement = () => {
     window.open(agreementFile, '_blank');
   };
@@ -180,9 +172,7 @@ const SignUp = () => {
 
             {/* Two-Column Layout */}
             <Grid container spacing={3}>
-              {/* Left Column */}
               <Grid item xs={12} md={6}>
-                {/* First Name */}
                 <TextField
                   label="First Name"
                   variant="outlined"
@@ -193,17 +183,11 @@ const SignUp = () => {
                   sx={{ mb: 3 }}
                   InputProps={{
                     style: { color: '#EEEEEE' },
-                    sx: {
-                      bgcolor: '#393E46',
-                      borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' },
-                    },
+                    sx: { bgcolor: '#393E46', borderRadius: 1 },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
                   required
                 />
-
-                {/* Middle Name */}
                 <TextField
                   label="Middle Name"
                   variant="outlined"
@@ -214,16 +198,10 @@ const SignUp = () => {
                   sx={{ mb: 3 }}
                   InputProps={{
                     style: { color: '#EEEEEE' },
-                    sx: {
-                      bgcolor: '#393E46',
-                      borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' },
-                    },
+                    sx: { bgcolor: '#393E46', borderRadius: 1 },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
                 />
-
-                {/* Last Name */}
                 <TextField
                   label="Last Name"
                   variant="outlined"
@@ -234,17 +212,11 @@ const SignUp = () => {
                   sx={{ mb: 3 }}
                   InputProps={{
                     style: { color: '#EEEEEE' },
-                    sx: {
-                      bgcolor: '#393E46',
-                      borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' },
-                    },
+                    sx: { bgcolor: '#393E46', borderRadius: 1 },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
                   required
                 />
-
-                {/* Location */}
                 <TextField
                   label="Location"
                   variant="outlined"
@@ -255,20 +227,13 @@ const SignUp = () => {
                   sx={{ mb: 3 }}
                   InputProps={{
                     style: { color: '#EEEEEE' },
-                    sx: {
-                      bgcolor: '#393E46',
-                      borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' },
-                    },
+                    sx: { bgcolor: '#393E46', borderRadius: 1 },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
                   required
                 />
               </Grid>
-
-              {/* Right Column */}
               <Grid item xs={12} md={6}>
-                {/* Email */}
                 <TextField
                   label="Email"
                   variant="outlined"
@@ -279,17 +244,11 @@ const SignUp = () => {
                   sx={{ mb: 3 }}
                   InputProps={{
                     style: { color: '#EEEEEE' },
-                    sx: {
-                      bgcolor: '#393E46',
-                      borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' },
-                    },
+                    sx: { bgcolor: '#393E46', borderRadius: 1 },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
                   required
                 />
-
-                {/* Password */}
                 <TextField
                   label="Password"
                   type="password"
@@ -301,17 +260,11 @@ const SignUp = () => {
                   sx={{ mb: 3 }}
                   InputProps={{
                     style: { color: '#EEEEEE' },
-                    sx: {
-                      bgcolor: '#393E46',
-                      borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' },
-                    },
+                    sx: { bgcolor: '#393E46', borderRadius: 1 },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
                   required
                 />
-
-                {/* Confirm Password */}
                 <TextField
                   label="Confirm Password"
                   type="password"
@@ -323,17 +276,11 @@ const SignUp = () => {
                   sx={{ mb: 3 }}
                   InputProps={{
                     style: { color: '#EEEEEE' },
-                    sx: {
-                      bgcolor: '#393E46',
-                      borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' },
-                    },
+                    sx: { bgcolor: '#393E46', borderRadius: 1 },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
                   required
                 />
-
-                {/* Phone Number */}
                 <TextField
                   label="Phone Number"
                   variant="outlined"
@@ -344,11 +291,7 @@ const SignUp = () => {
                   sx={{ mb: 3 }}
                   InputProps={{
                     style: { color: '#EEEEEE' },
-                    sx: {
-                      bgcolor: '#393E46',
-                      borderRadius: 1,
-                      '&:focus': { bgcolor: '#00ADB5' },
-                    },
+                    sx: { bgcolor: '#393E46', borderRadius: 1 },
                   }}
                   InputLabelProps={{ style: { color: '#EEEEEE' } }}
                   required
@@ -359,17 +302,13 @@ const SignUp = () => {
             {/* File Uploads */}
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
-                {/* Passport/ID File Upload */}
                 <Box sx={{ mb: 3 }}>
                   <TextField
                     label="Passport/ID"
                     type="file"
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                      style: { color: '#EEEEEE' },
-                    }}
+                    InputLabelProps={{ shrink: true, style: { color: '#EEEEEE' } }}
                     inputProps={{ accept: 'image/*,.pdf' }}
                     onChange={(e) => handleFileChange(e, 'passportId')}
                     sx={{ bgcolor: '#393E46', borderRadius: 1 }}
@@ -392,19 +331,14 @@ const SignUp = () => {
                   )}
                 </Box>
               </Grid>
-
               <Grid item xs={12} md={6}>
-                {/* Hotel Trade License File Upload */}
                 <Box sx={{ mb: 3 }}>
                   <TextField
                     label="Hotel Trade License"
                     type="file"
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                      style: { color: '#EEEEEE' },
-                    }}
+                    InputLabelProps={{ shrink: true, style: { color: '#EEEEEE' } }}
                     inputProps={{ accept: 'image/*,.pdf' }}
                     onChange={(e) => handleFileChange(e, 'tradeLicense')}
                     sx={{ bgcolor: '#393E46', borderRadius: 1 }}
@@ -412,19 +346,14 @@ const SignUp = () => {
                   />
                 </Box>
               </Grid>
-
               <Grid item xs={12} md={6}>
-                {/* Manager ID File Upload */}
                 <Box sx={{ mb: 3 }}>
                   <TextField
                     label="Manager ID"
                     type="file"
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                      style: { color: '#EEEEEE' },
-                    }}
+                    InputLabelProps={{ shrink: true, style: { color: '#EEEEEE' } }}
                     inputProps={{ accept: 'image/*,.pdf' }}
                     onChange={(e) => handleFileChange(e, 'managerId')}
                     sx={{ bgcolor: '#393E46', borderRadius: 1 }}
@@ -434,7 +363,6 @@ const SignUp = () => {
               </Grid>
             </Grid>
 
-            {/* Sign Up Button */}
             <Button
               type="submit"
               variant="contained"
@@ -450,10 +378,8 @@ const SignUp = () => {
                 mt: 3,
               }}
             >
-              {loading ? 'Creating Account...' : 'Sign Up'}
+              {loading ? 'Sending Verification...' : 'Sign Up'}
             </Button>
-
-            {/* Log In Button */}
             <Button
               fullWidth
               sx={{ mt: 2, color: '#00ADB5' }}

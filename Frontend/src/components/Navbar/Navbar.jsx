@@ -30,6 +30,10 @@ import {
 } from "@mui/icons-material";
 import { debounce } from "lodash";
 
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+
+
 // Define the color palette
 const colors = {
   primary: "#222831",
@@ -151,6 +155,7 @@ const languages = [
   { name: "Spanish", code: "ES" },
 ];
 
+
 // Expanded search data to include all searchable items
 const searchData = [
   { name: "Hotels and Locations", path: "/hotelslocation" },
@@ -162,6 +167,19 @@ const searchData = [
 ];
 
 export default function Navbar({ isLoggedIn, onLogout, user }) {
+
+// Original handleLogout outside the component
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  setIsLoggedIn(false);
+  setSuccess("Logged out successfully!");
+  setError("");
+  onLogout();
+  navigate("/login");
+};
+
+export default function ButtonAppBar({ isLoggedIn, onLogout }) {
+
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
@@ -171,7 +189,27 @@ export default function Navbar({ isLoggedIn, onLogout, user }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [anchorElUser, setAnchorElUser] = useState(null);
+  const [isLoggedInState, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+
+
+  // Sync local state with prop
+  useEffect(() => {
+    setIsLoggedIn(isLoggedIn); // Sync with prop from App.jsx
+  }, [isLoggedIn]);
+
+  // Expanded search data to include all searchable items
+  const searchData = [
+    { name: "Hotels and Locations", path: "/hotelslocation" },
+    { name: "Filtered Hotels", path: "/filtered-hotels" },
+    { name: "Hotel Details", path: "/hoteldetails" },
+    { name: "Unison Hotel", path: "/hotel/1" },
+    { name: "Leoages Lodge", path: "/hotel/2" },
+    { name: "Sign Up", path: "/signup" },
+  ];
+
 
   // Debounced search function
   const handleSearch = debounce((query) => {
@@ -263,9 +301,14 @@ export default function Navbar({ isLoggedIn, onLogout, user }) {
     handleCloseLanguageModal();
   };
 
-  // Handler for logout
-  const handleLogout = () => {
+  // Handle logout inside the component
+  const handleLogoutInside = () => {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    setSuccess("Logged out successfully!");
+    setError("");
     onLogout();
+    navigate("/login");
     handleCloseUserMenu();
   };
 
@@ -526,6 +569,7 @@ export default function Navbar({ isLoggedIn, onLogout, user }) {
                 color="inherit"
                 sx={{ display: 'flex', alignItems: 'center' }}
               >
+
                 {isLoggedIn && user?.profileImage ? (
                   <>
                     <ProfileImage src={user.profileImage} alt="Profile" />
@@ -537,6 +581,10 @@ export default function Navbar({ isLoggedIn, onLogout, user }) {
                     <ArrowDropDown />
                   </>
                 )}
+
+                <AccountCircle />
+                <ArrowDropDown />
+
               </StyledAccountButton>
               <StyledMenu
                 id="user-menu"
@@ -613,7 +661,7 @@ export default function Navbar({ isLoggedIn, onLogout, user }) {
                       <HelpIcon sx={{ mr: 2 }} />
                       Help
                     </MenuItem>
-                    <MenuItem onClick={handleLogout}>
+                    <MenuItem onClick={handleLogoutInside}>
                       <LogoutIcon sx={{ mr: 2 }} />
                       Log out
                     </MenuItem>
@@ -703,6 +751,28 @@ export default function Navbar({ isLoggedIn, onLogout, user }) {
 
       {/* Add padding to prevent content overlap */}
       <Box sx={{ paddingTop: "64px" }}></Box>
+
+      {/* Success and Error Messages */}
+      <Snackbar
+        open={!!success}
+        autoHideDuration={3000}
+        onClose={() => setSuccess("")}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="success" sx={{ width: "100%" }}>
+          {success}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={3000}
+        onClose={() => setError("")}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="error" sx={{ width: "100%" }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

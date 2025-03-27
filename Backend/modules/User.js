@@ -1,14 +1,30 @@
 import mongoose from "mongoose";
 
-const userSchema=new mongoose.Schema({
-    username:String,
-    fname:String,
-    lname:String,
-    email:String,
-    pno:Number,
-    password:String
-})
+const userSchema = new mongoose.Schema({
+  firstName: { type: String, required: true },
+  middleName: { type: String },
+  lastName: { type: String, required: true },
+  email: { 
+    type: String, 
+    required: true, 
+    unique: true,
+    match: [/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i, 'Please enter a valid email']
+  },
+  phone: { 
+    type: String, 
+    required: true,
+    match: [/^\+?[0-9]{7,15}$/, 'Please enter a valid phone number']
+  },
+  password: { type: String, required: true },
+  passportOrId: { type: String }, // Store file path or URL
+  role: { 
+    type: String, 
+    enum: ['user', 'admin'], 
+    default: 'user' 
+  },
+  acceptedTerms: { type: Boolean, required: true },
+}, { timestamps: true });
 
-const userModel=mongoose.model('users',userSchema)
 
+ const userModel=mongoose.model('User',userSchema)
 export default userModel
