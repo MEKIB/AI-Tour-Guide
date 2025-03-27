@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
-import { Box } from "@mui/material"; // Import Box component
-import ButtonAppBar from "./components/Navbar/Navbar"; // Your navbar component
+import { Box } from "@mui/material";
+import ButtonAppBar from "./components/Navbar/Navbar";
 import Home from "./components/Home page/Home";
 import News from "./components/News/News";
 import EventsBoth from "./components/Events/EventsBoth";
@@ -14,7 +14,7 @@ import FilteredHotels from "./components/Tourist Facilities/Hotels and Lodges/Fi
 import HotelDetails from "./components/Tourist Facilities/Hotels and Lodges/HotelDetails";
 import Footer from "./components/Footer/Footer";
 import SignupPage from "./components/account/Signup";
-import LoginPage from "./components/account/Login"; // Your Login component
+import LoginPage from "./components/account/Login";
 import ForgotPasswordPage from "./components/account/ForgotPassword";
 import ResetPasswordPage from "./components/account/ResetPassword";
 import ChatbotLogic from "./components/Chatbot/ChatbotLogic";
@@ -27,69 +27,78 @@ import LakesAndWaterfallHome from "./components/Destinations/Lakes,waterfall/Lak
 import NationalParksHome from "./components/Destinations/National Parks and Community Protected Area/NationalParksHome";
 import HotelsLodges from "./components/Tourist Facilities/Hotels and Lodges/HotelsLodges";
 import HOMEPage from "./components/Home page/HOMEPage";
-
 import Bookings from "./components/profile/Bookings";
+import Reserve from "./components/profile/Reserve";
+import Profile from "./components/profile/Profile";
 
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Manage login state
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
+    // Check for existing user session
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+      setIsLoggedIn(true);
+    }
+
+    // Get user location
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        // Simple location detection (replace with actual coordinates)
         if (latitude >= 12.5 && latitude <= 12.7) {
-          // Lalibela
           setUserLocation("Lalibela");
         } else if (latitude >= 12.3 && latitude <= 12.5) {
-          // Gondar
           setUserLocation("Gondar");
         } else if (latitude >= 11.5 && latitude <= 11.7) {
-          // Bahir Dar
           setUserLocation("BahirDar");
         }
         setPermissionGranted(true);
       },
       (error) => {
         console.error("Location permission denied:", error);
-        setUserLocation("Lalibela"); // Default location
+        setUserLocation("Lalibela");
         setPermissionGranted(true);
       }
     );
   }, []);
 
-  // Function to handle location change
   const handleLocationChange = (event) => {
     setUserLocation(event.target.value);
   };
 
-  // Handle login
-  const handleLogin = () => {
+  const handleLogin = (userData) => {
     setIsLoggedIn(true);
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
-  // Handle logout
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setUser(null);
+    localStorage.removeItem('user');
   };
 
   return (
     <Box
       sx={{
-        marginLeft: "-8px", // Remove default margin
-        padding: 2, // Remove default padding
-        width: "100%", // Ensure full width
-        minHeight: "100vh", // Ensure full height
-        backgroundColor: "#393E46", // Set background color
-        overflowX: "hidden", // Prevent horizontal overflow
+        marginLeft: "-8px",
+        padding: 2,
+        width: "100%",
+        minHeight: "100vh",
+        backgroundColor: "#393E46",
+        overflowX: "hidden",
       }}
     >
-      {/* Navbar */}
-      <ButtonAppBar isLoggedIn={isLoggedIn} onLogout={handleLogout} />
+      <ButtonAppBar 
+        isLoggedIn={isLoggedIn} 
+        onLogout={handleLogout} 
+        user={user} 
+      />
 
-      {/* Routes */}
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
         <Route path="/religioussites" element={<ReligiousHome />} />
@@ -106,23 +115,19 @@ function App() {
         <Route path="/hoteldetails" element={<HotelDetails />} />
         <Route path="/hotel/:id" element={<HotelsLodges />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route
-          path="/login"
-          element={<LoginPage onLogin={handleLogin} />} // Pass handleLogin to LoginPage
-        />
+        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/amhara" element={<AmharaBoth />} />
         <Route path="/bureau" element={<Bureau />} />
         <Route path="/mandate" element={<Merge />} />
         <Route path="/managment" element={<Managment />} />
-        <Route path="/bookings" element={<Bookings />} /> {/* Add Bookings route */}
+        <Route path="/bookings" element={<Bookings />} />
+        <Route path="/reserve" element={<Reserve />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
 
-      {/* Chatbot */}
       <ChatbotLogic />
-
-      {/* Footer */}
       <Footer />
     </Box>
   );

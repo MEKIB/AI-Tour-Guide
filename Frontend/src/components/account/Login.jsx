@@ -13,20 +13,20 @@ import {
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate, Link } from "react-router-dom";
-import { Email, Lock } from "@mui/icons-material"; // Import icons
+import { Email, Lock } from "@mui/icons-material";
+import Img from "../../assets/11.png";
 
 // Define the color palette for dark theme
 const colors = {
-  primary: "#00ADB5", // Teal
-  secondary: "#393E46", // Medium gray
-  background: "#222831", // Dark gray
-  text: "#EEEEEE", // Light gray
+  primary: "#00ADB5",
+  secondary: "#393E46",
+  background: "#222831",
+  text: "#EEEEEE",
 };
 
-// Custom dark theme for consistent styling
 const theme = createTheme({
   palette: {
-    mode: "dark", // Enable dark mode
+    mode: "dark",
     primary: {
       main: colors.primary,
     },
@@ -50,10 +50,12 @@ const theme = createTheme({
   },
 });
 
-// Predefined user account for login
+// Predefined user account with profile image
 const userAccount = {
   email: "user@example.com",
   password: "pass",
+  profileImage: Img,
+  name: "John Doe" // Added name for the user menu
 };
 
 const LoginPage = ({ onLogin }) => {
@@ -63,16 +65,14 @@ const LoginPage = ({ onLogin }) => {
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
-  // Handle login form submission
   const handleLogin = (e) => {
     e.preventDefault();
 
-    // Hardcoded validation
     if (email === userAccount.email && password === userAccount.password) {
       setSuccess("Login successful!");
       setError("");
-      onLogin(); // Call the onLogin function passed from App.jsx
-      navigate("/"); // Redirect to home page
+      onLogin(userAccount); // Pass the complete user object
+      navigate("/");
     } else {
       setError("Invalid email or password.");
       setSuccess("");
@@ -159,11 +159,10 @@ const LoginPage = ({ onLogin }) => {
                 </Button>
               </form>
 
-              {/* "Forgot Password" Link */}
               <Box sx={{ mt: 2, textAlign: "center" }}>
                 <Typography variant="body2" sx={{ color: colors.text }}>
                   <Link
-                    to="/forgot-password" // Replace with your forgot password route
+                    to="/forgot-password"
                     style={{
                       color: colors.primary,
                       textDecoration: "none",
@@ -175,7 +174,6 @@ const LoginPage = ({ onLogin }) => {
                 </Typography>
               </Box>
 
-              {/* "Don't have an account? Sign up" Link */}
               <Box sx={{ mt: 3, textAlign: "center" }}>
                 <Typography variant="body2" sx={{ color: colors.text }}>
                   Don't have an account?{" "}
@@ -196,7 +194,6 @@ const LoginPage = ({ onLogin }) => {
         </Container>
       </Box>
 
-      {/* Success and Error Messages */}
       <Snackbar
         open={!!success}
         autoHideDuration={3000}

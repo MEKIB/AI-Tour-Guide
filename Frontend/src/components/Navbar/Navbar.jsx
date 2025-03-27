@@ -14,7 +14,7 @@ import { styled } from "@mui/material/styles";
 import Modal from "@mui/material/Modal";
 import CloseIcon from "@mui/icons-material/Close";
 import AccountCircle from "@mui/icons-material/AccountCircle";
-import ArrowDropDown from "@mui/icons-material/ArrowDropDown"; // Added drop-down icon
+import ArrowDropDown from "@mui/icons-material/ArrowDropDown";
 import SearchIcon from "@mui/icons-material/Search";
 import InputBase from "@mui/material/InputBase";
 import ReactCountryFlag from "react-country-flag";
@@ -28,7 +28,7 @@ import {
   Person as ProfileIcon,
   Logout as LogoutIcon,
 } from "@mui/icons-material";
-import { debounce } from "lodash"; // For debouncing the search input
+import { debounce } from "lodash";
 
 // Define the color palette
 const colors = {
@@ -36,7 +36,7 @@ const colors = {
   secondary: "#393E46",
   accent: "#00ADB5",
   background: "#EEEEEE",
-  searchModalBackground: "#393E46", // Updated search modal background color
+  searchModalBackground: "#393E46",
 };
 
 // Styled components
@@ -117,7 +117,7 @@ const SearchResultsDropdown = styled(Box)(({ theme }) => ({
   top: "100%",
   left: 0,
   right: 0,
-  backgroundColor: colors.searchModalBackground, // Updated background color
+  backgroundColor: colors.searchModalBackground,
   border: `1px solid ${colors.secondary}`,
   borderRadius: theme.shape.borderRadius,
   boxShadow: theme.shadows[5],
@@ -135,6 +135,14 @@ const SearchResultItem = styled(Box)(({ theme }) => ({
   },
 }));
 
+const ProfileImage = styled('img')({
+  width: '32px',
+  height: '32px',
+  borderRadius: '50%',
+  objectFit: 'cover',
+  marginRight: '8px',
+});
+
 // List of supported languages
 const languages = [
   { name: "English", code: "US" },
@@ -143,7 +151,17 @@ const languages = [
   { name: "Spanish", code: "ES" },
 ];
 
-export default function ButtonAppBar({ isLoggedIn, onLogout }) {
+// Expanded search data to include all searchable items
+const searchData = [
+  { name: "Hotels and Locations", path: "/hotelslocation" },
+  { name: "Filtered Hotels", path: "/filtered-hotels" },
+  { name: "Hotel Details", path: "/hoteldetails" },
+  { name: "Unison Hotel", path: "/hotel/1" },
+  { name: "Leoages Lodge", path: "/hotel/2" },
+  { name: "Sign Up", path: "/signup" },
+];
+
+export default function Navbar({ isLoggedIn, onLogout, user }) {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
@@ -154,16 +172,6 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
   const [searchResults, setSearchResults] = useState([]);
   const [anchorElUser, setAnchorElUser] = useState(null);
   const navigate = useNavigate();
-
-  // Expanded search data to include all searchable items
-  const searchData = [
-    { name: "Hotels and Locations", path: "/hotelslocation" },
-    { name: "Filtered Hotels", path: "/filtered-hotels" },
-    { name: "Hotel Details", path: "/hoteldetails" },
-    { name: "Unison Hotel", path: "/hotel/1" }, // Example hotel with ID 1
-    { name: "Leoages Lodge", path: "/hotel/2" }, // Example lodge with ID 2
-    { name: "Sign Up", path: "/signup" },
-  ];
 
   // Debounced search function
   const handleSearch = debounce((query) => {
@@ -510,15 +518,25 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
               </LanguageModalContent>
             </LanguageModal>
 
-            {/* Account Button - Redirects to Login Page or Opens User Menu */}
+            {/* Account Button with Profile Image */}
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <StyledAccountButton
                 id="account-button"
                 onClick={handleOpenUserMenu}
                 color="inherit"
+                sx={{ display: 'flex', alignItems: 'center' }}
               >
-                <AccountCircle />
-                <ArrowDropDown /> {/* Added drop-down icon */}
+                {isLoggedIn && user?.profileImage ? (
+                  <>
+                    <ProfileImage src={user.profileImage} alt="Profile" />
+                    <ArrowDropDown />
+                  </>
+                ) : (
+                  <>
+                    <AccountCircle />
+                    <ArrowDropDown />
+                  </>
+                )}
               </StyledAccountButton>
               <StyledMenu
                 id="user-menu"
@@ -531,27 +549,67 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
               >
                 {isLoggedIn ? (
                   <>
-                    <MenuItem onClick={() => navigate("/bookings")}>
+                    <MenuItem onClick={() => {
+                      navigate("/profile");
+                      handleCloseUserMenu();
+                    }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        {user?.profileImage && (
+                          <ProfileImage 
+                            src={user.profileImage} 
+                            alt="Profile" 
+                            sx={{ mr: 2 }}
+                          />
+                        )}
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                            {user?.name || 'My Profile'}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: colors.accent }}>
+                            {user?.email || ''}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </MenuItem>
+                    <MenuItem onClick={() => {
+                      navigate("/bookings");
+                      handleCloseUserMenu();
+                    }}>
                       <BookIcon sx={{ mr: 2 }} />
-                      Bookings
+                      Booking
                     </MenuItem>
-                    <MenuItem onClick={() => navigate("/rewards")}>
+                    <MenuItem onClick={() => {
+                      navigate("/reserve");
+                      handleCloseUserMenu();
+                    }}>
                       <RewardsIcon sx={{ mr: 2 }} />
-                      Viator Rewards
+                      Reserve
                     </MenuItem>
-                    <MenuItem onClick={() => navigate("/new")}>
+                    <MenuItem onClick={() => {
+                      navigate("/new");
+                      handleCloseUserMenu();
+                    }}>
                       <NewIcon sx={{ mr: 2 }} />
                       New!
                     </MenuItem>
-                    <MenuItem onClick={() => navigate("/wishlists")}>
+                    <MenuItem onClick={() => {
+                      navigate("/wishlists");
+                      handleCloseUserMenu();
+                    }}>
                       <WishlistIcon sx={{ mr: 2 }} />
                       Wishlists
                     </MenuItem>
-                    <MenuItem onClick={() => navigate("/profile")}>
+                    <MenuItem onClick={() => {
+                      navigate("/profile");
+                      handleCloseUserMenu();
+                    }}>
                       <ProfileIcon sx={{ mr: 2 }} />
-                      Profile
+                      Profile Settings
                     </MenuItem>
-                    <MenuItem onClick={() => navigate("/help")}>
+                    <MenuItem onClick={() => {
+                      navigate("/help");
+                      handleCloseUserMenu();
+                    }}>
                       <HelpIcon sx={{ mr: 2 }} />
                       Help
                     </MenuItem>
@@ -562,11 +620,17 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
                   </>
                 ) : (
                   <>
-                    <MenuItem onClick={() => navigate("/help")}>
+                    <MenuItem onClick={() => {
+                      navigate("/help");
+                      handleCloseUserMenu();
+                    }}>
                       <HelpIcon sx={{ mr: 2 }} />
                       Help
                     </MenuItem>
-                    <MenuItem onClick={() => navigate("/login")}>
+                    <MenuItem onClick={() => {
+                      navigate("/login");
+                      handleCloseUserMenu();
+                    }}>
                       <LoginIcon sx={{ mr: 2 }} />
                       Login/Sign Up
                     </MenuItem>
