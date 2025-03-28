@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import EventImage from "../../assets/events.jpg";
+
 const EventsUpper = () => {
   return (
     <Box
@@ -13,7 +14,7 @@ const EventsUpper = () => {
     >
       <img
         src={EventImage}
-        alt="Hotels and Lodges"
+        alt="Events"
         style={{
           position: "absolute",
           top: 0,
@@ -30,7 +31,6 @@ const EventsUpper = () => {
           left: "50%",
           transform: "translate(-50%, -50%)",
           textAlign: "center",
-          color: "white",
           zIndex: 1,
           width: "100%",
         }}
@@ -39,7 +39,10 @@ const EventsUpper = () => {
           variant="h2"
           fontWeight="bold"
           gutterBottom
-          sx={{ textShadow: "2px 2px 4px #000000" }}
+          sx={{
+            color: "#00ADB5 !important", // Enforce teal color with !important to override any defaults
+            textShadow: "2px 2px 4px #000000",
+          }}
         >
           Events
         </Typography>
@@ -59,5 +62,3 @@ const EventsUpper = () => {
 };
 
 export default EventsUpper;
-
-// ... (Rendering code remains the same)

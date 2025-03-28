@@ -9,10 +9,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import LanguageIcon from "@mui/icons-material/Language";
 import { styled } from "@mui/material/styles";
-import Modal from "@mui/material/Modal";
-import CloseIcon from "@mui/icons-material/Close";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import ArrowDropDown from "@mui/icons-material/ArrowDropDown";
 import SearchIcon from "@mui/icons-material/Search";
@@ -32,7 +29,6 @@ import { debounce } from "lodash";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
-// Define the color palette
 const colors = {
   primary: "#222831",
   secondary: "#393E46",
@@ -42,39 +38,6 @@ const colors = {
 };
 
 // Styled components
-const StyledLanguageButton = styled(IconButton)(({ theme }) => ({
-  padding: theme.spacing(0.5, 1),
-  borderRadius: theme.shape.borderRadius,
-  border: `1px solid ${colors.secondary}`,
-  "&:hover": {
-    backgroundColor: colors.accent,
-  },
-}));
-
-const LanguageModal = styled(Modal)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}));
-
-const LanguageModalContent = styled(Box)(({ theme }) => ({
-  backgroundColor: colors.background,
-  border: `2px solid ${colors.primary}`,
-  boxShadow: theme.shadows[5],
-  padding: theme.spacing(2, 4, 3),
-  borderRadius: theme.shape.borderRadius,
-  minWidth: 300,
-  maxWidth: 800,
-}));
-
-const LanguageButtonContainer = styled(Box)(({ theme }) => ({
-  display: "flex",
-  flexWrap: "wrap",
-  gap: theme.spacing(1),
-  justifyContent: "center",
-  marginTop: theme.spacing(2),
-}));
-
 const StyledLinkButton = styled(Button)(({ theme }) => ({
   textDecoration: "none",
   color: colors.background,
@@ -157,7 +120,7 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
-  const [languageModalOpen, setLanguageModalOpen] = useState(false);
+  const [anchorElLanguage, setAnchorElLanguage] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [searchBoxOpen, setSearchBoxOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -167,6 +130,7 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
 
   // Sync local state with props
   useEffect(() => {
@@ -259,18 +223,19 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
     setAnchorElUser(null);
   };
 
+
   // Handlers for Language modal
   const handleOpenLanguageModal = () => {
     setLanguageModalOpen(true);
   };
 
-  const handleCloseLanguageModal = () => {
-    setLanguageModalOpen(false);
+  const handleCloseLanguage = () => {
+    setAnchorElLanguage(null);
   };
 
   const handleLanguageSelect = (language) => {
     setSelectedLanguage(language);
-    handleCloseLanguageModal();
+    handleCloseLanguage();
   };
 
   // Handle logout
@@ -300,6 +265,7 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
             </Link>
           </Typography>
           <Box sx={{ display: "flex", gap: 4, alignItems: "center" }}>
+
             {/* Search Icon and Search Box */}
             <Box className="search-box">
               {searchBoxOpen ? (
@@ -314,6 +280,7 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                   <IconButton onClick={() => setSearchBoxOpen(false)}>
                     <CloseIcon />
                   </IconButton>
+
                 </SearchBox>
               ) : (
                 <IconButton color="inherit" onClick={() => setSearchBoxOpen(true)}>
@@ -376,7 +343,7 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                 </MenuItem>
                 <MenuItem onClick={handleCloseDestination}>
                   <Link
-                    to="/nationalparks"
+                    to="/national-parks" // Changed from "/nationalparks" to match route
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     National Parks and Community Protected Area
@@ -408,8 +375,6 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                 </MenuItem>
               </StyledMenu>
             </Box>
-
-            {/* Tourist Facilities Menu */}
             <Box
               onMouseEnter={handleOpenTourist}
               onMouseLeave={handleCloseTourist}
@@ -450,21 +415,26 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                   </Link>
                 </MenuItem>
                 <MenuItem onClick={handleCloseTourist}>
-                  Tourist Information Centers
+                  <Link
+                    to="/tourist-information-center"
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    Tourist Information Centers
+                  </Link>
                 </MenuItem>
+
                 <MenuItem onClick={handleCloseTourist}>
                   Other Service Providers
                 </MenuItem>
               </StyledMenu>
             </Box>
-
-            {/* Events Link */}
             <Link
               to="/events"
               style={{ textDecoration: "none", color: colors.background }}
             >
               Events
             </Link>
+
 
             {/* Language Modal */}
             <StyledLanguageButton
@@ -648,10 +618,7 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
             </Box>
 
             {/* About Menu */}
-            <Box
-              onMouseEnter={handleOpenAbout}
-              onMouseLeave={handleCloseAbout}
-            >
+            <Box onMouseEnter={handleOpenAbout} onMouseLeave={handleCloseAbout}>
               <Button
                 id="about-button"
                 aria-haspopup="true"
@@ -705,9 +672,55 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                 </MenuItem>
               </StyledMenu>
             </Box>
+
+            {/* Language Dropdown */}
+            <Box
+              onMouseEnter={handleOpenLanguage}
+              onMouseLeave={handleCloseLanguage}
+            >
+              <Button
+                id="language-button"
+                aria-haspopup="true"
+                aria-controls="language-menu"
+                color="inherit"
+                sx={{ textTransform: "none", fontSize: "1rem" }}
+              >
+                Lang
+              </Button>
+              <StyledMenu
+                id="language-menu"
+                anchorEl={anchorElLanguage}
+                open={Boolean(anchorElLanguage)}
+                onClose={handleCloseLanguage}
+                MenuListProps={{
+                  "aria-labelledby": "language-button",
+                }}
+                onMouseLeave={handleCloseLanguage}
+              >
+                {languages.map((language) => (
+                  <MenuItem
+                    key={language.name}
+                    onClick={() => handleLanguageSelect(language.name)}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      backgroundColor:
+                        selectedLanguage === language.name
+                          ? colors.accent
+                          : "transparent",
+                    }}
+                  >
+                    <ReactCountryFlag countryCode={language.code} svg />
+                    {language.name}
+                  </MenuItem>
+                ))}
+              </StyledMenu>
+            </Box>
           </Box>
         </Toolbar>
       </AppBar>
+
 
       {/* Add padding to prevent content overlap */}
       <Box sx={{ paddingTop: "64px" }}></Box>
