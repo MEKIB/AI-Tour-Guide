@@ -15,6 +15,10 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate, Link } from "react-router-dom";
 import { Email, Lock } from "@mui/icons-material";
 
+import Img from "../../assets/11.png";
+=======
+
+
 // Define the color palette for dark theme
 const colors = {
   primary: "#00ADB5",
@@ -23,20 +27,45 @@ const colors = {
   text: "#EEEEEE",
 };
 
-// Custom dark theme for consistent styling
 const theme = createTheme({
   palette: {
     mode: "dark",
+
+    primary: {
+      main: colors.primary,
+    },
+    secondary: {
+      main: colors.secondary,
+    },
+    background: {
+      default: colors.background,
+      paper: colors.secondary,
+    },
+    text: {
+      primary: colors.text,
+    },
+
     primary: { main: colors.primary },
     secondary: { main: colors.secondary },
     background: { default: colors.background, paper: colors.secondary },
     text: { primary: colors.text },
+
   },
   typography: {
     fontFamily: "Roboto, sans-serif",
     h4: { fontWeight: 600, color: colors.text },
   },
 });
+
+
+// Predefined user account with profile image
+const userAccount = {
+  email: "user@example.com",
+  password: "pass",
+  profileImage: Img,
+  name: "John Doe" // Added name for the user menu
+};
+
 
 const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState("");
@@ -46,8 +75,12 @@ const LoginPage = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+
+  const handleLogin = (e) => {
+
   // Handle login form submission
   const handleLogin = async (e) => {
+
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -64,6 +97,16 @@ const LoginPage = ({ onLogin }) => {
 
       const data = await response.json();
 
+
+    if (email === userAccount.email && password === userAccount.password) {
+      setSuccess("Login successful!");
+      setError("");
+      onLogin(userAccount); // Pass the complete user object
+      navigate("/");
+    } else {
+      setError("Invalid email or password.");
+      setSuccess("");
+
       if (response.ok) {
         setSuccess("Login successful!");
         localStorage.setItem("token", data.token); // Store JWT token
@@ -76,6 +119,7 @@ const LoginPage = ({ onLogin }) => {
       setError("Server error. Please try again later.");
     } finally {
       setLoading(false);
+
     }
   };
 
@@ -160,7 +204,6 @@ const LoginPage = ({ onLogin }) => {
                 </Button>
               </form>
 
-              {/* "Forgot Password" Link */}
               <Box sx={{ mt: 2, textAlign: "center" }}>
                 <Typography variant="body2" sx={{ color: colors.text }}>
                   <Link
@@ -176,7 +219,6 @@ const LoginPage = ({ onLogin }) => {
                 </Typography>
               </Box>
 
-              {/* "Don't have an account? Sign up" Link */}
               <Box sx={{ mt: 3, textAlign: "center" }}>
                 <Typography variant="body2" sx={{ color: colors.text }}>
                   Don't have an account?{" "}
@@ -197,7 +239,6 @@ const LoginPage = ({ onLogin }) => {
         </Container>
       </Box>
 
-      {/* Success and Error Messages */}
       <Snackbar
         open={!!success}
         autoHideDuration={3000}

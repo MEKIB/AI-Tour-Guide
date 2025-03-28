@@ -66,35 +66,27 @@ const colors = {
   light: '#EEEEEE', // Light Gray
 };
 
-// Mock data for available rooms
+// Mock data for available rooms - updated to only Single and Double
 const availableRooms = [
-  { id: 1, type: 'Two-Bedroom Apartment', roomNumber: 'R101', price: 200 },
-  { id: 2, type: 'One-Bedroom Apartment', roomNumber: 'R102', price: 150 },
-  { id: 3, type: 'Studio Apartment', roomNumber: 'R103', price: 100 },
-  { id: 4, type: 'Two-Bedroom Apartment', roomNumber: 'R104', price: 220 },
-  { id: 5, type: 'One-Bedroom Apartment', roomNumber: 'R105', price: 160 },
+  { id: 1, type: 'Double', roomNumber: 'R101', price: 200 },
+  { id: 2, type: 'Single', roomNumber: 'R102', price: 150 },
+  { id: 3, type: 'Single', roomNumber: 'R103', price: 100 },
+  { id: 4, type: 'Double', roomNumber: 'R104', price: 220 },
+  { id: 5, type: 'Single', roomNumber: 'R105', price: 160 },
 ];
 
-// Apartment details
-const apartmentDetails = {
-  'Two-Bedroom Apartment': {
+// Room details - updated for Single and Double rooms
+const roomDetails = {
+  'Double': {
     bedrooms: [
-      { name: 'Bedroom 1', beds: '1 queen bed' },
-      { name: 'Bedroom 2', beds: '1 queen bed' },
+      { name: 'Bedroom', beds: '1 queen bed' },
     ],
-    bathrooms: 2,
-    size: '110 m²',
+    bathrooms: 1,
+    size: '40 m²',
     amenities: [
-      'Private kitchen',
-      'Balcony',
-      'Mountain view',
-      'City view',
-      'Patio',
       'Flat-screen TV',
       'Free Wifi',
       'Free toiletries',
-      'Kitchen with washing machine',
-      'Sofa',
       'Bathtub or shower',
       'Towels and linens provided',
       'Socket near the bed',
@@ -106,102 +98,35 @@ const apartmentDetails = {
       'Ironing facilities',
       'Tea/Coffee maker',
       'Iron',
-      'Interconnecting room(s) available',
-      'Microwave',
       'Hairdryer',
-      'Kitchenware',
-      'Kitchenette',
-      'Guest bathroom',
       'Carpeted flooring',
       'Electric kettle',
       'Alarm clock',
-      'Oven',
-      'Stovetop',
-      'Toaster',
-      'Dining area',
-      'Upper floors accessible by stairs only',
-      'Private apartment in building',
-      'Clothes rack',
-      'Drying rack for clothing',
       'Toilet paper',
       'Hand sanitizer',
     ],
   },
-  'One-Bedroom Apartment': {
-    bedrooms: [{ name: 'Bedroom 1', beds: '1 queen bed' }],
-    bathrooms: 1,
-    size: '80 m²',
-    amenities: [
-      'Private kitchen',
-      'Balcony',
-      'City view',
-      'Flat-screen TV',
-      'Free Wifi',
-      'Free toiletries',
-      'Kitchen with washing machine',
-      'Sofa',
-      'Bathtub or shower',
-      'Towels and linens provided',
-      'Socket near the bed',
-      'Cleaning products',
-      'Tile/Marble floor',
-      'Sitting area',
-      'Slippers',
-      'Refrigerator',
-      'Ironing facilities',
-      'Tea/Coffee maker',
-      'Iron',
-      'Microwave',
-      'Hairdryer',
-      'Kitchenware',
-      'Carpeted flooring',
-      'Electric kettle',
-      'Alarm clock',
-      'Oven',
-      'Stovetop',
-      'Toaster',
-      'Dining area',
-      'Private apartment in building',
-      'Clothes rack',
-      'Toilet paper',
-      'Hand sanitizer',
+  'Single': {
+    bedrooms: [
+      { name: 'Bedroom', beds: '1 single bed' },
     ],
-  },
-  'Studio Apartment': {
-    bedrooms: [],
     bathrooms: 1,
-    size: '50 m²',
+    size: '25 m²',
     amenities: [
-      'Private kitchen',
-      'City view',
       'Flat-screen TV',
       'Free Wifi',
       'Free toiletries',
-      'Kitchen with washing machine',
-      'Sofa',
       'Bathtub or shower',
       'Towels and linens provided',
       'Socket near the bed',
       'Cleaning products',
       'Tile/Marble floor',
-      'Sitting area',
       'Slippers',
-      'Refrigerator',
-      'Ironing facilities',
       'Tea/Coffee maker',
-      'Iron',
-      'Microwave',
       'Hairdryer',
-      'Kitchenware',
       'Carpeted flooring',
       'Electric kettle',
       'Alarm clock',
-      'Oven',
-      'Stovetop',
-      'Toaster',
-      'Dining area',
-      'Private apartment in building',
-      'Clothes rack',
       'Toilet paper',
       'Hand sanitizer',
     ],
@@ -263,7 +188,7 @@ const Availability = () => {
   const [guestPopoverAnchorEl, setGuestPopoverAnchorEl] = useState(null);
   const [ageError, setAgeError] = useState(false);
   const [selectedRooms, setSelectedRooms] = useState([]);
-  const [selectedApartmentType, setSelectedApartmentType] = useState('');
+  const [selectedRoomType, setSelectedRoomType] = useState('');
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [reservePopoverAnchorEl, setReservePopoverAnchorEl] = useState(null);
 
@@ -342,8 +267,8 @@ const Availability = () => {
     setAgeError(false);
   };
 
-  const handleApartmentTypeSelection = (event) => {
-    setSelectedApartmentType(event.target.value);
+  const handleRoomTypeSelection = (event) => {
+    setSelectedRoomType(event.target.value);
     setSelectedRooms([]);
   };
 
@@ -355,14 +280,14 @@ const Availability = () => {
   };
 
   const handleReserve = () => {
-    console.log('Selected Apartment Type:', selectedApartmentType);
+    console.log('Selected Room Type:', selectedRoomType);
     console.log('Selected Rooms:', selectedRooms);
     setShowBookingForm(true);
   };
 
-  const apartmentTypes = [...new Set(availableRooms.map((room) => room.type))];
-  const filteredRooms = selectedApartmentType
-    ? availableRooms.filter((room) => room.type === selectedApartmentType)
+  const roomTypes = [...new Set(availableRooms.map((room) => room.type))];
+  const filteredRooms = selectedRoomType
+    ? availableRooms.filter((room) => room.type === selectedRoomType)
     : availableRooms;
 
   return (
@@ -611,10 +536,10 @@ const Availability = () => {
             <Table>
               <TableHead sx={{ backgroundColor: colors.primary }}>
                 <TableRow>
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Apartment Type</TableCell>
+                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Room Type</TableCell>
                   <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Room Number</TableCell>
                   <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Price</TableCell>
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Number of Apartments</TableCell>
+                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Number of Rooms</TableCell>
                   <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Your Choice</TableCell>
                   <TableCell sx={{ color: colors.light }}></TableCell>
                 </TableRow>
@@ -624,49 +549,49 @@ const Availability = () => {
                   <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
                     <FormControl fullWidth>
                       <Select
-                        value={selectedApartmentType}
-                        onChange={handleApartmentTypeSelection}
+                        value={selectedRoomType}
+                        onChange={handleRoomTypeSelection}
                         displayEmpty
                         sx={{ backgroundColor: colors.dark, color: colors.light }}
                       >
                         <MenuItem value="" disabled>
-                          Select Apartment Type
+                          Select Room Type
                         </MenuItem>
-                        {apartmentTypes.map((type, index) => (
+                        {roomTypes.map((type, index) => (
                           <MenuItem key={index} value={type} sx={{ backgroundColor: colors.mediumDark, color: colors.light }}>
                             {type}
                           </MenuItem>
                         ))}
                       </Select>
-                      {selectedApartmentType && (
+                      {selectedRoomType && (
                         <Box sx={{ mt: 4 }}>
                           <Typography variant="h6" gutterBottom sx={{ color: colors.primary }}>
-                            {selectedApartmentType} Details
+                            {selectedRoomType} Room Details
                           </Typography>
                           <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: '4px', backgroundColor: colors.dark }}>
                             <Typography variant="subtitle1" gutterBottom sx={{ color: colors.light }}>
                               Bedrooms:
                             </Typography>
                             <List>
-                              {apartmentDetails[selectedApartmentType].bedrooms.map((bedroom, index) => (
+                              {roomDetails[selectedRoomType].bedrooms.map((bedroom, index) => (
                                 <ListItem key={index}>
                                   <ListItemText primary={`${bedroom.name}: ${bedroom.beds}`} sx={{ color: colors.light }} />
                                 </ListItem>
                               ))}
                             </List>
                             <Typography variant="subtitle1" gutterBottom sx={{ color: colors.light }}>
-                              Bathrooms: {apartmentDetails[selectedApartmentType].bathrooms}
+                              Bathrooms: {roomDetails[selectedRoomType].bathrooms}
                             </Typography>
                             <Typography variant="subtitle1" gutterBottom sx={{ color: colors.light }}>
-                              Size: {apartmentDetails[selectedApartmentType].size}
+                              Size: {roomDetails[selectedRoomType].size}
                             </Typography>
                             <Typography variant="subtitle1" gutterBottom sx={{ color: colors.light }}>
                               Amenities:
                             </Typography>
                             <List>
-                              {apartmentDetails[selectedApartmentType].amenities.map((amenity, index) => (
+                              {roomDetails[selectedRoomType].amenities.map((amenity, index) => (
                                 <ListItem key={index}>
-                                  <ListItemIcon>{amenityIcons[amenity]}</ListItemIcon>
+                                  <ListItemIcon>{amenityIcons[amenity] || <ChairIcon sx={{ color: colors.primary }} />}</ListItemIcon>
                                   <ListItemText primary={amenity} sx={{ color: colors.light }} />
                                 </ListItem>
                               ))}
@@ -683,7 +608,7 @@ const Availability = () => {
                         value={selectedRooms}
                         onChange={handleRoomSelection}
                         displayEmpty
-                        disabled={!selectedApartmentType}
+                        disabled={!selectedRoomType}
                         renderValue={(selected) => (
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                             {selected.map((roomNumber) => (
@@ -715,7 +640,7 @@ const Availability = () => {
                     {selectedRooms.length > 0 &&
                       selectedRooms.map((roomNumber) => (
                         <Typography key={roomNumber} sx={{ color: colors.light }}>
-                          {availableRooms.find((room) => room.roomNumber === roomNumber)?.price}
+                          ${availableRooms.find((room) => room.roomNumber === roomNumber)?.price} per night
                         </Typography>
                       ))}
                   </TableCell>
@@ -743,7 +668,7 @@ const Availability = () => {
                       <Box>
                         {selectedRooms.map((roomNumber) => (
                           <Typography key={roomNumber} sx={{ color: colors.light }}>
-                            {selectedApartmentType} - {roomNumber}
+                            {selectedRoomType} - {roomNumber}
                           </Typography>
                         ))}
                       </Box>
@@ -775,7 +700,7 @@ const Availability = () => {
                               <strong>Hotel Name:</strong> Your Hotel Name
                             </Typography>
                             <Typography variant="body1">
-                              <strong>Apartment Type:</strong> {selectedApartmentType}
+                              <strong>Room Type:</strong> {selectedRoomType}
                             </Typography>
                             <Typography variant="body1">
                               <strong>Check-in Date:</strong> {checkInDate ? checkInDate.format('MM/DD/YYYY') : 'Not selected'}
