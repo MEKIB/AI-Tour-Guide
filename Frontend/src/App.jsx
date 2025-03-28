@@ -4,7 +4,7 @@ import { Box } from "@mui/material"; // Import Box component
 import ButtonAppBar from "./components/Navbar/Navbar";
 import Home from "./components/Home page/Home";
 import News from "./components/News/News";
-import EventsBoth from "./components/Events/EventsBoth";
+import Events from "./components/Events/Events";
 import ThingsToDo from "./components/Things To Do/DoThings";
 import World from "./components/Destinations/World Heritage Sites/World";
 import ReligiousHome from "./components/Destinations/Religious Sites/ReligiousHome";
@@ -34,6 +34,19 @@ import ChokeMountainPage from "./components/Destinations/National Parks and Comm
 import BorenaSayintPage from "./components/Destinations/National Parks and Community Protected Area/BorenaSayintPage";
 import MenzGuassaPage from "./components/Destinations/National Parks and Community Protected Area/MenzGuassaPage";
 import AlitashPage from "./components/Destinations/National Parks and Community Protected Area/AlitashPage";
+import AshendaPage from "./components/Events/AshendaPage";
+import MerqoriosPage from "./components/Events/MerqoriosPage";
+import FasikaPage from "./components/Events/FasikaPage";
+import TimketPage from "./components/Events/TimketPage";
+import GennaPage from "./components/Events/GennaPage";
+import MeskelPage from "./components/Events/MeskelPage";
+import SebatPage from "./components/Events/SebatPage";
+import MewlidPage from "./components/Events/MewlidPage";
+import TouristInformationCenter from "./components/Tourist Facilities/TouristInformationCenter";
+import SemienMountainsHeritagePage from "./components/Destinations/World Heritage Sites/SemienMountainsHeritagePage";
+import LalibelaHeritagePage from "./components/Destinations/World Heritage Sites/LalibelaHeritagePage";
+import LakeTanaHeritagePage from "./components/Destinations/World Heritage Sites/LakeTanaHeritagePage";
+import FasilGhebbiHeritagePage from "./components/Destinations/World Heritage Sites/FasilGhebbiHeritagePage";
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
@@ -86,6 +99,24 @@ function App() {
       {/* Routes */}
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
+        <Route
+          path="/worldheritagesites/semienmountains"
+          element={<SemienMountainsHeritagePage />}
+        />
+        <Route
+          path="/worldheritagesites/lalibela"
+          element={<LalibelaHeritagePage />}
+        />
+        <Route
+          path="/worldheritagesites/fasilghebbi"
+          element={<FasilGhebbiHeritagePage />}
+        />
+
+        <Route
+          path="/worldheritagesites/lakeTana"
+          element={<LakeTanaHeritagePage />}
+        />
+
         <Route path="/religioussites" element={<ReligiousHome />} />
         <Route path="/national-parks" element={<NationalParksHome />} />
         <Route
@@ -115,9 +146,21 @@ function App() {
         <Route path="/national-parks/alitash" element={<AlitashPage />} />
         <Route path="/lakeAndWaterfall" element={<LakesAndWaterfallHome />} />
         <Route path="/historicalLandmarks" element={<HistoricalHome />} />
+        <Route
+          path="/tourist-information-center"
+          element={<TouristInformationCenter />}
+        />
         <Route path="/" element={<HOMEPage location={userLocation} />} />
         <Route path="/news" element={<News />} />
-        <Route path="/events" element={<EventsBoth />} />
+        <Route path="/events" element={<Events />} />
+        <Route path="/events/merqorios" element={<MerqoriosPage />} />
+        <Route path="/events/sebat" element={<SebatPage />} />
+        <Route path="/events/mewlid" element={<MewlidPage />} />
+        <Route path="/events/ashenda" element={<AshendaPage />} />
+        <Route path="/events/meskel" element={<MeskelPage />} />
+        <Route path="/events/genna" element={<GennaPage />} />
+        <Route path="/events/timket" element={<TimketPage />} />
+        <Route path="/events/fasika" element={<FasikaPage />} />
         <Route path="/things" element={<ThingsToDo />} />
         <Route path="/flights" element={<Flight />} />
         <Route path="/hotelslocation" element={<HotelsandLocations />} />

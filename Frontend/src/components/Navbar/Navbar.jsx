@@ -9,10 +9,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import LanguageIcon from "@mui/icons-material/Language";
 import { styled } from "@mui/material/styles";
-import Modal from "@mui/material/Modal";
-import CloseIcon from "@mui/icons-material/Close";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import SearchIcon from "@mui/icons-material/Search";
 import InputBase from "@mui/material/InputBase";
@@ -25,39 +22,7 @@ const colors = {
   background: "#EEEEEE",
 };
 
-const StyledLanguageButton = styled(IconButton)(({ theme }) => ({
-  padding: theme.spacing(0.5, 1),
-  borderRadius: theme.shape.borderRadius,
-  border: `1px solid ${colors.secondary}`,
-  "&:hover": {
-    backgroundColor: colors.accent,
-  },
-}));
-
-const LanguageModal = styled(Modal)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}));
-
-const LanguageModalContent = styled(Box)(({ theme }) => ({
-  backgroundColor: colors.background,
-  border: `2px solid ${colors.primary}`,
-  boxShadow: theme.shadows[5],
-  padding: theme.spacing(2, 4, 3),
-  borderRadius: theme.shape.borderRadius,
-  minWidth: 300,
-  maxWidth: 800,
-}));
-
-const LanguageButtonContainer = styled(Box)(({ theme }) => ({
-  display: "flex",
-  flexWrap: "wrap",
-  gap: theme.spacing(1),
-  justifyContent: "center",
-  marginTop: theme.spacing(2),
-}));
-
+// Styled components
 const StyledLinkButton = styled(Button)(({ theme }) => ({
   textDecoration: "none",
   color: colors.background,
@@ -100,12 +65,13 @@ export default function ButtonAppBar() {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
-  const [languageModalOpen, setLanguageModalOpen] = useState(false);
+  const [anchorElLanguage, setAnchorElLanguage] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [searchBoxOpen, setSearchBoxOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
+  // Handle dropdown open/close
   const handleOpenTourist = (event) => {
     setAnchorElTourist(event.currentTarget);
   };
@@ -130,17 +96,17 @@ export default function ButtonAppBar() {
     setAnchorElDestination(null);
   };
 
-  const handleOpenLanguageModal = () => {
-    setLanguageModalOpen(true);
+  const handleOpenLanguage = (event) => {
+    setAnchorElLanguage(event.currentTarget);
   };
 
-  const handleCloseLanguageModal = () => {
-    setLanguageModalOpen(false);
+  const handleCloseLanguage = () => {
+    setAnchorElLanguage(null);
   };
 
   const handleLanguageSelect = (language) => {
     setSelectedLanguage(language);
-    handleCloseLanguageModal();
+    handleCloseLanguage();
   };
 
   const languages = [
@@ -324,8 +290,14 @@ export default function ButtonAppBar() {
                   </Link>
                 </MenuItem>
                 <MenuItem onClick={handleCloseTourist}>
-                  Tourist Information Centers
+                  <Link
+                    to="/tourist-information-center"
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    Tourist Information Centers
+                  </Link>
                 </MenuItem>
+
                 <MenuItem onClick={handleCloseTourist}>
                   Other Service Providers
                 </MenuItem>
@@ -337,71 +309,8 @@ export default function ButtonAppBar() {
             >
               Events
             </Link>
-            <StyledLanguageButton
-              id="language-button"
-              onClick={handleOpenLanguageModal}
-              color="inherit"
-            >
-              <LanguageIcon />
-            </StyledLanguageButton>
-            <LanguageModal
-              open={languageModalOpen}
-              onClose={handleCloseLanguageModal}
-              aria-labelledby="language-modal-title"
-              aria-describedby="language-modal-description"
-            >
-              <LanguageModalContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography
-                    id="language-modal-title"
-                    variant="h6"
-                    component="h2"
-                  >
-                    Select Language ({selectedLanguage})
-                  </Typography>
-                  <IconButton
-                    aria-label="close"
-                    onClick={handleCloseLanguageModal}
-                  >
-                    <CloseIcon />
-                  </IconButton>
-                </Box>
-                <LanguageButtonContainer>
-                  {languages.map((language) => (
-                    <Button
-                      key={language.name}
-                      variant={
-                        selectedLanguage === language.name
-                          ? "contained"
-                          : "outlined"
-                      }
-                      onClick={() => handleLanguageSelect(language.name)}
-                      startIcon={
-                        <ReactCountryFlag countryCode={language.code} svg />
-                      }
-                      sx={{
-                        backgroundColor:
-                          selectedLanguage === language.name
-                            ? colors.accent
-                            : "transparent",
-                        color: colors.background,
-                        "&:hover": {
-                          backgroundColor: colors.accent,
-                        },
-                      }}
-                    >
-                      {language.name}
-                    </Button>
-                  ))}
-                </LanguageButtonContainer>
-              </LanguageModalContent>
-            </LanguageModal>
+
+            {/* Account Button - Redirects to Login Page */}
             <StyledAccountButton
               id="account-button"
               onClick={handleAccountClick}
@@ -409,6 +318,8 @@ export default function ButtonAppBar() {
             >
               <AccountCircle />
             </StyledAccountButton>
+
+            {/* About Menu */}
             <Box onMouseEnter={handleOpenAbout} onMouseLeave={handleCloseAbout}>
               <Button
                 id="about-button"
@@ -461,6 +372,51 @@ export default function ButtonAppBar() {
                     Mandate and Responsibility
                   </Link>
                 </MenuItem>
+              </StyledMenu>
+            </Box>
+
+            {/* Language Dropdown */}
+            <Box
+              onMouseEnter={handleOpenLanguage}
+              onMouseLeave={handleCloseLanguage}
+            >
+              <Button
+                id="language-button"
+                aria-haspopup="true"
+                aria-controls="language-menu"
+                color="inherit"
+                sx={{ textTransform: "none", fontSize: "1rem" }}
+              >
+                Lang
+              </Button>
+              <StyledMenu
+                id="language-menu"
+                anchorEl={anchorElLanguage}
+                open={Boolean(anchorElLanguage)}
+                onClose={handleCloseLanguage}
+                MenuListProps={{
+                  "aria-labelledby": "language-button",
+                }}
+                onMouseLeave={handleCloseLanguage}
+              >
+                {languages.map((language) => (
+                  <MenuItem
+                    key={language.name}
+                    onClick={() => handleLanguageSelect(language.name)}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      backgroundColor:
+                        selectedLanguage === language.name
+                          ? colors.accent
+                          : "transparent",
+                    }}
+                  >
+                    <ReactCountryFlag countryCode={language.code} svg />
+                    {language.name}
+                  </MenuItem>
+                ))}
               </StyledMenu>
             </Box>
           </Box>

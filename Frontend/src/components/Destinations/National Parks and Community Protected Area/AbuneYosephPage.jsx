@@ -78,7 +78,7 @@ const AbuneYosephPage = () => {
       <div style={containerStyle}>
         <div style={breadcrumbStyle}>
           <Link to="/" style={breadcrumbLinkStyle}>
-            Navigation
+            Home
           </Link>
           <span style={breadcrumbTextStyle}> / </span>
           <Link to="/national-parks" style={breadcrumbLinkStyle}>
