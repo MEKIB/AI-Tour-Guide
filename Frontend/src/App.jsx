@@ -46,14 +46,7 @@ function App() {
     setIsAuthenticated(false); // Reset authentication state
   }, []); // Empty dependency array means this runs once on mount
 
-  const handleLogin = () => {
-    setIsAuthenticated(true); // Update state on login
-  };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token"); // Remove token on logout
-    setIsAuthenticated(false); // Update state on logout
-  };
 
 
   useEffect(() => {

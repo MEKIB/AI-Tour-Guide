@@ -16,8 +16,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { Email, Lock } from "@mui/icons-material";
 
 import Img from "../../assets/11.png";
-=======
-
 
 // Define the color palette for dark theme
 const colors = {
@@ -30,7 +28,6 @@ const colors = {
 const theme = createTheme({
   palette: {
     mode: "dark",
-
     primary: {
       main: colors.primary,
     },
@@ -44,19 +41,12 @@ const theme = createTheme({
     text: {
       primary: colors.text,
     },
-
-    primary: { main: colors.primary },
-    secondary: { main: colors.secondary },
-    background: { default: colors.background, paper: colors.secondary },
-    text: { primary: colors.text },
-
   },
   typography: {
     fontFamily: "Roboto, sans-serif",
     h4: { fontWeight: 600, color: colors.text },
   },
 });
-
 
 // Predefined user account with profile image
 const userAccount = {
@@ -66,7 +56,6 @@ const userAccount = {
   name: "John Doe" // Added name for the user menu
 };
 
-
 const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -75,12 +64,7 @@ const LoginPage = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-
-  const handleLogin = (e) => {
-
-  // Handle login form submission
   const handleLogin = async (e) => {
-
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -97,20 +81,10 @@ const LoginPage = ({ onLogin }) => {
 
       const data = await response.json();
 
-
-    if (email === userAccount.email && password === userAccount.password) {
-      setSuccess("Login successful!");
-      setError("");
-      onLogin(userAccount); // Pass the complete user object
-      navigate("/");
-    } else {
-      setError("Invalid email or password.");
-      setSuccess("");
-
       if (response.ok) {
         setSuccess("Login successful!");
         localStorage.setItem("token", data.token); // Store JWT token
-        onLogin(); // Call the onLogin function passed from App.jsx
+        onLogin(data.user || userAccount); // Use API user data or fallback to local account
         setTimeout(() => navigate("/"), 2000); // Redirect to home page after 2 seconds
       } else {
         setError(data.message || "Login failed");
@@ -119,7 +93,6 @@ const LoginPage = ({ onLogin }) => {
       setError("Server error. Please try again later.");
     } finally {
       setLoading(false);
-
     }
   };
 
