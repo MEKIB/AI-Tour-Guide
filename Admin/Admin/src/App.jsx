@@ -4,7 +4,7 @@ import { Box, CssBaseline } from '@mui/material';
 import Navbar from './components/Navbar';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
-
+import VerifyEmail from './components/VerifyEmail';
 // Hotel admin components
 import HotelAdminDashboard from './components/HotelAdmin/HotelAdminDashboard';
 import Dashboard from './components/HotelAdmin/Dashboard';
@@ -20,6 +20,9 @@ import HotelRulesDetail from './components/HotelAdmin/HotelRulesDetail';
 import Profile from './components/HotelAdmin/Profile';
 import Review from './components/HotelAdmin/Review';
 import AvailableRooms from './components/HotelAdmin/AvailableRooms';
+import UnavailabilityManagement from './components/HotelAdmin/UnavailabilityManagement';
+import AddDetailedRoomAndAmenities from './components/HotelAdmin/AddDetailedRoomAndAmenities';
+import AddRoomForm from './components/HotelAdmin/AddRoomForm';
 
 // System admin components
 import SystemAdminDashboard from './components/SystemAdmin/SystemAdminDashboard';
@@ -31,7 +34,7 @@ import BookingManagements from './components/SystemAdmin/BookingManagement';
 import PaymentMonitoring from './components/SystemAdmin/PaymentMonitoring';
 import SystemSettings from './components/SystemAdmin/SystemSettings';
 import ProfileSettings from './components/SystemAdmin/ProfileSettings';
-import HotelAdmin  from './components/SystemAdmin/HotelAdmin';
+import HotelAdmin from './components/SystemAdmin/HotelAdmin';
 
 import HomePage from './components/HomePage';
 import './App.css';
@@ -74,6 +77,7 @@ const App = () => {
             }
           />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/verify-email" element={<VerifyEmail />} /> {/* Moved to top-level */}
 
           {/* System Admin Routes */}
           <Route
@@ -99,9 +103,12 @@ const App = () => {
           >
             <Route index element={<Dashboard />} /> {/* Default route */}
             <Route path="hotel-profile" element={<ProfileManagement />} />
-            <Route path="rooms" element={<RoomManagement />} />
+            {/* <Route path="rooms" element={<RoomManagement />} /> */}
+            <Route path="rooms" element={<AddRoomForm />} />
+            <Route path="room-amenties" element={<AddDetailedRoomAndAmenities />} />
             <Route path="amenties" element={<AddAmenitiesForm />} />
             <Route path="hotel-rules" element={<AddHotelRules />} />
+            <Route path="hotel-anavailability" element={<UnavailabilityManagement />} />
             <Route path="hotel-details" element={<HotelDetail />} />
             <Route path="amenties-detail" element={<Amenities />} />
             <Route path="hotel-rule-detail" element={<HotelRulesDetail />} />
@@ -110,6 +117,7 @@ const App = () => {
             <Route path="bookings" element={<BookingManagement />} />
             <Route path="check-booking" element={<CheckBooking />} />
             <Route path="profile" element={<Profile />} />
+            {/* Removed /verify-email from here */}
           </Route>
         </Routes>
       </Box>

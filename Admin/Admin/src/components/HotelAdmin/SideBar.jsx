@@ -63,11 +63,19 @@ const SideBar = ({ collapsed }) => {
             </ListItem>
 
             {/* Room Management */}
+            
             <ListItem button component={Link} to="rooms" sx={{ pl: collapsed ? 3 : 4, '&:hover': { bgcolor: '#222831' } }}>
               <ListItemIcon>
                 <RoomIcon sx={{ color: '#00ADB5' }} />
               </ListItemIcon>
               {!collapsed && <ListItemText primary="Room Management" sx={{ color: '#00ADB5' }} />}
+            </ListItem>
+
+            <ListItem button component={Link} to="room-amenties" sx={{ pl: collapsed ? 3 : 4, '&:hover': { bgcolor: '#222831' } }}>
+              <ListItemIcon>
+                <RoomIcon sx={{ color: '#00ADB5' }} />
+              </ListItemIcon>
+              {!collapsed && <ListItemText primary="Room Type and Amenties" sx={{ color: '#00ADB5' }} />}
             </ListItem>
 
             {/* Booking Management */}
@@ -76,6 +84,14 @@ const SideBar = ({ collapsed }) => {
                 <BookingIcon sx={{ color: '#00ADB5' }} />
               </ListItemIcon>
               {!collapsed && <ListItemText primary="Booking Management" sx={{ color: '#00ADB5' }} />}
+            </ListItem>
+
+             {/* Booking UnavailabilityManagement */}
+             <ListItem button component={Link} to="hotel-anavailability" sx={{ pl: collapsed ? 3 : 4, '&:hover': { bgcolor: '#222831' } }}>
+              <ListItemIcon>
+                <BookingIcon sx={{ color: '#00ADB5' }} />
+              </ListItemIcon>
+              {!collapsed && <ListItemText primary="Room Unavailability" sx={{ color: '#00ADB5' }} />}
             </ListItem>
 
             {/* Amenities */}

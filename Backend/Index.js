@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
+import nodemailer from 'nodemailer'
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import bcrypt from 'bcrypt';
@@ -12,9 +14,10 @@ import Hotel from './modules/Hotel.js';
 import Amenity from './modules/Facilities.js'; 
 import HotelRules from './modules/HotelRules.js'; 
 import HotelAdminList from './modules/HotelAdminList.js'; 
-import router from './Routes/Routes.js'; 
 import ApprovedHotelAdmin from './modules/ApprovedHotelAdminLists.js';
 import SystemAdminModel from './modules/SystemAdminLists.js';
+import userModel from './modules/User.js';
+import { authMiddleware,adminMiddleware } from './Routes/middleware.js';
 dotenv.config();
 
 const app = express();
@@ -25,8 +28,13 @@ app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+app.use('/uploads', express.static(uploadsDir));
+console.log('Serving static files from:', uploadsDir);
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -35,6 +43,7 @@ const storage = multer.diskStorage({
     cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
   },
 });
+
 
 const upload = multer({
   storage: storage,
@@ -53,7 +62,6 @@ const upload = multer({
 
 
 
-
 // Middleware to verify token
 const verifyToken = (req, res, next) => {
   const token = req.headers['authorization']?.split(' ')[1];
@@ -65,70 +73,81 @@ const verifyToken = (req, res, next) => {
     next();
   });
 };
-// Create/Update Hotel (protected route)
-router.post('/api/hotels', verifyToken, upload.array('images', 10), async (req, res) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.post('/api/hotels', verifyToken, upload.array('images', 10), async (req, res) => {
   try {
-      const { name, location, facilityType, description, lat, long, id } = req.body;
-      let images = [];
+    const { name, location, facilityType, description, lat, long } = req.body;
+    let images = [];
 
-      if (req.files && req.files.length > 0) {
-          images = req.files.map((file) => ({
-              name: file.filename,
-              url: `/uploads/${file.filename}`,
-          }));
-      }
+    if (req.files && req.files.length > 0) {
+      images = req.files.map((file) => ({
+        name: file.filename,
+        url: `/uploads/${file.filename}`,
+      }));
+    }
 
-      // Access email from the decoded token
-      const email = req.user.email;
+    const email = req.user.email;
+    const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
+    if (!approvedAdmin) {
+      return res.status(404).json({ message: 'Hotel admin not found' });
+    }
 
-      // Find the hotelAdminId from ApprovedHotelAdmin model
-      const approvedAdmin = await ApprovedHotelAdmin.findOne({ email: email });
+    const hotelAdminId = approvedAdmin.hotelAdminId;
 
-      if (!approvedAdmin) {
-          return res.status(404).json({ message: 'Hotel admin not found' });
-      }
-
-      const hotelAdminId = approvedAdmin.hotelAdminId; // Store only the ID
-
-      if (id) {
-          if (!mongoose.Types.ObjectId.isValid(id)) {
-              return res.status(400).json({ message: 'Invalid hotel ID' });
-          }
-          await Hotel.findByIdAndUpdate(id, {
-              HotelAdminId: hotelAdminId, // Store only the ID
-              name,
-              location,
-              facilityType,
-              description,
-              lat,
-              long,
-              images,
-          });
-          res.json({ message: 'Hotel updated successfully' });
-      } else {
-          const newHotel = new Hotel({
-              HotelAdminId: hotelAdminId, // Store only the ID
-              name,
-              location,
-              facilityType,
-              description,
-              lat,
-              long,
-              images,
-          });
-          await newHotel.save();
-          res.json({ message: 'Hotel created successfully' });
-      }
+    // Check if a hotel already exists for this hotelAdminId
+    const existingHotel = await Hotel.findOne({ HotelAdminId: hotelAdminId });
+    if (existingHotel) {
+      // Update existing hotel
+      const updatedHotel = await Hotel.findOneAndUpdate(
+        { HotelAdminId: hotelAdminId },
+        {
+          name,
+          location,
+          facilityType,
+          description,
+          lat,
+          long,
+          images: images.length > 0 ? images : existingHotel.images, // Keep old images if no new ones
+        },
+        { new: true }
+      );
+      res.json({ message: 'Hotel updated successfully', data: updatedHotel });
+    } else {
+      // Create new hotel
+      const newHotel = new Hotel({
+        HotelAdminId: hotelAdminId,
+        name,
+        location,
+        facilityType,
+        description,
+        lat,
+        long,
+        images,
+      });
+      await newHotel.save();
+      res.json({ message: 'Hotel created successfully', data: newHotel });
+    }
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server error', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 
 
-
-router.get('/api/hotel/admin', verifyToken, async (req, res) => {
+app.get('/api/hotel/admin', verifyToken, async (req, res) => {
   console.log('Request received at /api/hotel/admin');
   try {
       const email = req.user.email;
@@ -157,6 +176,75 @@ router.get('/api/hotel/admin', verifyToken, async (req, res) => {
       res.status(500).json({ message: 'Server error' });
   }
 });
+
+
+// GET: Fetch Hotels with Filters (Public Route)
+app.get('/api/hotels', async (req, res) => {
+  try {
+    const { location, facilityType } = req.query;
+
+    // Build query object
+    const query = {};
+    if (location && location !== 'All Locations') {
+      query.location = { $regex: location, $options: 'i' }; // Case-insensitive search
+    }
+    if (facilityType && facilityType !== 'All Facility Types') {
+      query.facilityType = facilityType;
+    }
+
+    const hotels = await Hotel.find(query);
+    if (!hotels.length) {
+      return res.status(200).json({ message: 'No hotels found', data: [] });
+    }
+
+    res.json({ message: 'Hotels fetched successfully', data: hotels });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+
+
+// GET /api/hotels/admin/:hotelAdminId - Get hotel by hotelAdminId
+app.get('/api/hotels/admin/:hotelAdminId', async (req, res) => {
+  try {
+    const { hotelAdminId } = req.params;
+    
+    const hotel = await Hotel.findOne({ HotelAdminId: hotelAdminId });
+    
+    if (!hotel) {
+      return res.status(404).json({ message: 'Hotel not found for this admin ID' });
+    }
+
+    res.json({ data: hotel });
+  } catch (error) {
+    console.error('Error fetching hotel by admin ID:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -251,10 +339,26 @@ app.post('/api/amenities', verifyToken, async (req, res) => {
 });
 
 
+// GET: Fetch Amenities by HotelAdminId (Public Route)
+app.get('/api/amenities/by-hotel', async (req, res) => {
+  try {
+    const { hotelAdminId } = req.query;
 
+    if (!hotelAdminId) {
+      return res.status(400).json({ message: 'HotelAdminId is required' });
+    }
 
+    const amenityDoc = await Amenity.findOne({ hotelAdminId });
+    if (!amenityDoc || !amenityDoc.amenities.length) {
+      return res.status(200).json({ message: 'No amenities found', data: [] });
+    }
 
-
+    res.json({ message: 'Amenities fetched successfully', data: amenityDoc.amenities });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
 
 
@@ -368,6 +472,26 @@ app.get('/api/hotel-rules', verifyToken, async (req, res) => {
 
 
 
+// GET: Fetch Hotel Rules by HotelAdminId (Public Route)
+app.get('/api/hotel-rules/by-hotel', async (req, res) => {
+  try {
+    const { hotelAdminId } = req.query;
+
+    if (!hotelAdminId) {
+      return res.status(400).json({ message: 'HotelAdminId is required' });
+    }
+
+    const rules = await HotelRules.findOne({ hotelAdminId });
+    if (!rules) {
+      return res.status(200).json({ message: 'No rules found', data: null });
+    }
+
+    res.json({ message: 'Hotel rules fetched successfully', data: rules });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
 
 
@@ -400,7 +524,17 @@ app.get('/api/hotel-rules', verifyToken, async (req, res) => {
 
 
 
+// Email transporter setup (using Gmail as an example)
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER, // Your Gmail email
+    pass: process.env.EMAIL_PASS, // Your Gmail app password (not regular password)
+  },
+});
 
+// Temporary storage for verification codes (in-memory, use Redis or DB in production)
+const verificationCodes = new Map();
 
 
 
@@ -453,41 +587,44 @@ app.post(
         return res.status(400).json({ message: 'Email already in use' });
       }
 
-      // Hash the password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-
-      // Prepare file data
-      const passportId = {
-        name: req.files.passportId[0].filename,
-        url: `/uploads/${req.files.passportId[0].filename}`,
-      };
-      const tradeLicense = {
-        name: req.files.tradeLicense[0].filename,
-        url: `/uploads/${req.files.tradeLicense[0].filename}`,
-      };
-      const managerId = {
-        name: req.files.managerId[0].filename,
-        url: `/uploads/${req.files.managerId[0].filename}`,
-      };
-
-      // Create new user
-      const newHotelAdmin = new HotelAdminList({
-        firstName,
-        middleName,
-        lastName,
-        location,
-        email,
-        password: hashedPassword,
-        phoneNumber,
-        passportId,
-        tradeLicense,
-        managerId,
-        agreedToTerms: true,
+      // Generate a 6-digit verification code
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      verificationCodes.set(email, {
+        code: verificationCode,
+        data: {
+          firstName,
+          middleName,
+          lastName,
+          location,
+          email,
+          password,
+          phoneNumber,
+          passportId: {
+            name: req.files.passportId[0].filename,
+            url: `/uploads/${req.files.passportId[0].filename}`,
+          },
+          tradeLicense: {
+            name: req.files.tradeLicense[0].filename,
+            url: `/uploads/${req.files.tradeLicense[0].filename}`,
+          },
+          managerId: {
+            name: req.files.managerId[0].filename,
+            url: `/uploads/${req.files.managerId[0].filename}`,
+          },
+          agreedToTerms: true,
+        },
       });
 
-      await newHotelAdmin.save();
-      res.status(201).json({ message: 'Account created successfully' });
+      // Send verification email
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Email Verification Code',
+        text: `Your verification code is: ${verificationCode}. Please enter this code to complete your signup.`,
+      };
+
+      await transporter.sendMail(mailOptions);
+      res.status(200).json({ message: 'Verification code sent to your email' });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Server error', error: error.message });
@@ -496,9 +633,38 @@ app.post(
 );
 
 
+// Verify Email Route
+app.post('/api/verify-email', async (req, res) => {
+  try {
+    const { email, code } = req.body;
 
+    if (!email || !code) {
+      return res.status(400).json({ message: 'Email and verification code are required' });
+    }
 
+    const storedData = verificationCodes.get(email);
+    if (!storedData || storedData.code !== code) {
+      return res.status(400).json({ message: 'Invalid or expired verification code' });
+    }
 
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(storedData.data.password, salt);
+
+    // Create new user
+    const newHotelAdmin = new HotelAdminList({
+      ...storedData.data,
+      password: hashedPassword,
+    });
+
+    await newHotelAdmin.save();
+    verificationCodes.delete(email); // Remove the temporary data
+    res.status(201).json({ message: 'Account created successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
 
 
@@ -737,6 +903,9 @@ app.post('/api/system-admin/signup', async (req, res) => {
 
 
 
+
+
+
 // System Admin Login Route
 app.post('/api/system-admin/login', async (req, res) => {
   try {
@@ -837,11 +1006,115 @@ app.post('/api/system-admin/login', async (req, res) => {
 
 
 
+app.post('/register',upload.single('passportOrId'), async (req, res) => {
+  try {
+    const {
+      firstName,
+      middleName,
+      lastName,
+      email,
+      phone,
+      password,
+      confirmPassword,
+      acceptedTerms
+    } = req.body;
+    const passportOrId = req.file ? req.file.path : null;
+    // Validation
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match' });
+    }
+
+    const existingUser = await userModel.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create new user
+    const user = new userModel({
+      firstName,
+      middleName,
+      lastName,
+      email,
+      phone,
+      password: hashedPassword,
+      passportOrId, // In production, handle file upload separately
+      acceptedTerms
+    });
+
+    await user.save();
+
+    // Create and return JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    res.status(201).json({ token, user: { id: user._id, email: user.email, role: user.role } });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Login user
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    res.json({ token, user: { id: user._id, email: user.email, role: user.role } });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get current user (protected route)
+app.get('/me', authMiddleware, async (req, res) => {
+  try {
+    const user = await userModel.findById(req.user.id).select('-password');
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Admin route example (protected + admin only)
+app.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const users = await userModel.find().select('-password');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 
 
 
-app.use(router);
+
+
+
+
+
 
 // MongoDB Connection
 mongoose

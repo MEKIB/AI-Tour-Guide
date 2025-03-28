@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, List, ListItem, Divider, Link, Avatar } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -10,18 +10,17 @@ import {
   LocalHotel,
   Cancel,
   Payment,
-} from '@mui/icons-material'; // Import icons
+} from '@mui/icons-material';
+import axios from 'axios';
 
-// Color Palette
 const colors = {
-  dark: '#222831', // Dark Gray
-  mediumDark: '#393E46', // Medium Gray
-  primary: '#00ADB5', // Teal
-  light: '#F5F5F5', // Light Gray (Updated Background)
-  white: '#FFFFFF', // White
+  dark: '#222831',
+  mediumDark: '#393E46',
+  primary: '#00ADB5',
+  light: '#F5F5F5',
+  white: '#FFFFFF',
 };
 
-// Styled Components
 const StyledBox = styled(Box)(({ theme }) => ({
   padding: theme.spacing(4),
   backgroundColor: colors.white,
@@ -30,9 +29,7 @@ const StyledBox = styled(Box)(({ theme }) => ({
   maxWidth: '1100px',
   margin: '0 auto',
   marginBottom: 30,
-  [theme.breakpoints.down('md')]: {
-    padding: theme.spacing(3),
-  },
+  [theme.breakpoints.down('md')]: { padding: theme.spacing(3) },
 }));
 
 const StyledTitle = styled(Typography)(({ theme }) => ({
@@ -67,14 +64,10 @@ const StyledListItem = styled(ListItem)(({ theme }) => ({
   '&:hover': {
     backgroundColor: colors.primary,
     borderRadius: theme.spacing(1),
-    '& .MuiTypography-root': {
-      color: colors.white,
-    },
+    '& .MuiTypography-root': { color: colors.white },
     '& .MuiAvatar-root': {
       backgroundColor: colors.white,
-      '& .MuiSvgIcon-root': {
-        color: colors.primary,
-      },
+      '& .MuiSvgIcon-root': { color: colors.primary },
     },
   },
 }));
@@ -84,7 +77,38 @@ const StyledDivider = styled(Divider)(({ theme }) => ({
   backgroundColor: colors.primary,
 }));
 
-const Rules = () => {
+const Rules = ({ hotelAdminId }) => {
+  const [rules, setRules] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchRules = async () => {
+      try {
+        if (!hotelAdminId) {
+          setError('No Hotel Admin ID provided');
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get('http://localhost:2000/api/hotel-rules/by-hotel', {
+          params: { hotelAdminId },
+        });
+
+        setRules(response.data.data);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to load house rules');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRules();
+  }, [hotelAdminId]);
+
+  if (loading) return <Typography>Loading house rules...</Typography>;
+  if (error) return <Typography color="error">{error}</Typography>;
+
   return (
     <Box sx={{ backgroundColor: colors.light, p: 4 }}>
       <StyledBox>
@@ -96,7 +120,7 @@ const Rules = () => {
         </StyledTitle>
 
         <StyledText variant="body1" gutterBottom>
-          AYA Addis Hotel takes special requests - add in the next step!
+          {rules ? `${rules.name || 'This hotel'} takes special requests - add in the next step!` : 'Loading hotel info...'}
         </StyledText>
 
         <StyledDivider />
@@ -110,18 +134,14 @@ const Rules = () => {
         <List>
           <StyledListItem disablePadding>
             <Box display="flex" justifyContent="space-between" width="100%">
-              <Typography fontWeight="bold" color={colors.dark}>
-                Check-in:
-              </Typography>
-              <Typography color={colors.mediumDark}>From 14:00 to 00:00</Typography>
+              <Typography fontWeight="bold" color={colors.dark}>Check-in:</Typography>
+              <Typography color={colors.mediumDark}>{rules?.checkIn || 'Not specified'}</Typography>
             </Box>
           </StyledListItem>
           <StyledListItem disablePadding>
             <Box display="flex" justifyContent="space-between" width="100%">
-              <Typography fontWeight="bold" color={colors.dark}>
-                Check-out:
-              </Typography>
-              <Typography color={colors.mediumDark}>From 07:00 to 12:00</Typography>
+              <Typography fontWeight="bold" color={colors.dark}>Check-out:</Typography>
+              <Typography color={colors.mediumDark}>{rules?.checkOut || 'Not specified'}</Typography>
             </Box>
           </StyledListItem>
         </List>
@@ -135,11 +155,9 @@ const Rules = () => {
           Cancellation/Prepayment
         </StyledSectionTitle>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-          <Typography fontWeight="bold" color={colors.dark}>
-            Cancellation/Prepayment:
-          </Typography>
+          <Typography fontWeight="bold" color={colors.dark}>Cancellation/Prepayment:</Typography>
           <StyledText variant="body1" style={{ flex: 1, marginLeft: '16px' }}>
-            Cancellation and prepayment policies vary according to accommodation type. Please check what conditions may apply to each option when making your selection.
+            {rules?.cancellationPolicy || 'Cancellation and prepayment policies vary according to accommodation type.'}
           </StyledText>
         </Box>
 
@@ -153,56 +171,12 @@ const Rules = () => {
         </StyledSectionTitle>
         <StyledSectionTitle variant="subtitle1">Child Policies</StyledSectionTitle>
         <StyledText variant="body1" gutterBottom>
-          Children of any age are welcome.
-        </StyledText>
-        <StyledText variant="body1" gutterBottom>
-          Children 12 years and above will be charged as adults at this property.
-        </StyledText>
-        <StyledText variant="body1" gutterBottom>
-          To see correct prices and occupancy information, please add the number of children in your group and their ages to your search.
+          {rules?.childPolicies || 'Children of any age are welcome.'}
         </StyledText>
 
         <StyledSectionTitle variant="subtitle1">Cot and Extra Bed Policies</StyledSectionTitle>
-        <List>
-          <StyledListItem disablePadding>
-            <Box display="flex" justifyContent="space-between" width="100%">
-              <Typography fontWeight="bold" color={colors.dark}>
-                0 - 2 years:
-              </Typography>
-              <Typography color={colors.mediumDark}>
-                Extra bed upon request: US$15 per child, per night. Cot upon request: Free
-              </Typography>
-            </Box>
-          </StyledListItem>
-          <StyledListItem disablePadding>
-            <Box display="flex" justifyContent="space-between" width="100%">
-              <Typography fontWeight="bold" color={colors.dark}>
-                3 - 12 years:
-              </Typography>
-              <Typography color={colors.mediumDark}>
-                Extra bed upon request: US$15 per child, per night
-              </Typography>
-            </Box>
-          </StyledListItem>
-          <StyledListItem disablePadding>
-            <Box display="flex" justifyContent="space-between" width="100%">
-              <Typography fontWeight="bold" color={colors.dark}>
-                13+ years:
-              </Typography>
-              <Typography color={colors.mediumDark}>
-                Extra bed upon request: US$20 per person, per night
-              </Typography>
-            </Box>
-          </StyledListItem>
-        </List>
         <StyledText variant="body1" gutterBottom>
-          Prices for cots and extra beds are not included in the total price, and will have to be paid for separately during your stay.
-        </StyledText>
-        <StyledText variant="body1" gutterBottom>
-          The number of extra beds and cots allowed is dependent on the option you choose. Please check your selected option for more information.
-        </StyledText>
-        <StyledText variant="body1" gutterBottom>
-          All cots and extra beds are subject to availability.
+          {rules?.cotAndExtraBedPolicies || 'Cot and extra bed policies vary by room type.'}
         </StyledText>
 
         <StyledDivider />
@@ -214,7 +188,9 @@ const Rules = () => {
           No Age Restriction
         </StyledSectionTitle>
         <StyledText variant="body1" gutterBottom>
-          There is no age requirement for check-in.
+          {rules?.noAgeRestriction !== undefined
+            ? `There is ${rules.noAgeRestriction ? 'no' : 'an'} age requirement for check-in.`
+            : 'There is no age requirement for check-in.'}
         </StyledText>
 
         <StyledDivider />
@@ -226,7 +202,9 @@ const Rules = () => {
           Pets
         </StyledSectionTitle>
         <StyledText variant="body1" gutterBottom>
-          Pets are not allowed.
+          {rules?.petsAllowed !== undefined
+            ? `Pets are ${rules.petsAllowed ? 'allowed' : 'not allowed'}.`
+            : 'Pets are not allowed.'}
         </StyledText>
 
         <StyledDivider />
@@ -238,11 +216,9 @@ const Rules = () => {
           Cards Accepted at this Hotel
         </StyledSectionTitle>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-          <Typography fontWeight="bold" color={colors.dark}>
-            Cards Accepted at this Hotel:
-          </Typography>
+          <Typography fontWeight="bold" color={colors.dark}>Cards Accepted at this Hotel:</Typography>
           <StyledText variant="body1" style={{ flex: 1, marginLeft: '16px' }}>
-            (Cards icons here - you'd need to add the card icons if needed) Cash is not accepted
+            {rules?.acceptedCards || 'Cash is not accepted.'}
           </StyledText>
         </Box>
       </StyledBox>

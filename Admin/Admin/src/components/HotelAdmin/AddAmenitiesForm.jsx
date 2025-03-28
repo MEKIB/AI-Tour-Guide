@@ -11,6 +11,8 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
+  Paper,
+  Avatar,
 } from '@mui/material';
 import { Search as SearchIcon, Close as CloseIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import * as MuiIcons from '@mui/icons-material';
@@ -18,12 +20,27 @@ import { FixedSizeList } from 'react-window';
 import { debounce } from 'lodash';
 import axios from 'axios';
 
+// Color palette
+const colors = {
+  primary: '#00ADB5', // Teal
+  secondary: '#393E46', // Dark Gray
+  background: '#222831', // Dark Background
+  textLight: '#EEEEEE', // Light Text
+  textDark: '#222831', // Dark Text
+  error: '#FF4444', // Red for errors
+  success: '#00C853', // Green for success
+  inputBackground: '#2D2D2D', // Darker background for input fields
+  inputText: '#EEEEEE', // Light text color for input fields
+  inputBorder: '#00ADB5', // Teal border for input fields
+};
+
 const AddAmenitiesForm = () => {
   const [amenities, setAmenities] = useState([]); // List of amenities
   const [newAmenity, setNewAmenity] = useState({ name: '', description: '', icon: '' });
   const [iconSearchQuery, setIconSearchQuery] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
+  // Fetch all Material Icons and memoize them
   const muiIcons = useMemo(() => {
     return Object.keys(MuiIcons).map((iconName) => ({
       name: iconName,
@@ -56,16 +73,19 @@ const AddAmenitiesForm = () => {
     fetchAmenities();
   }, []);
 
+  // Debounced search function for icons
   const handleSearch = debounce((query) => {
     setIconSearchQuery(query);
   }, 300);
 
+  // Filter icons based on search query
   const filteredIcons = useMemo(() => {
     return muiIcons.filter((icon) =>
       icon.name.toLowerCase().includes(iconSearchQuery.toLowerCase())
     );
   }, [iconSearchQuery, muiIcons]);
 
+  // Add a new amenity to the list
   const handleAddAmenity = () => {
     if (newAmenity.name.trim() && newAmenity.description.trim() && newAmenity.icon) {
       setAmenities([...amenities, newAmenity]);
@@ -76,10 +96,12 @@ const AddAmenitiesForm = () => {
     }
   };
 
+  // Delete an amenity from the list
   const handleDeleteAmenity = (index) => {
     setAmenities(amenities.filter((_, i) => i !== index));
   };
 
+  // Submit the entire list of amenities
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -104,10 +126,12 @@ const AddAmenitiesForm = () => {
     }
   };
 
+  // Clear the selected icon
   const clearIcon = () => {
     setNewAmenity({ ...newAmenity, icon: '' });
   };
 
+  // Render individual icon items in the FixedSizeList
   const IconItem = ({ index, style }) => {
     const icon = filteredIcons[index];
     const IconComponent = icon.component;
@@ -120,11 +144,11 @@ const AddAmenitiesForm = () => {
           minWidth: 'auto',
           padding: 1,
           borderRadius: 1,
-          color: newAmenity.icon === icon.name ? '#EEEEEE' : '#00ADB5',
-          backgroundColor: newAmenity.icon === icon.name ? '#00ADB5' : 'transparent',
+          color: newAmenity.icon === icon.name ? colors.textLight : colors.primary,
+          backgroundColor: newAmenity.icon === icon.name ? colors.primary : 'transparent',
           '&:hover': {
-            backgroundColor: '#008B8B',
-            color: '#EEEEEE',
+            backgroundColor: colors.secondary,
+            color: colors.textLight,
           },
         }}
       >
@@ -133,16 +157,41 @@ const AddAmenitiesForm = () => {
     );
   };
 
+  // Get the selected icon component
   const SelectedIconComponent = newAmenity.icon ? MuiIcons[newAmenity.icon] : null;
 
+  // Custom styles for input fields
+  const inputStyles = {
+    backgroundColor: colors.inputBackground,
+    color: colors.inputText,
+    borderRadius: 1,
+    '& .MuiOutlinedInput-root': {
+      '& fieldset': {
+        borderColor: colors.inputBorder,
+      },
+      '&:hover fieldset': {
+        borderColor: colors.primary,
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: colors.primary,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: colors.inputText,
+    },
+    '& .MuiInputBase-input': {
+      color: colors.inputText,
+    },
+  };
+
   return (
-    <Box sx={{ padding: 3 }}>
-      <Typography variant="h4" sx={{ color: '#00ADB5', fontWeight: 'bold', marginBottom: 3 }}>
+    <Box sx={{ padding: 3, backgroundColor: colors.background, minHeight: '100vh', color: colors.textLight }}>
+      <Typography variant="h4" sx={{ color: colors.primary, fontWeight: 'bold', marginBottom: 3 }}>
         {isEditing ? 'Update Amenities' : 'Add New Amenities'}
       </Typography>
 
       {/* Form to add a new amenity */}
-      <Box sx={{ marginBottom: 4 }}>
+      <Paper sx={{ padding: 3, marginBottom: 4, backgroundColor: colors.secondary }}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={4}>
             <TextField
@@ -151,6 +200,7 @@ const AddAmenitiesForm = () => {
               variant="outlined"
               value={newAmenity.name}
               onChange={(e) => setNewAmenity({ ...newAmenity, name: e.target.value })}
+              sx={inputStyles}
             />
           </Grid>
           <Grid item xs={12} md={4}>
@@ -160,6 +210,7 @@ const AddAmenitiesForm = () => {
               variant="outlined"
               value={newAmenity.description}
               onChange={(e) => setNewAmenity({ ...newAmenity, description: e.target.value })}
+              sx={inputStyles}
             />
           </Grid>
           <Grid item xs={12} md={4}>
@@ -189,14 +240,16 @@ const AddAmenitiesForm = () => {
                   </InputAdornment>
                 ),
               }}
+              sx={inputStyles}
             />
             <Box
               sx={{
                 marginTop: 2,
                 height: 200,
-                border: '1px solid #393E46',
+                border: `1px solid ${colors.primary}`,
                 borderRadius: 1,
                 padding: 2,
+                backgroundColor: colors.background,
               }}
             >
               <FixedSizeList
@@ -214,39 +267,43 @@ const AddAmenitiesForm = () => {
               variant="contained"
               onClick={handleAddAmenity}
               sx={{
-                backgroundColor: '#00ADB5',
-                '&:hover': { backgroundColor: '#008B8B' },
+                backgroundColor: colors.primary,
+                color: colors.textLight,
+                '&:hover': { backgroundColor: colors.secondary },
               }}
             >
               Add to List
             </Button>
           </Grid>
         </Grid>
-      </Box>
+      </Paper>
 
       {/* Display current list of amenities */}
-      <Box sx={{ marginBottom: 4 }}>
-        <Typography variant="h6" sx={{ color: '#00ADB5', marginBottom: 2 }}>
+      <Paper sx={{ padding: 3, marginBottom: 4, backgroundColor: colors.secondary }}>
+        <Typography variant="h6" sx={{ color: colors.primary, marginBottom: 2 }}>
           Current Amenities
         </Typography>
         {amenities.length === 0 ? (
-          <Typography sx={{ color: '#EEEEEE' }}>No amenities added yet.</Typography>
+          <Typography sx={{ color: colors.textLight }}>No amenities added yet.</Typography>
         ) : (
           <List>
             {amenities.map((amenity, index) => (
-              <ListItem key={index} sx={{ borderBottom: '1px solid #393E46' }}>
+              <ListItem key={index} sx={{ borderBottom: `1px solid ${colors.primary}` }}>
+                <Avatar sx={{ backgroundColor: colors.primary, marginRight: 2 }}>
+                  {amenity.icon ? React.createElement(MuiIcons[amenity.icon]) : null}
+                </Avatar>
                 <ListItemText
                   primary={amenity.name}
                   secondary={amenity.description}
-                  primaryTypographyProps={{ color: '#EEEEEE' }}
-                  secondaryTypographyProps={{ color: '#AAAAAA' }}
+                  primaryTypographyProps={{ color: colors.textLight }}
+                  secondaryTypographyProps={{ color: colors.textLight }}
                 />
                 <ListItemSecondaryAction>
                   <IconButton
                     edge="end"
                     aria-label="delete"
                     onClick={() => handleDeleteAmenity(index)}
-                    sx={{ color: '#FF4444' }}
+                    sx={{ color: colors.error }}
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -255,7 +312,7 @@ const AddAmenitiesForm = () => {
             ))}
           </List>
         )}
-      </Box>
+      </Paper>
 
       {/* Submit the entire list */}
       <form onSubmit={handleSubmit}>
@@ -263,8 +320,9 @@ const AddAmenitiesForm = () => {
           type="submit"
           variant="contained"
           sx={{
-            backgroundColor: '#00ADB5',
-            '&:hover': { backgroundColor: '#008B8B' },
+            backgroundColor: colors.primary,
+            color: colors.textLight,
+            '&:hover': { backgroundColor: colors.secondary },
           }}
         >
           {isEditing ? 'Update Amenities' : 'Save Amenities'}
