@@ -29,10 +29,8 @@ import {
   Logout as LogoutIcon,
 } from "@mui/icons-material";
 import { debounce } from "lodash";
-
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
-
 
 // Define the color palette
 const colors = {
@@ -155,31 +153,7 @@ const languages = [
   { name: "Spanish", code: "ES" },
 ];
 
-
-// Expanded search data to include all searchable items
-const searchData = [
-  { name: "Hotels and Locations", path: "/hotelslocation" },
-  { name: "Filtered Hotels", path: "/filtered-hotels" },
-  { name: "Hotel Details", path: "/hoteldetails" },
-  { name: "Unison Hotel", path: "/hotel/1" },
-  { name: "Leoages Lodge", path: "/hotel/2" },
-  { name: "Sign Up", path: "/signup" },
-];
-
-export default function Navbar({ isLoggedIn, onLogout, user }) {
-
-// Original handleLogout outside the component
-const handleLogout = () => {
-  localStorage.removeItem("token");
-  setIsLoggedIn(false);
-  setSuccess("Logged out successfully!");
-  setError("");
-  onLogout();
-  navigate("/login");
-};
-
-export default function ButtonAppBar({ isLoggedIn, onLogout }) {
-
+export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user = null }) {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
@@ -194,10 +168,9 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-
-  // Sync local state with prop
+  // Sync local state with props
   useEffect(() => {
-    setIsLoggedIn(isLoggedIn); // Sync with prop from App.jsx
+    setIsLoggedIn(isLoggedIn);
   }, [isLoggedIn]);
 
   // Expanded search data to include all searchable items
@@ -209,7 +182,6 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
     { name: "Leoages Lodge", path: "/hotel/2" },
     { name: "Sign Up", path: "/signup" },
   ];
-
 
   // Debounced search function
   const handleSearch = debounce((query) => {
@@ -301,8 +273,8 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
     handleCloseLanguageModal();
   };
 
-  // Handle logout inside the component
-  const handleLogoutInside = () => {
+  // Handle logout
+  const handleLogout = () => {
     localStorage.removeItem("token");
     setIsLoggedIn(false);
     setSuccess("Logged out successfully!");
@@ -569,8 +541,7 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
                 color="inherit"
                 sx={{ display: 'flex', alignItems: 'center' }}
               >
-
-                {isLoggedIn && user?.profileImage ? (
+                {isLoggedInState && user?.profileImage ? (
                   <>
                     <ProfileImage src={user.profileImage} alt="Profile" />
                     <ArrowDropDown />
@@ -581,10 +552,6 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
                     <ArrowDropDown />
                   </>
                 )}
-
-                <AccountCircle />
-                <ArrowDropDown />
-
               </StyledAccountButton>
               <StyledMenu
                 id="user-menu"
@@ -595,7 +562,7 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
                   "aria-labelledby": "account-button",
                 }}
               >
-                {isLoggedIn ? (
+                {isLoggedInState ? (
                   <>
                     <MenuItem onClick={() => {
                       navigate("/profile");
@@ -624,31 +591,24 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
                       handleCloseUserMenu();
                     }}>
                       <BookIcon sx={{ mr: 2 }} />
-                      Booking
+                      Bookings
                     </MenuItem>
                     <MenuItem onClick={() => {
-                      navigate("/reserve");
+                      navigate("/reservations");
                       handleCloseUserMenu();
                     }}>
                       <RewardsIcon sx={{ mr: 2 }} />
-                      Reserve
+                      Reservations
                     </MenuItem>
                     <MenuItem onClick={() => {
-                      navigate("/new");
-                      handleCloseUserMenu();
-                    }}>
-                      <NewIcon sx={{ mr: 2 }} />
-                      New!
-                    </MenuItem>
-                    <MenuItem onClick={() => {
-                      navigate("/wishlists");
+                      navigate("/wishlist");
                       handleCloseUserMenu();
                     }}>
                       <WishlistIcon sx={{ mr: 2 }} />
-                      Wishlists
+                      Wishlist
                     </MenuItem>
                     <MenuItem onClick={() => {
-                      navigate("/profile");
+                      navigate("/profile/settings");
                       handleCloseUserMenu();
                     }}>
                       <ProfileIcon sx={{ mr: 2 }} />
@@ -659,9 +619,9 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
                       handleCloseUserMenu();
                     }}>
                       <HelpIcon sx={{ mr: 2 }} />
-                      Help
+                      Help Center
                     </MenuItem>
-                    <MenuItem onClick={handleLogoutInside}>
+                    <MenuItem onClick={handleLogout}>
                       <LogoutIcon sx={{ mr: 2 }} />
                       Log out
                     </MenuItem>
@@ -673,7 +633,7 @@ export default function ButtonAppBar({ isLoggedIn, onLogout }) {
                       handleCloseUserMenu();
                     }}>
                       <HelpIcon sx={{ mr: 2 }} />
-                      Help
+                      Help Center
                     </MenuItem>
                     <MenuItem onClick={() => {
                       navigate("/login");
