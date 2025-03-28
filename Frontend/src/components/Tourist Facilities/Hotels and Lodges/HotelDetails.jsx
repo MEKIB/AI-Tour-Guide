@@ -5,39 +5,32 @@ import {
   Card,
   CardContent,
   CardMedia,
-  Rating,
   List,
   ListItem,
   ListItemIcon,
   Grid,
   IconButton,
   Modal,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
-  TextField,
-  Avatar,
 } from '@mui/material';
-import StarIcon from '@mui/icons-material/Star';
 import WifiIcon from '@mui/icons-material/Wifi';
 import PoolIcon from '@mui/icons-material/Pool';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CloseIcon from '@mui/icons-material/Close';
+import StarIcon from '@mui/icons-material/Star';
 import { Carousel } from 'react-responsive-carousel';
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import axios from 'axios';
+import HotelReviews from './HotelReview';
 
 const HotelDetails = ({ hotelAdminId }) => {
   const [openModal, setOpenModal] = useState(false);
-  const [openReviews, setOpenReviews] = useState(false);
-  const [newReview, setNewReview] = useState({ user: '', rating: 0, comment: '' });
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
   const baseUrl = 'http://localhost:2000'; // Adjust if your backend runs on a different port/domain
 
-  const [staticReviews, setStaticReviews] = useState({
+  // Static reviews data (for display only)
+  const [staticReviews] = useState({
     averageRating: 4.5,
     reviews: [
       { id: 1, user: "Traveler123", rating: 5, comment: "Excellent service and beautiful location!", date: "2023-08-15" },
@@ -98,38 +91,6 @@ const HotelDetails = ({ hotelAdminId }) => {
 
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => setOpenModal(false);
-
-  const handleOpenReviews = () => setOpenReviews(true);
-  const handleCloseReviews = () => {
-    setOpenReviews(false);
-    setNewReview({ user: '', rating: 0, comment: '' });
-  };
-
-  const calculateAverageRating = (reviews) => {
-    const total = reviews.reduce((sum, review) => sum + review.rating, 0);
-    return reviews.length > 0 ? Number((total / reviews.length).toFixed(1)) : 0;
-  };
-
-  const handleReviewSubmit = () => {
-    if (!newReview.comment.trim() || newReview.rating === 0) return;
-
-    const updatedReviews = [{
-      id: Date.now(),
-      user: newReview.user.trim() || 'Anonymous',
-      rating: newReview.rating,
-      comment: newReview.comment,
-      date: new Date().toISOString().split('T')[0],
-    }, ...staticReviews.reviews];
-
-    const newAverageRating = calculateAverageRating(updatedReviews);
-
-    setStaticReviews({
-      reviews: updatedReviews,
-      averageRating: newAverageRating,
-    });
-
-    setNewReview({ user: '', rating: 0, comment: '' });
-  };
 
   return (
     <Box sx={{ p: 5, px: 10, backgroundColor: '#222831', color: '#EEEEEE' }}>
@@ -224,7 +185,7 @@ const HotelDetails = ({ hotelAdminId }) => {
           </Grid>
         </Grid>
 
-        {/* Right side: Hotel details */}
+        {/* Right side: Hotel details with review display */}
         <Grid item xs={12} md={4}>
           <Card sx={{ backgroundColor: '#393E46', color: '#EEEEEE', height: '100%' }}>
             <CardContent>
@@ -249,7 +210,7 @@ const HotelDetails = ({ hotelAdminId }) => {
                 </Grid>
               </Grid>
 
-              {/* Review Section */}
+              {/* Review Display Section */}
               <Box sx={{ maxWidth: 500, margin: 'auto', textAlign: 'center', mt: 2 }}>
                 <Typography variant="h5" gutterBottom>
                   What Our Guests Loved
@@ -290,16 +251,8 @@ const HotelDetails = ({ hotelAdminId }) => {
                     </Card>
                   ))}
                 </Carousel>
+                <HotelReviews/>
               </Box>
-
-              <Button
-                variant="outlined"
-                fullWidth
-                sx={{ mt: 2, color: '#00ADB5', borderColor: '#00ADB5' }}
-                onClick={handleOpenReviews}
-              >
-                Add Review
-              </Button>
 
               {/* Map Placeholder */}
               <Box sx={{ mt: 2, height: 200, backgroundColor: '#222831', borderRadius: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -420,88 +373,6 @@ const HotelDetails = ({ hotelAdminId }) => {
           </Box>
         </Box>
       </Modal>
-
-      {/* Dialog for adding and viewing reviews */}
-      <Dialog open={openReviews} onClose={handleCloseReviews} fullWidth maxWidth="md">
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#393E46', color: '#EEEEEE' }}>
-          <Typography variant="h5">Guest Reviews</Typography>
-          <IconButton onClick={handleCloseReviews}>
-            <CloseIcon sx={{ color: '#EEEEEE' }} />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers sx={{ bgcolor: '#393E46', color: '#EEEEEE' }}>
-          <Box sx={{ mb: 3, p: 2, border: `1px solid #00ADB5`, borderRadius: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Share Your Experience
-            </Typography>
-            <TextField
-              fullWidth
-              label="Your Name (optional)"
-              value={newReview.user}
-              onChange={(e) => setNewReview({ ...newReview, user: e.target.value })}
-              sx={{ mb: 2, bgcolor: '#222831', color: '#EEEEEE' }}
-            />
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <Typography>Your Rating:</Typography>
-              <Rating
-                value={newReview.rating}
-                onChange={(e, newValue) => setNewReview({ ...newReview, rating: newValue })}
-                size="large"
-                sx={{ color: '#00ADB5' }}
-              />
-            </Box>
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              variant="outlined"
-              label="Your review"
-              value={newReview.comment}
-              onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-              sx={{ mb: 2, bgcolor: '#222831', color: '#EEEEEE' }}
-            />
-            <Button
-              variant="contained"
-              onClick={handleReviewSubmit}
-              disabled={!newReview.comment.trim() || newReview.rating === 0}
-              sx={{ bgcolor: '#00ADB5', color: '#EEEEEE', '&:hover': { bgcolor: '#00838F' } }}
-            >
-              Submit Review
-            </Button>
-          </Box>
-
-          <Box sx={{ mt: 2 }}>
-            {staticReviews.reviews.map((review) => (
-              <Box key={review.id} sx={{ mb: 2, p: 2, bgcolor: '#222831', borderRadius: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: '#00ADB5' }}>
-                      {review.user[0].toUpperCase()}
-                    </Avatar>
-                    <Typography variant="subtitle1" fontWeight={500}>
-                      {review.user}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Rating value={review.rating} size="small" readOnly sx={{ color: '#00ADB5' }} />
-                    <Typography variant="body2" color="text.secondary">
-                      {review.date}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Typography variant="body2" paragraph>
-                  {review.comment}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ bgcolor: '#393E46' }}>
-          <Button onClick={handleCloseReviews} sx={{ color: '#EEEEEE' }}>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

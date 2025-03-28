@@ -1006,7 +1006,7 @@ app.post('/api/system-admin/login', async (req, res) => {
 
 
 
-app.post('/register',upload.single('passportOrId'), async (req, res) => {
+app.post('/register', upload.single('passportOrId'), async (req, res) => {
   try {
     const {
       firstName,
@@ -1019,6 +1019,7 @@ app.post('/register',upload.single('passportOrId'), async (req, res) => {
       acceptedTerms
     } = req.body;
     const passportOrId = req.file ? req.file.path : null;
+
     // Validation
     if (password !== confirmPassword) {
       return res.status(400).json({ message: 'Passwords do not match' });
@@ -1041,24 +1042,27 @@ app.post('/register',upload.single('passportOrId'), async (req, res) => {
       email,
       phone,
       password: hashedPassword,
-      passportOrId, // In production, handle file upload separately
+      passportOrId,
       acceptedTerms
     });
 
     await user.save();
 
-    // Create and return JWT
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-
-    res.status(201).json({ token, user: { id: user._id, email: user.email, role: user.role } });
+    // Return success response without token
+    res.status(201).json({
+      message: 'Registration successful',
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
+
+
 
 // Login user
 app.post('/login', async (req, res) => {
