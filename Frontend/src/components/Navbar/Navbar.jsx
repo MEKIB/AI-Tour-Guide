@@ -13,6 +13,7 @@ import { styled } from "@mui/material/styles";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import ArrowDropDown from "@mui/icons-material/ArrowDropDown";
 import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from "@mui/icons-material/Close";
 import InputBase from "@mui/material/InputBase";
 import ReactCountryFlag from "react-country-flag";
 import {
@@ -20,7 +21,6 @@ import {
   Login as LoginIcon,
   Book as BookIcon,
   CardGiftcard as RewardsIcon,
-  NewReleases as NewIcon,
   Favorite as WishlistIcon,
   Person as ProfileIcon,
   Logout as LogoutIcon,
@@ -100,12 +100,12 @@ const SearchResultItem = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ProfileImage = styled('img')({
-  width: '32px',
-  height: '32px',
-  borderRadius: '50%',
-  objectFit: 'cover',
-  marginRight: '8px',
+const ProfileImage = styled("img")({
+  width: "32px",
+  height: "32px",
+  borderRadius: "50%",
+  objectFit: "cover",
+  marginRight: "8px",
 });
 
 // List of supported languages
@@ -116,7 +116,11 @@ const languages = [
   { name: "Spanish", code: "ES" },
 ];
 
-export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user = null }) {
+export default function Navbar({
+  isLoggedIn = false,
+  onLogout = () => {},
+  user = null,
+}) {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
@@ -126,11 +130,12 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [anchorElUser, setAnchorElUser] = useState(null);
-  const [isLoggedInState, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [isLoggedInState, setIsLoggedIn] = useState(
+    !!localStorage.getItem("token")
+  );
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-
 
   // Sync local state with props
   useEffect(() => {
@@ -223,10 +228,9 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
     setAnchorElUser(null);
   };
 
-
-  // Handlers for Language modal
-  const handleOpenLanguageModal = () => {
-    setLanguageModalOpen(true);
+  // Handlers for Language menu
+  const handleOpenLanguage = (event) => {
+    setAnchorElLanguage(event.currentTarget);
   };
 
   const handleCloseLanguage = () => {
@@ -265,7 +269,6 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
             </Link>
           </Typography>
           <Box sx={{ display: "flex", gap: 4, alignItems: "center" }}>
-
             {/* Search Icon and Search Box */}
             <Box className="search-box">
               {searchBoxOpen ? (
@@ -280,10 +283,12 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                   <IconButton onClick={() => setSearchBoxOpen(false)}>
                     <CloseIcon />
                   </IconButton>
-
                 </SearchBox>
               ) : (
-                <IconButton color="inherit" onClick={() => setSearchBoxOpen(true)}>
+                <IconButton
+                  color="inherit"
+                  onClick={() => setSearchBoxOpen(true)}
+                >
                   <SearchIcon />
                 </IconButton>
               )}
@@ -343,7 +348,7 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                 </MenuItem>
                 <MenuItem onClick={handleCloseDestination}>
                   <Link
-                    to="/national-parks" // Changed from "/nationalparks" to match route
+                    to="/national-parks"
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     National Parks and Community Protected Area
@@ -375,6 +380,8 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                 </MenuItem>
               </StyledMenu>
             </Box>
+
+            {/* Tourist Facilities Menu */}
             <Box
               onMouseEnter={handleOpenTourist}
               onMouseLeave={handleCloseTourist}
@@ -422,12 +429,13 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                     Tourist Information Centers
                   </Link>
                 </MenuItem>
-
                 <MenuItem onClick={handleCloseTourist}>
                   Other Service Providers
                 </MenuItem>
               </StyledMenu>
             </Box>
+
+            {/* Events Link */}
             <Link
               to="/events"
               style={{ textDecoration: "none", color: colors.background }}
@@ -435,81 +443,13 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
               Events
             </Link>
 
-
-            {/* Language Modal */}
-            <StyledLanguageButton
-              id="language-button"
-              onClick={handleOpenLanguageModal}
-              color="inherit"
-            >
-              <LanguageIcon />
-            </StyledLanguageButton>
-            <LanguageModal
-              open={languageModalOpen}
-              onClose={handleCloseLanguageModal}
-              aria-labelledby="language-modal-title"
-              aria-describedby="language-modal-description"
-            >
-              <LanguageModalContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography
-                    id="language-modal-title"
-                    variant="h6"
-                    component="h2"
-                  >
-                    Select Language ({selectedLanguage})
-                  </Typography>
-                  <IconButton
-                    aria-label="close"
-                    onClick={handleCloseLanguageModal}
-                  >
-                    <CloseIcon />
-                  </IconButton>
-                </Box>
-                <LanguageButtonContainer>
-                  {languages.map((language) => (
-                    <Button
-                      key={language.name}
-                      variant={
-                        selectedLanguage === language.name
-                          ? "contained"
-                          : "outlined"
-                      }
-                      onClick={() => handleLanguageSelect(language.name)}
-                      startIcon={
-                        <ReactCountryFlag countryCode={language.code} svg />
-                      }
-                      sx={{
-                        backgroundColor:
-                          selectedLanguage === language.name
-                            ? colors.accent
-                            : "transparent",
-                        color: colors.background,
-                        "&:hover": {
-                          backgroundColor: colors.accent,
-                        },
-                      }}
-                    >
-                      {language.name}
-                    </Button>
-                  ))}
-                </LanguageButtonContainer>
-              </LanguageModalContent>
-            </LanguageModal>
-
             {/* Account Button with Profile Image */}
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <StyledAccountButton
                 id="account-button"
                 onClick={handleOpenUserMenu}
                 color="inherit"
-                sx={{ display: 'flex', alignItems: 'center' }}
+                sx={{ display: "flex", alignItems: "center" }}
               >
                 {isLoggedInState && user?.profileImage ? (
                   <>
@@ -534,60 +474,84 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
               >
                 {isLoggedInState ? (
                   <>
-                    <MenuItem onClick={() => {
-                      navigate("/profile");
-                      handleCloseUserMenu();
-                    }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                    <MenuItem
+                      onClick={() => {
+                        navigate("/profile");
+                        handleCloseUserMenu();
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          width: "100%",
+                        }}
+                      >
                         {user?.profileImage && (
-                          <ProfileImage 
-                            src={user.profileImage} 
-                            alt="Profile" 
+                          <ProfileImage
+                            src={user.profileImage}
+                            alt="Profile"
                             sx={{ mr: 2 }}
                           />
                         )}
                         <Box>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                            {user?.name || 'My Profile'}
+                          <Typography
+                            variant="subtitle1"
+                            sx={{ fontWeight: "bold" }}
+                          >
+                            {user?.name || "My Profile"}
                           </Typography>
-                          <Typography variant="body2" sx={{ color: colors.accent }}>
-                            {user?.email || ''}
+                          <Typography
+                            variant="body2"
+                            sx={{ color: colors.accent }}
+                          >
+                            {user?.email || ""}
                           </Typography>
                         </Box>
                       </Box>
                     </MenuItem>
-                    <MenuItem onClick={() => {
-                      navigate("/bookings");
-                      handleCloseUserMenu();
-                    }}>
+                    <MenuItem
+                      onClick={() => {
+                        navigate("/bookings");
+                        handleCloseUserMenu();
+                      }}
+                    >
                       <BookIcon sx={{ mr: 2 }} />
                       Bookings
                     </MenuItem>
-                    <MenuItem onClick={() => {
-                      navigate("/reservations");
-                      handleCloseUserMenu();
-                    }}>
+                    <MenuItem
+                      onClick={() => {
+                        navigate("/reservations");
+                        handleCloseUserMenu();
+                      }}
+                    >
                       <RewardsIcon sx={{ mr: 2 }} />
                       Reservations
                     </MenuItem>
-                    <MenuItem onClick={() => {
-                      navigate("/wishlist");
-                      handleCloseUserMenu();
-                    }}>
+                    <MenuItem
+                      onClick={() => {
+                        navigate("/wishlist");
+                        handleCloseUserMenu();
+                      }}
+                    >
                       <WishlistIcon sx={{ mr: 2 }} />
                       Wishlist
                     </MenuItem>
-                    <MenuItem onClick={() => {
-                      navigate("/profile/settings");
-                      handleCloseUserMenu();
-                    }}>
+                    <MenuItem
+                      onClick={() => {
+                        navigate("/profile/settings");
+                        handleCloseUserMenu();
+                      }}
+                    >
                       <ProfileIcon sx={{ mr: 2 }} />
                       Profile Settings
                     </MenuItem>
-                    <MenuItem onClick={() => {
-                      navigate("/help");
-                      handleCloseUserMenu();
-                    }}>
+                    <MenuItem
+                      onClick={() => {
+                        navigate("/help");
+                        handleCloseUserMenu();
+                      }}
+                    >
                       <HelpIcon sx={{ mr: 2 }} />
                       Help Center
                     </MenuItem>
@@ -598,17 +562,21 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                   </>
                 ) : (
                   <>
-                    <MenuItem onClick={() => {
-                      navigate("/help");
-                      handleCloseUserMenu();
-                    }}>
+                    <MenuItem
+                      onClick={() => {
+                        navigate("/help");
+                        handleCloseUserMenu();
+                      }}
+                    >
                       <HelpIcon sx={{ mr: 2 }} />
                       Help Center
                     </MenuItem>
-                    <MenuItem onClick={() => {
-                      navigate("/login");
-                      handleCloseUserMenu();
-                    }}>
+                    <MenuItem
+                      onClick={() => {
+                        navigate("/login");
+                        handleCloseUserMenu();
+                      }}
+                    >
                       <LoginIcon sx={{ mr: 2 }} />
                       Login/Sign Up
                     </MenuItem>
@@ -720,7 +688,6 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
           </Box>
         </Toolbar>
       </AppBar>
-
 
       {/* Add padding to prevent content overlap */}
       <Box sx={{ paddingTop: "64px" }}></Box>

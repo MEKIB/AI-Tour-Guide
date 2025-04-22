@@ -50,6 +50,12 @@ import FasilGhebbiHeritagePage from "./components/Destinations/World Heritage Si
 import Bookings from "./components/profile/Bookings";
 import Reserve from "./components/profile/Reserve";
 import Profile from "./components/profile/Profile";
+import LakeZengenaPage from "./components/Destinations/Lakes,waterfall/LakeZengenaPage";
+import LakeTirbaPage from "./components/Destinations/Lakes,waterfall/LakeTirbaPage";
+import LakeHayqPage from "./components/Destinations/Lakes,waterfall/LakeHayqPage";
+import WanzayeHotspringPage from "./components/Destinations/Lakes,waterfall/WanzayeHotspringPage";
+import BlueNileFallsPage from "./components/Destinations/Lakes,waterfall/BlueNileFallsPage";
+import LakeTanaLakesPage from "./components/Destinations/Lakes,waterfall/LakeTanaLakesPage";
 
 function App() {
   const [userLocation, setUserLocation] = useState(null);
@@ -58,7 +64,9 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
 
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("token"));
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem("token")
+  );
 
   // Clear token on page load/refresh
   useEffect(() => {
@@ -66,12 +74,9 @@ function App() {
     setIsAuthenticated(false); // Reset authentication state
   }, []); // Empty dependency array means this runs once on mount
 
-
-
-
   useEffect(() => {
     // Check for existing user session
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
       setIsLoggedIn(true);
@@ -102,24 +107,21 @@ function App() {
     setUserLocation(event.target.value);
   };
 
-
   const handleLogin = (userData) => {
     setIsLoggedIn(true);
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem("user", JSON.stringify(userData));
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem("user");
   };
-
 
   return (
     <Box
       sx={{
-
         marginLeft: "-8px",
         padding: 2,
         width: "100%",
@@ -128,16 +130,14 @@ function App() {
         overflowX: "hidden",
       }}
     >
-
-      <ButtonAppBar 
-        isLoggedIn={isLoggedIn} 
-        onLogout={handleLogout} 
-        user={user} 
+      <ButtonAppBar
+        isLoggedIn={isLoggedIn}
+        onLogout={handleLogout}
+        user={user}
       />
 
       {/* Navbar */}
       <ButtonAppBar isLoggedIn={isAuthenticated} onLogout={handleLogout} />
-
 
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
@@ -187,6 +187,31 @@ function App() {
         />
         <Route path="/national-parks/alitash" element={<AlitashPage />} />
         <Route path="/lakeAndWaterfall" element={<LakesAndWaterfallHome />} />
+
+        <Route
+          path="/lakes-hot-springs-waterfalls/lake-zengena"
+          element={<LakeZengenaPage />}
+        />
+        <Route
+          path="/lakes-hot-springs-waterfalls/lake-tirba"
+          element={<LakeTirbaPage />}
+        />
+        <Route
+          path="/lakes-hot-springs-waterfalls/wanzaye-hot-spring"
+          element={<WanzayeHotspringPage />}
+        />
+        <Route
+          path="/lakes-hot-springs-waterfalls/lake-hayq"
+          element={<LakeHayqPage />}
+        />
+        <Route
+          path="/lakes-hot-springs-waterfalls/blue-nile-falls"
+          element={<BlueNileFallsPage />}
+        />
+        <Route
+          path="/lakes-hot-springs-waterfalls/lake-tana"
+          element={<LakeTanaLakesPage />}
+        />
         <Route path="/historicalLandmarks" element={<HistoricalHome />} />
         <Route
           path="/tourist-information-center"
@@ -228,7 +253,6 @@ function App() {
 
         <Route path="/reserve" element={<Reserve />} />
         <Route path="/profile" element={<Profile />} />
-
       </Routes>
 
       <ChatbotLogic />
