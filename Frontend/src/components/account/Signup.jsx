@@ -159,9 +159,8 @@ const SignupPage = () => {
         const data = await response.json();
 
         if (response.ok) {
-          setAlert({ type: "success", message: "Registration successful!" });
-          localStorage.setItem("token", data.token); // Store JWT token
-          setTimeout(() => navigate("/home"), 2000); // Redirect after 2 seconds
+          setAlert({ type: "success", message: "Registration successful! Redirecting to login..." });
+          setTimeout(() => navigate("/login"), 2000); // Redirect to login page after 2 seconds
         } else {
           setAlert({ type: "error", message: data.message || "Registration failed" });
         }

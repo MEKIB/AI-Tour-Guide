@@ -4,7 +4,7 @@ import { Box } from "@mui/material";
 import ButtonAppBar from "./components/Navbar/Navbar";
 import Home from "./components/Home page/Home";
 import News from "./components/News/News";
-import EventsBoth from "./components/Events/EventsBoth";
+import Events from "./components/Events/Events";
 import ThingsToDo from "./components/Things To Do/DoThings";
 import World from "./components/Destinations/World Heritage Sites/World";
 import ReligiousHome from "./components/Destinations/Religious Sites/ReligiousHome";
@@ -27,9 +27,35 @@ import LakesAndWaterfallHome from "./components/Destinations/Lakes,waterfall/Lak
 import NationalParksHome from "./components/Destinations/National Parks and Community Protected Area/NationalParksHome";
 import HotelsLodges from "./components/Tourist Facilities/Hotels and Lodges/HotelsLodges";
 import HOMEPage from "./components/Home page/HOMEPage";
+import AbuneYosephPage from "./components/Destinations/National Parks and Community Protected Area/AbuneYosephPage";
+import SemienMountainsPage from "./components/Destinations/National Parks and Community Protected Area/SemienMountainsPage";
+import GunaMountainPage from "./components/Destinations/National Parks and Community Protected Area/GunaMountainPage";
+import ChokeMountainPage from "./components/Destinations/National Parks and Community Protected Area/ChokeMountainPage";
+import BorenaSayintPage from "./components/Destinations/National Parks and Community Protected Area/BorenaSayintPage";
+import MenzGuassaPage from "./components/Destinations/National Parks and Community Protected Area/MenzGuassaPage";
+import AlitashPage from "./components/Destinations/National Parks and Community Protected Area/AlitashPage";
+import AshendaPage from "./components/Events/AshendaPage";
+import MerqoriosPage from "./components/Events/MerqoriosPage";
+import FasikaPage from "./components/Events/FasikaPage";
+import TimketPage from "./components/Events/TimketPage";
+import GennaPage from "./components/Events/GennaPage";
+import MeskelPage from "./components/Events/MeskelPage";
+import SebatPage from "./components/Events/SebatPage";
+import MewlidPage from "./components/Events/MewlidPage";
+import TouristInformationCenter from "./components/Tourist Facilities/TouristInformationCenter";
+import SemienMountainsHeritagePage from "./components/Destinations/World Heritage Sites/SemienMountainsHeritagePage";
+import LalibelaHeritagePage from "./components/Destinations/World Heritage Sites/LalibelaHeritagePage";
+import LakeTanaHeritagePage from "./components/Destinations/World Heritage Sites/LakeTanaHeritagePage";
+import FasilGhebbiHeritagePage from "./components/Destinations/World Heritage Sites/FasilGhebbiHeritagePage";
 import Bookings from "./components/profile/Bookings";
 import Reserve from "./components/profile/Reserve";
 import Profile from "./components/profile/Profile";
+import LakeZengenaPage from "./components/Destinations/Lakes,waterfall/LakeZengenaPage";
+import LakeTirbaPage from "./components/Destinations/Lakes,waterfall/LakeTirbaPage";
+import LakeHayqPage from "./components/Destinations/Lakes,waterfall/LakeHayqPage";
+import WanzayeHotspringPage from "./components/Destinations/Lakes,waterfall/WanzayeHotspringPage";
+import BlueNileFallsPage from "./components/Destinations/Lakes,waterfall/BlueNileFallsPage";
+import LakeTanaLakesPage from "./components/Destinations/Lakes,waterfall/LakeTanaLakesPage";
 
 function App() {
   const [userLocation, setUserLocation] = useState(null);
@@ -38,7 +64,9 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
 
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("token"));
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem("token")
+  );
 
   // Clear token on page load/refresh
   useEffect(() => {
@@ -46,12 +74,9 @@ function App() {
     setIsAuthenticated(false); // Reset authentication state
   }, []); // Empty dependency array means this runs once on mount
 
-
-
-
   useEffect(() => {
     // Check for existing user session
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
       setIsLoggedIn(true);
@@ -82,19 +107,17 @@ function App() {
     setUserLocation(event.target.value);
   };
 
-
   const handleLogin = (userData) => {
     setIsLoggedIn(true);
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem("user", JSON.stringify(userData));
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem("user");
   };
-
 
   return (
     <Box
@@ -107,26 +130,104 @@ function App() {
         overflowX: "hidden",
       }}
     >
-
-      <ButtonAppBar 
-        isLoggedIn={isLoggedIn} 
-        onLogout={handleLogout} 
-        user={user} 
+      <ButtonAppBar
+        isLoggedIn={isLoggedIn}
+        onLogout={handleLogout}
+        user={user}
       />
 
       {/* Navbar */}
       <ButtonAppBar isLoggedIn={isAuthenticated} onLogout={handleLogout} />
 
-
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
+        <Route
+          path="/worldheritagesites/semienmountains"
+          element={<SemienMountainsHeritagePage />}
+        />
+        <Route
+          path="/worldheritagesites/lalibela"
+          element={<LalibelaHeritagePage />}
+        />
+        <Route
+          path="/worldheritagesites/fasilghebbi"
+          element={<FasilGhebbiHeritagePage />}
+        />
+
+        <Route
+          path="/worldheritagesites/lakeTana"
+          element={<LakeTanaHeritagePage />}
+        />
+
         <Route path="/religioussites" element={<ReligiousHome />} />
-        <Route path="/nationalparks" element={<NationalParksHome />} />
+        <Route path="/national-parks" element={<NationalParksHome />} />
+        <Route
+          path="/national-parks/abune-yoseph"
+          element={<AbuneYosephPage />}
+        />
+        <Route
+          path="/national-parks/semien-mountains"
+          element={<SemienMountainsPage />}
+        />
+        <Route
+          path="/national-parks/guna-mountain"
+          element={<GunaMountainPage />}
+        />
+        <Route
+          path="/national-parks/choke-mountain"
+          element={<ChokeMountainPage />}
+        />
+        <Route
+          path="/national-parks/borena-sayint"
+          element={<BorenaSayintPage />}
+        />
+        <Route
+          path="/national-parks/menz-guassa"
+          element={<MenzGuassaPage />}
+        />
+        <Route path="/national-parks/alitash" element={<AlitashPage />} />
         <Route path="/lakeAndWaterfall" element={<LakesAndWaterfallHome />} />
+
+        <Route
+          path="/lakes-hot-springs-waterfalls/lake-zengena"
+          element={<LakeZengenaPage />}
+        />
+        <Route
+          path="/lakes-hot-springs-waterfalls/lake-tirba"
+          element={<LakeTirbaPage />}
+        />
+        <Route
+          path="/lakes-hot-springs-waterfalls/wanzaye-hot-spring"
+          element={<WanzayeHotspringPage />}
+        />
+        <Route
+          path="/lakes-hot-springs-waterfalls/lake-hayq"
+          element={<LakeHayqPage />}
+        />
+        <Route
+          path="/lakes-hot-springs-waterfalls/blue-nile-falls"
+          element={<BlueNileFallsPage />}
+        />
+        <Route
+          path="/lakes-hot-springs-waterfalls/lake-tana"
+          element={<LakeTanaLakesPage />}
+        />
         <Route path="/historicalLandmarks" element={<HistoricalHome />} />
+        <Route
+          path="/tourist-information-center"
+          element={<TouristInformationCenter />}
+        />
         <Route path="/" element={<HOMEPage location={userLocation} />} />
         <Route path="/news" element={<News />} />
-        <Route path="/events" element={<EventsBoth />} />
+        <Route path="/events" element={<Events />} />
+        <Route path="/events/merqorios" element={<MerqoriosPage />} />
+        <Route path="/events/sebat" element={<SebatPage />} />
+        <Route path="/events/mewlid" element={<MewlidPage />} />
+        <Route path="/events/ashenda" element={<AshendaPage />} />
+        <Route path="/events/meskel" element={<MeskelPage />} />
+        <Route path="/events/genna" element={<GennaPage />} />
+        <Route path="/events/timket" element={<TimketPage />} />
+        <Route path="/events/fasika" element={<FasikaPage />} />
         <Route path="/things" element={<ThingsToDo />} />
         <Route path="/flights" element={<Flight />} />
         <Route path="/hotelslocation" element={<HotelsandLocations />} />
@@ -152,7 +253,6 @@ function App() {
 
         <Route path="/reserve" element={<Reserve />} />
         <Route path="/profile" element={<Profile />} />
-
       </Routes>
 
       <ChatbotLogic />
