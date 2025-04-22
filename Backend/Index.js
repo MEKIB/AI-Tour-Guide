@@ -10,8 +10,12 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
+import Review from './modules/HotelReviews.js';
 import Hotel from './modules/Hotel.js'; 
+import RoomType from './modules/RoomTypes.js';
 import Amenity from './modules/Facilities.js'; 
+import RoomTypeProperites from './modules/RoomTypeProperites.js';
+import AmenityFacilities from './modules/Amenity.js';
 import HotelRules from './modules/HotelRules.js'; 
 import HotelAdminList from './modules/HotelAdminList.js'; 
 import ApprovedHotelAdmin from './modules/ApprovedHotelAdminLists.js';
@@ -524,6 +528,163 @@ app.get('/api/hotel-rules/by-hotel', async (req, res) => {
 
 
 
+
+
+
+
+// Middleware to get hotelAdminId from token
+const getHotelAdminId = async (req, res, next) => {
+  try {
+    const admin = await ApprovedHotelAdmin.findById(req.user.id);
+    if (!admin) {
+      return res.status(404).json({ message: 'Hotel admin not found' });
+    }
+    req.hotelAdminId = admin.hotelAdminId;
+    next();
+  } catch (error) {
+    console.error('Error fetching hotel admin:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Create new room type
+app.post('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
+  try {
+    const { type, rate, roomNumbers } = req.body;
+    
+    // Validation
+    if (!type || !rate || !roomNumbers) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    // Split and clean room numbers
+    const numbersArray = roomNumbers.split(',')
+      .map(num => num.trim().toUpperCase())
+      .filter(num => num !== '');
+
+    if (numbersArray.length === 0) {
+      return res.status(400).json({ message: 'At least one room number required' });
+    }
+
+    // Check for existing room type
+    const existingType = await RoomType.findOne({
+      hotelAdminId: req.hotelAdminId,
+      type: type
+    });
+
+    if (existingType) {
+      return res.status(400).json({ message: 'Room type already exists' });
+    }
+
+    // Create new room type
+    const newRoomType = new RoomType({
+      hotelAdminId: req.hotelAdminId,
+      type,
+      rate: parseFloat(rate),
+      roomNumbers: numbersArray
+    });
+
+    await newRoomType.save();
+    
+    res.status(201).json({ 
+      message: 'Room type added successfully',
+      data: newRoomType
+    });
+
+  } catch (error) {
+    console.error('Error creating room type:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get all room types for hotel admin
+app.get('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
+  try {
+    const roomTypes = await RoomType.find({ hotelAdminId: req.hotelAdminId });
+    res.json({ data: roomTypes });
+  } catch (error) {
+    console.error('Error fetching room types:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+
+
+// Get all room types
+app.get('/', verifyToken, getHotelAdminId, async (req, res) => {
+  try {
+    const rooms = await RoomTypeProperites.find({ hotelAdminId: req.hotelAdminId });
+    res.json(rooms);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Create new room type
+app.post('/', verifyToken, getHotelAdminId, async (req, res) => {
+  try {
+    const { type, rate, roomNumbers, details } = req.body;
+    
+    const newRoom = new RoomTypeProperites({
+      hotelAdminId: req.hotelAdminId,
+      type,
+      rate,
+      roomNumbers: roomNumbers?.map(num => ({
+        number: num.trim(),
+        availability: []
+      })),
+      details
+    });
+
+    await newRoom.save();
+    res.status(201).json(newRoom);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+
+
+
+// Bulk upload amenities
+app.post('/upload', verifyToken, getHotelAdminId, async (req, res) => {
+  try {
+    const { amenities } = req.body;
+    
+    const amenitiesWithHotelId = amenities.map(amenity => ({
+      hotelAdminId: req.hotelAdminId,
+      ...amenity
+    }));
+
+    const result = await AmenityFacilities.insertMany(amenitiesWithHotelId);
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Get all amenities
+app.get('/', verifyToken, getHotelAdminId, async (req, res) => {
+  try {
+    const amenities = await AmenityFacilities.find({ hotelAdminId: req.hotelAdminId });
+    res.json(amenities);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Email transporter setup (using Gmail as an example)
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -847,7 +1008,7 @@ app.post('/api/login', async (req, res) => {
       }
 
       const token = jwt.sign(
-          { userId: userAdmin._id, email: userAdmin.email, role: 'hotel-admin' },
+          { id: userAdmin._id, email: userAdmin.email, role: 'hotel-admin' },
           process.env.JWT_SECRET,
           { expiresIn: '1h' }
       );
@@ -1111,6 +1272,154 @@ app.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.post('/api/reviews', verifyToken, async (req, res) => {
+  const { hotelAdminId, user, rating, comment } = req.body;
+
+  try {
+    // Validate required fields
+    if (!hotelAdminId || !rating || !comment) {
+      return res.status(400).json({ message: 'hotelAdminId, rating, and comment are required' });
+    }
+
+    // Check if the user already has a review for this hotel
+    const existingReview = await Review.findOne({
+      hotelAdminId,
+      userId: req.user.id, // Changed to req.user.id
+    });
+
+    if (existingReview) {
+      return res.status(400).json({
+        message: 'You have already reviewed this hotel. Use PUT to update your review.',
+        reviewId: existingReview._id,
+      });
+    }
+
+    const newReview = new Review({
+      hotelAdminId,
+      userId: req.user.id, // Changed to req.user.id
+      user: user || 'Anonymous',
+      rating,
+      comment,
+    });
+
+    const savedReview = await newReview.save();
+    res.status(201).json({ message: 'Review added successfully', data: savedReview });
+  } catch (error) {
+    console.error('Error adding review:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/reviews/:reviewId', verifyToken, async (req, res) => {
+  const { user, rating, comment } = req.body;
+
+  try {
+    const review = await Review.findById(req.params.reviewId);
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+
+    // Ensure the review belongs to the user
+    if (review.userId.toString() !== req.user.id.toString()) { // Changed to req.user.id
+      return res.status(403).json({ message: 'Unauthorized to update this review' });
+    }
+
+    // Update fields only if provided
+    review.user = user || review.user;
+    review.rating = rating !== undefined ? rating : review.rating;
+    review.comment = comment || review.comment;
+
+    const updatedReview = await review.save();
+    res.status(200).json({ message: 'Review updated successfully', data: updatedReview });
+  } catch (error) {
+    console.error('Error updating review:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+
+app.get('/api/reviews/user/:hotelAdminId', verifyToken, async (req, res) => {
+  try {
+    const review = await Review.findOne({
+      hotelAdminId: req.params.hotelAdminId,
+      userId: req.user.id, // Changed to req.user.id
+    });
+
+    if (!review) {
+      return res.status(404).json({ message: 'No review found for this user and hotel' });
+    }
+
+    res.status(200).json({ data: review });
+  } catch (error) {
+    console.error('Error fetching review:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// GET all reviews for a specific hotelAdminId (for display purposes)
+app.get('/api/reviews/:hotelAdminId', async (req, res) => {
+  try {
+    const reviews = await Review.find({ hotelAdminId: req.params.hotelAdminId });
+    res.status(200).json({ data: reviews });
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
 
 

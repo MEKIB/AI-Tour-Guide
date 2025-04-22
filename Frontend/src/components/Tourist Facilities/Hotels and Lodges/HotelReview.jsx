@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -10,46 +10,89 @@ import {
   TextField,
   Rating,
   IconButton,
-  Avatar,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const HotelReviews = ({ hotelId }) => {
+const HotelReviews = ({ hotelAdminId }) => {
   const [openReviews, setOpenReviews] = useState(false);
   const [newReview, setNewReview] = useState({ user: '', rating: 0, comment: '' });
+  const [existingReviewId, setExistingReviewId] = useState(null);
   const [openLoginPrompt, setOpenLoginPrompt] = useState(false);
   const navigate = useNavigate();
+  const baseUrl = 'http://localhost:2000';
 
-  const handleOpenReviews = () => {
-    const isLoggedIn = !!localStorage.getItem("token");
-    if (isLoggedIn) {
-      setOpenReviews(true);
-    } else {
+  const handleOpenReviews = async () => {
+    const isLoggedIn = !!localStorage.getItem('token');
+    if (!isLoggedIn) {
       setOpenLoginPrompt(true);
+      return;
     }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${baseUrl}/api/reviews/user/${hotelAdminId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (response.data.data) {
+        const existingReview = response.data.data;
+        setNewReview({
+          user: existingReview.user,
+          rating: existingReview.rating,
+          comment: existingReview.comment,
+        });
+        setExistingReviewId(existingReview._id);
+      }
+    } catch (error) {
+      if (error.response?.status !== 404) {
+        console.error('Error fetching review:', error);
+      }
+    }
+    setOpenReviews(true);
   };
 
   const handleCloseReviews = () => {
     setOpenReviews(false);
     setNewReview({ user: '', rating: 0, comment: '' });
+    setExistingReviewId(null);
   };
 
-  const handleReviewSubmit = () => {
-    const isLoggedIn = !!localStorage.getItem("token");
-    if (!isLoggedIn) {
-      setOpenLoginPrompt(true);
-      return;
-    }
-
+  const handleReviewSubmit = async () => {
     if (!newReview.comment.trim() || newReview.rating === 0) return;
 
-    // Here you would typically send the review to your backend
-    console.log('Submitting review:', newReview);
+    try {
+      const token = localStorage.getItem('token');
+      const reviewData = {
+        hotelAdminId,
+        user: newReview.user || 'Anonymous',
+        rating: newReview.rating,
+        comment: newReview.comment,
+      };
 
-    // Reset form after submission
-    setNewReview({ user: '', rating: 0, comment: '' });
-    setOpenReviews(false);
+      if (existingReviewId) {
+        await axios.put(
+          `${baseUrl}/api/reviews/${existingReviewId}`,
+          reviewData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await axios.post(
+          `${baseUrl}/api/reviews`,
+          reviewData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
+      handleCloseReviews();
+    } catch (error) {
+      console.error('Review submission failed:', error);
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      }
+    }
   };
 
   const handleCloseLoginPrompt = () => setOpenLoginPrompt(false);
@@ -66,13 +109,12 @@ const HotelReviews = ({ hotelId }) => {
         sx={{ mt: 2, color: '#00ADB5', borderColor: '#00ADB5' }}
         onClick={handleOpenReviews}
       >
-        Add Review
+        {existingReviewId ? 'Edit Review' : 'Add Review'}
       </Button>
 
-      {/* Dialog for adding reviews */}
       <Dialog open={openReviews} onClose={handleCloseReviews} fullWidth maxWidth="md">
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#393E46', color: '#EEEEEE' }}>
-          <Typography variant="h5">Add Your Review</Typography>
+          <Typography variant="h5">{existingReviewId ? 'Edit Your Review' : 'Add Your Review'}</Typography>
           <IconButton onClick={handleCloseReviews}>
             <CloseIcon sx={{ color: '#EEEEEE' }} />
           </IconButton>
@@ -116,25 +158,19 @@ const HotelReviews = ({ hotelId }) => {
               disabled={!newReview.comment.trim() || newReview.rating === 0}
               sx={{ bgcolor: '#00ADB5', color: '#EEEEEE', '&:hover': { bgcolor: '#00838F' } }}
             >
-              Submit Review
+              {existingReviewId ? 'Update Review' : 'Submit Review'}
             </Button>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ bgcolor: '#393E46' }}>
-          <Button onClick={handleCloseReviews} sx={{ color: '#EEEEEE' }}>
-            Close
-          </Button>
-        </DialogActions>
       </Dialog>
 
-      {/* Login Prompt Dialog */}
       <Dialog open={openLoginPrompt} onClose={handleCloseLoginPrompt}>
         <DialogTitle sx={{ bgcolor: '#393E46', color: '#EEEEEE' }}>
           Login Required
         </DialogTitle>
         <DialogContent sx={{ bgcolor: '#393E46', color: '#EEEEEE' }}>
           <Typography>
-            You need to be logged in to add a review. Please log in to continue.
+            You need to be logged in to add or edit a review. Please log in to continue.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ bgcolor: '#393E46' }}>
