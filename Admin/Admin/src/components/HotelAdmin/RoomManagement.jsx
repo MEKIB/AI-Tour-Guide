@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
+// RoomManagement.jsx
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -15,383 +16,180 @@ import {
   Autocomplete,
   Snackbar,
   Alert,
+  CircularProgress
 } from '@mui/material';
-import * as MuiIcons from '@mui/icons-material'; // Import all Material Icons
-import { debounce } from 'lodash'; // For debouncing the search input
-import axios from 'axios'; // For making HTTP requests
+import * as MuiIcons from '@mui/icons-material';
+import axios from 'axios';
 
-// Color palette
 const colors = {
   dark: '#222831',
   darkGray: '#393E46',
   teal: '#00ADB5',
   light: '#EEEEEE',
-  background: '#1A1A1A', // Darker background for contrast
-  inputBackground: '#2D2D2D', // Darker background for input fields
-  inputText: '#EEEEEE', // Light text color for input fields
-  inputBorder: '#00ADB5', // Teal border for input fields
-  success: '#00C853', // Green for success
-  error: '#FF4444', // Red for errors
+  background: '#1A1A1A',
+  inputBackground: '#2D2D2D',
+  success: '#00C853',
+  error: '#FF4444'
 };
 
-// Get all Material Icons as an array of { name, icon }
-const materialIcons = Object.keys(MuiIcons).map((iconName) => ({
-  name: iconName,
-  icon: MuiIcons[iconName], // Dynamically get the icon component
-}));
-
 const RoomManagement = () => {
-  const [rooms, setRooms] = useState([
-    {
-      id: 1,
-      type: 'Standard',
-      rate: 100,
-      roomNumbers: [
-        {
-          number: 'R101',
-          availability: [], // Start with no unavailability
-        },
-      ],
-    },
-  ]);
-
+  const [rooms, setRooms] = useState([]);
+  const [amenities, setAmenities] = useState([]);
   const [newRoom, setNewRoom] = useState({ type: '', rate: '', roomNumbers: '' });
   const [newDetailedRoom, setNewDetailedRoom] = useState({
     type: '',
     bathrooms: '',
     size: '',
   });
-  const [amenities, setAmenities] = useState([]);
   const [newAmenity, setNewAmenity] = useState({ name: '', icon: '' });
-  const [searchIcon, setSearchIcon] = useState('');
-  const [success, setSuccess] = useState(''); // Success message
-  const [error, setError] = useState(''); // Error message
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+  const baseUrl = 'http://localhost:2000';
 
-  // Debounced search function
-  const handleSearch = useCallback(
-    debounce((value) => {
-      setSearchIcon(value);
-    }, 300),
-    []
-  );
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        
+        // Fetch rooms
+        const roomsRes = await axios.get(`${baseUrl}/api/rooms`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        // Fetch amenities
+        const amenitiesRes = await axios.get(`${baseUrl}/api/amenities`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-  // Filtered icons based on search input
-  const filteredIcons = useMemo(() => {
-    if (!searchIcon) return materialIcons.slice(0, 10); // Show first 10 icons by default
-    return materialIcons
-      .filter((icon) => icon.name.toLowerCase().includes(searchIcon.toLowerCase()))
-      .slice(0, 10); // Limit to 10 results
-  }, [searchIcon]);
+        setRooms(roomsRes.data);
+        setAmenities(amenitiesRes.data);
+      } catch (err) {
+        setError('Failed to fetch data');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Handle adding a new room type with room numbers
-  const handleAddRoom = () => {
-    if (newRoom.type && newRoom.rate && newRoom.roomNumbers) {
-      const roomNumbersArray = newRoom.roomNumbers
-        .split(',')
-        .map((number) => number.trim())
-        .filter((number) => number !== '');
+    fetchData();
+  }, []);
 
-      const newRoomType = {
-        id: rooms.length + 1,
+  const handleAddRoom = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.post(`${baseUrl}/api/rooms`, {
         type: newRoom.type,
-        rate: newRoom.rate,
-        roomNumbers: roomNumbersArray.map((number) => ({
-          number,
-          availability: [], // Start with no unavailability
-        })),
-      };
-
-      setRooms([...rooms, newRoomType]);
-      setNewRoom({ type: '', rate: '', roomNumbers: '' });
-    }
-  };
-
-  // Handle adding a new detailed room type
-  const handleAddDetailedRoom = () => {
-    if (newDetailedRoom.type && newDetailedRoom.bathrooms && newDetailedRoom.size && amenities.length > 0) {
-      const newDetailedRoomType = {
-        id: rooms.length + 1,
-        type: newDetailedRoom.type,
-        details: {
-          bathrooms: newDetailedRoom.bathrooms,
-          size: newDetailedRoom.size,
-          amenities: amenities,
-        },
-      };
-
-      setRooms([...rooms, newDetailedRoomType]);
-      setNewDetailedRoom({
-        type: '',
-        bathrooms: '',
-        size: '',
+        rate: Number(newRoom.rate),
+        roomNumbers: newRoom.roomNumbers.split(',').map(n => n.trim())
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      setAmenities([]); // Clear amenities after adding
+
+      setRooms([...rooms, response.data]);
+      setNewRoom({ type: '', rate: '', roomNumbers: '' });
+      setSuccess('Room type added successfully');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to add room');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle adding a new amenity
-  const handleAddAmenity = () => {
-    if (newAmenity.name.trim() !== '' && newAmenity.icon) {
-      setAmenities((prev) => [...prev, newAmenity]);
-      setNewAmenity({ name: '', icon: '' }); // Reset form
-    }
-  };
-
-  // Handle removing an amenity
-  const handleRemoveAmenity = (index) => {
-    setAmenities((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  // Handle uploading all amenities at once
   const handleUploadAmenities = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No token found in localStorage');
-        return;
-      }
-      const response = await axios.post(
-        'http://localhost:2000/api/amenities/upload',
-        { amenities }, // Send the entire list of amenities
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      console.log(response.data.message);
-      setSuccess('All amenities uploaded successfully');
-    } catch (error) {
-      console.error('Error uploading amenities:', error.response?.data || error.message);
-      setError('Failed to upload amenities');
-    }
-  };
+      
+      await axios.post(`${baseUrl}/api/amenities/upload`, { amenities }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-  // Custom styles for input fields
-  const inputStyles = {
-    backgroundColor: colors.inputBackground,
-    color: colors.inputText,
-    borderRadius: 1,
-    '& .MuiOutlinedInput-root': {
-      '& fieldset': {
-        borderColor: colors.inputBorder,
-      },
-      '&:hover fieldset': {
-        borderColor: colors.teal,
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: colors.teal,
-      },
-    },
-    '& .MuiInputLabel-root': {
-      color: colors.inputText,
-    },
-    '& .MuiInputBase-input': {
-      color: colors.inputText,
-    },
+      setSuccess('Amenities uploaded successfully');
+      setAmenities([]);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to upload amenities');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Box sx={{ p: 3, backgroundColor: colors.background, minHeight: '90vh', color: colors.light }}>
-      <Typography variant="h4" gutterBottom sx={{ color: colors.teal, fontWeight: 'bold' }}>
-        Room Management
-      </Typography>
-
-      {/* Form for adding new room type */}
-      <Box component="form" sx={{ maxWidth: 600, mb: 4, backgroundColor: colors.darkGray, p: 3, borderRadius: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ color: colors.teal, fontWeight: 'bold' }}>
+      {/* Add Room Form */}
+      <Box component="form" sx={{ mb: 4, backgroundColor: colors.darkGray, p: 3, borderRadius: 2 }}>
+        <Typography variant="h6" sx={{ color: colors.teal, mb: 2 }}>
           Add New Room Type
         </Typography>
+        
         <TextField
-          fullWidth
           label="Room Type"
-          variant="outlined"
-          margin="normal"
           value={newRoom.type}
           onChange={(e) => setNewRoom({ ...newRoom, type: e.target.value })}
-          sx={inputStyles}
+          sx={{ mb: 2, width: '100%', backgroundColor: colors.inputBackground }}
         />
+        
         <TextField
-          fullWidth
           label="Rate"
-          variant="outlined"
-          margin="normal"
           type="number"
           value={newRoom.rate}
           onChange={(e) => setNewRoom({ ...newRoom, rate: e.target.value })}
-          sx={inputStyles}
+          sx={{ mb: 2, width: '100%', backgroundColor: colors.inputBackground }}
         />
+        
         <TextField
-          fullWidth
           label="Room Numbers (comma-separated)"
-          variant="outlined"
-          margin="normal"
           value={newRoom.roomNumbers}
           onChange={(e) => setNewRoom({ ...newRoom, roomNumbers: e.target.value })}
-          placeholder="e.g., R101, R102, R103"
-          sx={inputStyles}
+          sx={{ mb: 2, width: '100%', backgroundColor: colors.inputBackground }}
         />
-        <Button
-          variant="contained"
-          sx={{ mt: 2, backgroundColor: colors.teal, color: colors.light, '&:hover': { backgroundColor: colors.darkGray } }}
+        
+        <Button 
           onClick={handleAddRoom}
+          variant="contained"
+          disabled={loading}
+          sx={{ backgroundColor: colors.teal }}
         >
-          Add Room Type
+          {loading ? <CircularProgress size={24} /> : 'Add Room Type'}
         </Button>
       </Box>
 
-      {/* Form for adding detailed room type */}
-      <Box component="form" sx={{ maxWidth: 600, mb: 4, backgroundColor: colors.darkGray, p: 3, borderRadius: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ color: colors.teal, fontWeight: 'bold' }}>
-          Add Detailed Room Type (Single/Double)
+      {/* Amenities Section */}
+      <Box sx={{ mb: 4, backgroundColor: colors.darkGray, p: 3, borderRadius: 2 }}>
+        <Typography variant="h6" sx={{ color: colors.teal, mb: 2 }}>
+          Manage Amenities
         </Typography>
-        <TextField
-          fullWidth
-          label="Room Type (Single/Double)"
-          variant="outlined"
-          margin="normal"
-          value={newDetailedRoom.type}
-          onChange={(e) => setNewDetailedRoom({ ...newDetailedRoom, type: e.target.value })}
-          sx={inputStyles}
-        />
-        <TextField
-          fullWidth
-          label="Bathrooms"
-          variant="outlined"
-          margin="normal"
-          value={newDetailedRoom.bathrooms}
-          onChange={(e) => setNewDetailedRoom({ ...newDetailedRoom, bathrooms: e.target.value })}
-          placeholder="e.g., 2"
-          sx={inputStyles}
-        />
-        <TextField
-          fullWidth
-          label="Size"
-          variant="outlined"
-          margin="normal"
-          value={newDetailedRoom.size}
-          onChange={(e) => setNewDetailedRoom({ ...newDetailedRoom, size: e.target.value })}
-          placeholder="e.g., 110 m²"
-          sx={inputStyles}
-        />
-        <Button
-          variant="contained"
-          sx={{ mt: 2, backgroundColor: colors.teal, color: colors.light, '&:hover': { backgroundColor: colors.darkGray } }}
-          onClick={handleAddDetailedRoom}
-        >
-          Add Detailed Room Type
-        </Button>
-      </Box>
-
-      {/* Separate Amenities Section */}
-      <Box sx={{ maxWidth: 600, mb: 4, backgroundColor: colors.darkGray, p: 3, borderRadius: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ color: colors.teal, fontWeight: 'bold' }}>
-          Add Amenities
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <TextField
-            fullWidth
-            label="Amenity Name"
-            variant="outlined"
-            value={newAmenity.name}
-            onChange={(e) => setNewAmenity({ ...newAmenity, name: e.target.value })}
-            sx={inputStyles}
-          />
-          <Autocomplete
-            fullWidth
-            options={filteredIcons}
-            getOptionLabel={(option) => option.name}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Search Icon"
-                variant="outlined"
-                onChange={(e) => handleSearch(e.target.value)}
-                sx={inputStyles}
-              />
-            )}
-            renderOption={(props, option) => (
-              <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {React.createElement(option.icon)} {/* Dynamically render the icon */}
-                {option.name}
-              </Box>
-            )}
-            onChange={(_, value) => setNewAmenity({ ...newAmenity, icon: value?.name || '' })}
-          />
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: colors.teal, color: colors.light, '&:hover': { backgroundColor: colors.darkGray } }}
-            onClick={handleAddAmenity}
-          >
-            Add Amenity
-          </Button>
-        </Box>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {amenities.map((amenity, index) => {
-            const IconComponent = MuiIcons[amenity.icon]; // Dynamically get the icon component
-            return (
-              <Chip
-                key={index}
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {IconComponent ? React.createElement(IconComponent) : null} {/* Render the icon */}
-                    {amenity.name}
-                  </Box>
-                }
-                onDelete={() => handleRemoveAmenity(index)}
-                sx={{ backgroundColor: colors.teal, color: colors.light }}
-              />
-            );
-          })}
-        </Box>
-        {/* Upload All Amenities Button */}
-        <Button
-          variant="contained"
+        
+        {/* Amenity Inputs */}
+        <Button 
           onClick={handleUploadAmenities}
-          sx={{
-            mt: 2,
-            backgroundColor: colors.success,
-            color: colors.light,
-            '&:hover': { backgroundColor: '#008B8B' },
-          }}
+          variant="contained"
+          disabled={loading}
+          sx={{ backgroundColor: colors.success, mt: 2 }}
         >
-          Upload All Amenities
+          {loading ? <CircularProgress size={24} /> : 'Upload Amenities'}
         </Button>
       </Box>
 
-      {/* Display the list of rooms */}
-      <TableContainer component={Paper} sx={{ mt: 4, backgroundColor: colors.darkGray, borderRadius: 2 }}>
+      {/* Rooms Table */}
+      <TableContainer component={Paper} sx={{ backgroundColor: colors.darkGray }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ color: colors.teal, fontWeight: 'bold' }}>Room Type</TableCell>
-              <TableCell sx={{ color: colors.teal, fontWeight: 'bold' }}>Details</TableCell>
+              <TableCell sx={{ color: colors.teal }}>Type</TableCell>
+              <TableCell sx={{ color: colors.teal }}>Rate</TableCell>
+              <TableCell sx={{ color: colors.teal }}>Room Numbers</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {rooms.map((room) => (
-              <TableRow key={room.id}>
+              <TableRow key={room._id}>
                 <TableCell sx={{ color: colors.light }}>{room.type}</TableCell>
+                <TableCell sx={{ color: colors.light }}>${room.rate}</TableCell>
                 <TableCell sx={{ color: colors.light }}>
-                  {room.details ? (
-                    <Box>
-                      <Typography>Bathrooms: {room.details.bathrooms}</Typography>
-                      <Typography>Size: {room.details.size}</Typography>
-                      <Typography>
-                        Amenities:{' '}
-                        {room.details.amenities.map((amenity, index) => {
-                          const IconComponent = MuiIcons[amenity.icon]; // Dynamically get the icon component
-                          return (
-                            <span key={index}>
-                              {IconComponent ? React.createElement(IconComponent) : null} {/* Render the icon */}
-                              {amenity.name}
-                              {index < room.details.amenities.length - 1 ? ', ' : ''}
-                            </span>
-                          );
-                        })}
-                      </Typography>
-                    </Box>
-                  ) : (
-                    'No details'
-                  )}
+                  {room.roomNumbers?.map(r => r.number).join(', ')}
                 </TableCell>
               </TableRow>
             ))}
@@ -399,26 +197,12 @@ const RoomManagement = () => {
         </Table>
       </TableContainer>
 
-      {/* Snackbar for Success and Error Messages */}
-      <Snackbar
-        open={!!success}
-        autoHideDuration={3000}
-        onClose={() => setSuccess('')}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert severity="success" sx={{ width: '100%' }}>
-          {success}
-        </Alert>
+      {/* Notifications */}
+      <Snackbar open={!!success} autoHideDuration={6000} onClose={() => setSuccess('')}>
+        <Alert severity="success">{success}</Alert>
       </Snackbar>
-      <Snackbar
-        open={!!error}
-        autoHideDuration={3000}
-        onClose={() => setError('')}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert severity="error" sx={{ width: '100%' }}>
-          {error}
-        </Alert>
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
+        <Alert severity="error">{error}</Alert>
       </Snackbar>
     </Box>
   );
