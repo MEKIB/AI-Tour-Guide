@@ -32,6 +32,9 @@ import { debounce } from "lodash";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
+// Import logo using ES module syntax
+import logo from '../../assets/logo/logo.png';
+
 // Define the color palette
 const colors = {
   primary: "#222831",
@@ -143,6 +146,13 @@ const ProfileImage = styled('img')({
   borderRadius: '50%',
   objectFit: 'cover',
   marginRight: '8px',
+});
+
+// Logo styles
+const LogoImage = styled('img')({
+  height: '40px',
+  marginRight: '10px',
+  verticalAlign: 'middle'
 });
 
 // List of supported languages
@@ -295,10 +305,15 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
       >
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
+            <Link to="/" style={{ textDecoration: "none", color: "inherit", display: 'flex', alignItems: 'center' }}>
+              <LogoImage 
+                src={logo} 
+                alt="Visit Amhara" 
+              />
               Visit Amhara
             </Link>
           </Typography>
+          
           <Box sx={{ display: "flex", gap: 4, alignItems: "center" }}>
             {/* Search Icon and Search Box */}
             <Box className="search-box">
@@ -560,6 +575,14 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                 onClose={handleCloseUserMenu}
                 MenuListProps={{
                   "aria-labelledby": "account-button",
+                }}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
                 }}
               >
                 {isLoggedInState ? (
