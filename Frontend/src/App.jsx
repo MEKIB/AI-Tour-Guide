@@ -61,11 +61,18 @@ import LakeTanaLakesPage from "./components/Destinations/Lakes,waterfall/LakeTan
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
+<<<<<<< HEAD
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+=======
+
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+
+>>>>>>> 6c4ff69edb52571d584e0f4f368b9b491699b253
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
+<<<<<<< HEAD
   // Clear token on initial load/refresh
   useEffect(() => {
     const clearTokenOnRefresh = () => {
@@ -79,6 +86,8 @@ function App() {
       clearTokenOnRefresh();
     }
   }, []);
+=======
+>>>>>>> 6c4ff69edb52571d584e0f4f368b9b491699b253
 
   useEffect(() => {
     // Check for existing user session and token
@@ -92,6 +101,22 @@ function App() {
       setUser(null);
       localStorage.removeItem("user");
       localStorage.removeItem("token");
+<<<<<<< HEAD
+=======
+    }
+
+  // Clear token on initial load/refresh
+  useEffect(() => {
+    const clearTokenOnRefresh = () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setIsAuthenticated(false);
+    };
+    
+    // Check if it's a page refresh
+    if (performance.navigation.type === 1) { // 1 means TYPE_RELOAD
+      clearTokenOnRefresh();
+>>>>>>> 6c4ff69edb52571d584e0f4f368b9b491699b253
     }
   }, []);
 
@@ -115,6 +140,7 @@ function App() {
     checkAuth();
   }, []);
 
+
   // Geolocation useEffect remains the same
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -137,6 +163,10 @@ function App() {
     );
   }, []);
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6c4ff69edb52571d584e0f4f368b9b491699b253
   const handleLocationChange = (event) => {
     setUserLocation(event.target.value);
   };
@@ -154,10 +184,24 @@ function App() {
     localStorage.setItem("token", "sample-token"); // Replace with actual token from login response
   };
 
+<<<<<<< HEAD
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+=======
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    localStorage.removeItem("token");
+
+    setUser(null);
+    setIsAuthenticated(false);
+    navigate("/login");
+
+>>>>>>> 6c4ff69edb52571d584e0f4f368b9b491699b253
   };
 
   return (
@@ -177,6 +221,10 @@ function App() {
         user={user}
       />
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6c4ff69edb52571d584e0f4f368b9b491699b253
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
         <Route
@@ -270,17 +318,52 @@ function App() {
         <Route path="/hoteldetails" element={<HotelDetails />} />
         <Route path="/hotel/:id" element={<HotelsLodges />} />
         <Route path="/signup" element={<SignupPage />} />
+<<<<<<< HEAD
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+=======
+
+        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+
+
+        <Route path="/login" element={<LoginPage/>} />
+
+      
+
+
+>>>>>>> 6c4ff69edb52571d584e0f4f368b9b491699b253
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/amhara" element={<AmharaBoth />} />
         <Route path="/bureau" element={<Bureau />} />
         <Route path="/mandate" element={<Merge />} />
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6c4ff69edb52571d584e0f4f368b9b491699b253
         <Route path="/management" element={<Managment />} />
         <Route path="/bookings" element={<Bookings />} />
         <Route path="/reserve" element={<Reserve />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
+<<<<<<< HEAD
+=======
+
+        <Route path="/managment" element={<Managment />} />
+
+
+        {/* Protected Routes */}
+        {isAuthenticated && (
+            <>
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/bookings" element={<Bookings />} />
+              <Route path="/reserve" element={<Reserve />} />
+            </>
+          )}
+
+
+              </Routes>
+
+>>>>>>> 6c4ff69edb52571d584e0f4f368b9b491699b253
 
       <ChatbotLogic />
       
