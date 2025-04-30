@@ -2,6 +2,7 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
+import axios from "axios";
 import ButtonAppBar from "./components/Navbar/Navbar";
 import Home from "./components/Home page/Home";
 import News from "./components/News/News";
@@ -61,13 +62,11 @@ import LakeTanaLakesPage from "./components/Destinations/Lakes,waterfall/LakeTan
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
-
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
-
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
+<<<<<<< HEAD
 
   useEffect(() => {
     // Check for existing user session and token
@@ -97,6 +96,8 @@ function App() {
     }
   }, []);
 
+=======
+>>>>>>> 70349fc8e3daa068d2b5cc232bb9832423ad7978
   // Authentication check and user data fetch
   useEffect(() => {
     const checkAuth = async () => {
@@ -104,7 +105,7 @@ function App() {
       if (token) {
         try {
           const response = await axios.get("/me", {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
           });
           setUser(response.data);
           setIsAuthenticated(true);
@@ -112,13 +113,17 @@ function App() {
           console.error("Session validation failed:", error);
           handleLogout();
         }
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
       }
     };
     checkAuth();
   }, []);
 
-
-  // Geolocation useEffect remains the same
+  // Geolocation
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -149,25 +154,20 @@ function App() {
       ...userData,
       passportOrId: userData.passportOrId
         ? `http://your-backend.com/${userData.passportOrId}`
-        : "https://via.placeholder.com/32", // Fallback image
+        : "https://via.placeholder.com/32",
     };
-    setIsLoggedIn(true);
+    setIsAuthenticated(true);
     setUser(userWithImage);
     localStorage.setItem("user", JSON.stringify(userWithImage));
-    localStorage.setItem("token", "sample-token"); // Replace with actual token from login response
+    localStorage.setItem("token", "sample-token"); // Replace with actual token
   };
-
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
-    localStorage.removeItem("token");
-
     setUser(null);
     setIsAuthenticated(false);
     navigate("/login");
-
   };
 
   return (
@@ -280,44 +280,25 @@ function App() {
         <Route path="/hoteldetails" element={<HotelDetails />} />
         <Route path="/hotel/:id" element={<HotelsLodges />} />
         <Route path="/signup" element={<SignupPage />} />
-
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-
-
-        <Route path="/login" element={<LoginPage/>} />
-
-      
-
-
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/amhara" element={<AmharaBoth />} />
         <Route path="/bureau" element={<Bureau />} />
         <Route path="/mandate" element={<Merge />} />
         <Route path="/management" element={<Managment />} />
-        <Route path="/bookings" element={<Bookings />} />
-        <Route path="/reserve" element={<Reserve />} />
-        <Route path="/profile" element={<Profile />} />
-      </Routes>
-
-        <Route path="/managment" element={<Managment />} />
-
 
         {/* Protected Routes */}
         {isAuthenticated && (
-            <>
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/bookings" element={<Bookings />} />
-              <Route path="/reserve" element={<Reserve />} />
-            </>
-          )}
-
-
-              </Routes>
-
+          <>
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/bookings" element={<Bookings />} />
+            <Route path="/reserve" element={<Reserve />} />
+          </>
+        )}
+      </Routes>
 
       <ChatbotLogic />
-      
       <Footer />
     </Box>
   );
