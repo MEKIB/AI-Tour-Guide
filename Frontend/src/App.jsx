@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
 import ButtonAppBar from "./components/Navbar/Navbar";
@@ -16,7 +17,7 @@ import Footer from "./components/Footer/Footer";
 import SignupPage from "./components/account/Signup";
 import LoginPage from "./components/account/Login";
 import ForgotPasswordPage from "./components/account/ForgotPassword";
-import ResetPasswordPage from "./components/account/ResetPassword";
+import ResetPasswordPage from "./components/account/ForgotPassword";
 import ChatbotLogic from "./components/Chatbot/ChatbotLogic";
 import Bureau from "./components/About/Bureau";
 import AmharaBoth from "./components/About/Amhara/AmharaBoth";
@@ -60,10 +61,10 @@ import LakeTanaLakesPage from "./components/Destinations/Lakes,waterfall/LakeTan
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
-
 
   // Clear token on initial load/refresh
   useEffect(() => {
@@ -79,6 +80,20 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    // Check for existing user session and token
+    const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("token");
+    if (token && storedUser) {
+      setUser(JSON.parse(storedUser));
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+      setUser(null);
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+    }
+  }, []);
 
   // Authentication check and user data fetch
   useEffect(() => {
@@ -122,12 +137,27 @@ function App() {
     );
   }, []);
 
+  const handleLocationChange = (event) => {
+    setUserLocation(event.target.value);
+  };
+
+  const handleLogin = (userData) => {
+    const userWithImage = {
+      ...userData,
+      passportOrId: userData.passportOrId
+        ? `http://your-backend.com/${userData.passportOrId}`
+        : "https://via.placeholder.com/32", // Fallback image
+    };
+    setIsLoggedIn(true);
+    setUser(userWithImage);
+    localStorage.setItem("user", JSON.stringify(userWithImage));
+    localStorage.setItem("token", "sample-token"); // Replace with actual token from login response
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    setUser(null);
-    setIsAuthenticated(false);
-    navigate("/login");
+    localStorage.removeItem("token");
   };
 
   return (
@@ -147,7 +177,6 @@ function App() {
         user={user}
       />
 
-
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
         <Route
@@ -162,12 +191,10 @@ function App() {
           path="/worldheritagesites/fasilghebbi"
           element={<FasilGhebbiHeritagePage />}
         />
-
         <Route
           path="/worldheritagesites/lakeTana"
           element={<LakeTanaHeritagePage />}
         />
-
         <Route path="/religioussites" element={<ReligiousHome />} />
         <Route path="/national-parks" element={<NationalParksHome />} />
         <Route
@@ -196,7 +223,6 @@ function App() {
         />
         <Route path="/national-parks/alitash" element={<AlitashPage />} />
         <Route path="/lakeAndWaterfall" element={<LakesAndWaterfallHome />} />
-
         <Route
           path="/lakes-hot-springs-waterfalls/lake-zengena"
           element={<LakeZengenaPage />}
@@ -206,7 +232,7 @@ function App() {
           element={<LakeTirbaPage />}
         />
         <Route
-          path="/lakes-hot-springs-waterfalls/wanzaye-hot-spring"
+          path="/lakes-hot-springs-waterfalls/wanzaye-hot spring"
           element={<WanzayeHotspringPage />}
         />
         <Route
@@ -244,30 +270,17 @@ function App() {
         <Route path="/hoteldetails" element={<HotelDetails />} />
         <Route path="/hotel/:id" element={<HotelsLodges />} />
         <Route path="/signup" element={<SignupPage />} />
-
-        <Route path="/login" element={<LoginPage/>} />
-
-      
-
+        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/amhara" element={<AmharaBoth />} />
         <Route path="/bureau" element={<Bureau />} />
         <Route path="/mandate" element={<Merge />} />
-        <Route path="/managment" element={<Managment />} />
-
-
-        {/* Protected Routes */}
-        {isAuthenticated && (
-            <>
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/bookings" element={<Bookings />} />
-              <Route path="/reserve" element={<Reserve />} />
-            </>
-          )}
-
-
-              </Routes>
+        <Route path="/management" element={<Managment />} />
+        <Route path="/bookings" element={<Bookings />} />
+        <Route path="/reserve" element={<Reserve />} />
+        <Route path="/profile" element={<Profile />} />
+      </Routes>
 
       <ChatbotLogic />
       

@@ -1496,12 +1496,12 @@ app.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: user.role, firstName: user.firstName, middleName: user.middleName, passportOrId: user.passportOrId },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    res.json({ token, user: { id: user._id, email: user.email, role: user.role } });
+    res.json({ token, user: { id: user._id, email: user.email, role: user.role, firstName: user.firstName,middleName: user.middleName, passportOrId: user.passportOrId } });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
