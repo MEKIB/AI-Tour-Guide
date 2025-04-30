@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
 import ButtonAppBar from "./components/Navbar/Navbar";
 import Home from "./components/Home page/Home";
@@ -60,29 +60,48 @@ import LakeTanaLakesPage from "./components/Destinations/Lakes,waterfall/LakeTan
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
-
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
 
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem("token")
-  );
 
-  // Clear token on page load/refresh
+  // Clear token on initial load/refresh
   useEffect(() => {
-    localStorage.removeItem("token"); // Remove token on refresh
-    setIsAuthenticated(false); // Reset authentication state
-  }, []); // Empty dependency array means this runs once on mount
-
-  useEffect(() => {
-    // Check for existing user session
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      setIsLoggedIn(true);
+    const clearTokenOnRefresh = () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setIsAuthenticated(false);
+    };
+    
+    // Check if it's a page refresh
+    if (performance.navigation.type === 1) { // 1 means TYPE_RELOAD
+      clearTokenOnRefresh();
     }
+  }, []);
 
-    // Get user location
+
+  // Authentication check and user data fetch
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const response = await axios.get("/me", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setUser(response.data);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error("Session validation failed:", error);
+          handleLogout();
+        }
+      }
+    };
+    checkAuth();
+  }, []);
+
+  // Geolocation useEffect remains the same
+  useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -103,20 +122,12 @@ function App() {
     );
   }, []);
 
-  const handleLocationChange = (event) => {
-    setUserLocation(event.target.value);
-  };
-
-  const handleLogin = (userData) => {
-    setIsLoggedIn(true);
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-  };
-
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUser(null);
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
+    setUser(null);
+    setIsAuthenticated(false);
+    navigate("/login");
   };
 
   return (
@@ -131,13 +142,11 @@ function App() {
       }}
     >
       <ButtonAppBar
-        isLoggedIn={isLoggedIn}
+        isLoggedIn={isAuthenticated}
         onLogout={handleLogout}
         user={user}
       />
 
-      {/* Navbar */}
-      <ButtonAppBar isLoggedIn={isAuthenticated} onLogout={handleLogout} />
 
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
@@ -236,12 +245,9 @@ function App() {
         <Route path="/hotel/:id" element={<HotelsLodges />} />
         <Route path="/signup" element={<SignupPage />} />
 
-        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+        <Route path="/login" element={<LoginPage/>} />
 
-        <Route
-          path="/login"
-          element={<LoginPage onLogin={handleLogin} onLogout={handleLogout} />}
-        />
+      
 
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -249,11 +255,19 @@ function App() {
         <Route path="/bureau" element={<Bureau />} />
         <Route path="/mandate" element={<Merge />} />
         <Route path="/managment" element={<Managment />} />
-        <Route path="/bookings" element={<Bookings />} />
 
-        <Route path="/reserve" element={<Reserve />} />
-        <Route path="/profile" element={<Profile />} />
-      </Routes>
+
+        {/* Protected Routes */}
+        {isAuthenticated && (
+            <>
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/bookings" element={<Bookings />} />
+              <Route path="/reserve" element={<Reserve />} />
+            </>
+          )}
+
+
+              </Routes>
 
       <ChatbotLogic />
       

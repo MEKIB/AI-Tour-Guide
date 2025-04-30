@@ -17,9 +17,9 @@ import * as MuiIcons from '@mui/icons-material';
 import { debounce } from 'lodash';
 import axios from 'axios';
 
-const AddDetailedRoomAndAmenities = ({ onAddDetailedRoom }) => {
+const AddDetailedRoomAndAmenities = () => {
   const [newDetailedRoom, setNewDetailedRoom] = useState({
-    type: '', // Room type (Single/Double)
+    type: '',
     bathrooms: '',
     size: '',
   });
@@ -61,13 +61,32 @@ const AddDetailedRoomAndAmenities = ({ onAddDetailedRoom }) => {
     setAmenities((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const validateFields = () => {
+    if (!newDetailedRoom.type || !newDetailedRoom.bathrooms || !newDetailedRoom.size) {
+      setError('Please fill all room details');
+      return false;
+    }
+    if (amenities.length === 0) {
+      setError('Please add at least one amenity');
+      return false;
+    }
+    if (isNaN(newDetailedRoom.bathrooms) || Number(newDetailedRoom.bathrooms) < 1) {
+      setError('Bathrooms must be a number greater than 0');
+      return false;
+    }
+    return true;
+  };
+
   const handleUploadAll = async () => {
+    if (!validateFields()) return;
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('No token found in localStorage');
+        setError('Authentication required');
         return;
       }
+
       const response = await axios.post(
         'http://localhost:2000/api/rooms/upload',
         { ...newDetailedRoom, amenities },
@@ -75,21 +94,29 @@ const AddDetailedRoomAndAmenities = ({ onAddDetailedRoom }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log(response.data.message);
+
       setSuccess('Room and amenities uploaded successfully');
-      onAddDetailedRoom({ ...newDetailedRoom, amenities });
       setNewDetailedRoom({ type: '', bathrooms: '', size: '' });
       setAmenities([]);
     } catch (error) {
-      console.error('Error uploading room and amenities:', error.response?.data || error.message);
-      setError('Failed to upload room and amenities');
+      console.error('Upload error:', error);
+      setError(error.response?.data?.message || 'Failed to upload room details');
     }
   };
 
   return (
-    <Box sx={{ maxWidth: 600, mb: 4, backgroundColor: '#1A1A1A', p: 3, borderRadius: 2, boxShadow: 3 }}>
+    <Box
+      sx={{
+        maxWidth: 600,
+        mb: 4,
+        backgroundColor: '#1A1A1A',
+        p: 3,
+        borderRadius: 2,
+        boxShadow: 3,
+      }}
+    >
       <Typography variant="h6" gutterBottom sx={{ color: '#00ADB5', fontWeight: 'bold' }}>
-        Add Detailed Room Type (Single/Double)
+        Add Detailed Room Type
       </Typography>
 
       {/* Room Type Dropdown */}
@@ -99,21 +126,18 @@ const AddDetailedRoomAndAmenities = ({ onAddDetailedRoom }) => {
           value={newDetailedRoom.type}
           onChange={(e) => setNewDetailedRoom({ ...newDetailedRoom, type: e.target.value })}
           label="Room Type"
-          sx={{ 
-            color: '#EEEEEE', 
-            '& .MuiSvgIcon-root': { color: '#00ADB5' }, // Dropdown icon color
-            '& .MuiInputLabel-root': { color: '#EEEEEE' }, // Label color
+          sx={{
+            color: '#EEEEEE',
+            '& .MuiSvgIcon-root': { color: '#00ADB5' },
+            '& .MuiInputLabel-root': { color: '#EEEEEE' },
           }}
           MenuProps={{
             PaperProps: {
               sx: {
-                backgroundColor: '#2D2D2D', // Dropdown modal background color
-                color: '#EEEEEE', // Dropdown text color
+                backgroundColor: '#2D2D2D',
+                color: '#EEEEEE',
                 '& .MuiMenuItem-root': {
-                  color: '#EEEEEE', // Menu item text color
-                  '&:hover': {
-                    backgroundColor: '#393E46', // Hover background color
-                  },
+                  '&:hover': { backgroundColor: '#393E46' },
                 },
               },
             },
@@ -130,16 +154,17 @@ const AddDetailedRoomAndAmenities = ({ onAddDetailedRoom }) => {
         label="Bathrooms"
         variant="outlined"
         margin="normal"
+        type="number"
         value={newDetailedRoom.bathrooms}
         onChange={(e) => setNewDetailedRoom({ ...newDetailedRoom, bathrooms: e.target.value })}
-        placeholder="e.g., 2"
-        sx={{ 
-          backgroundColor: '#2D2D2D', 
-          '& .MuiInputLabel-root': { color: '#EEEEEE' }, // Label color
-          '& .MuiOutlinedInput-root': { 
-            color: '#EEEEEE', // Input text color
-            '& fieldset': { borderColor: '#00ADB5' }, // Border color
-            '&:hover fieldset': { borderColor: '#00ADB5' }, // Hover border color
+        placeholder="Number of bathrooms"
+        sx={{
+          backgroundColor: '#2D2D2D',
+          '& .MuiInputLabel-root': { color: '#EEEEEE' },
+          '& .MuiOutlinedInput-root': {
+            color: '#EEEEEE',
+            '& fieldset': { borderColor: '#00ADB5' },
+            '&:hover fieldset': { borderColor: '#00ADB5' },
           },
         }}
       />
@@ -152,42 +177,41 @@ const AddDetailedRoomAndAmenities = ({ onAddDetailedRoom }) => {
         margin="normal"
         value={newDetailedRoom.size}
         onChange={(e) => setNewDetailedRoom({ ...newDetailedRoom, size: e.target.value })}
-        placeholder="e.g., 110 m²"
-        sx={{ 
-          backgroundColor: '#2D2D2D', 
-          '& .MuiInputLabel-root': { color: '#EEEEEE' }, // Label color
-          '& .MuiOutlinedInput-root': { 
-            color: '#EEEEEE', // Input text color
-            '& fieldset': { borderColor: '#00ADB5' }, // Border color
-            '&:hover fieldset': { borderColor: '#00ADB5' }, // Hover border color
+        placeholder="Room size in square meters"
+        sx={{
+          backgroundColor: '#2D2D2D',
+          '& .MuiInputLabel-root': { color: '#EEEEEE' },
+          '& .MuiOutlinedInput-root': {
+            color: '#EEEEEE',
+            '& fieldset': { borderColor: '#00ADB5' },
+            '&:hover fieldset': { borderColor: '#00ADB5' },
           },
         }}
       />
 
-      {/* Add Amenities Section */}
+      {/* Amenities Section */}
       <Typography variant="h6" gutterBottom sx={{ color: '#00ADB5', fontWeight: 'bold', mt: 2 }}>
         Add Amenities
       </Typography>
+
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        {/* Amenity Name Input */}
         <TextField
           fullWidth
           label="Amenity Name"
           variant="outlined"
           value={newAmenity.name}
           onChange={(e) => setNewAmenity({ ...newAmenity, name: e.target.value })}
-          sx={{ 
-            backgroundColor: '#2D2D2D', 
-            '& .MuiInputLabel-root': { color: '#EEEEEE' }, // Label color
-            '& .MuiOutlinedInput-root': { 
-              color: '#EEEEEE', // Input text color
-              '& fieldset': { borderColor: '#00ADB5' }, // Border color
-              '&:hover fieldset': { borderColor: '#00ADB5' }, // Hover border color
+          sx={{
+            backgroundColor: '#2D2D2D',
+            '& .MuiInputLabel-root': { color: '#EEEEEE' },
+            '& .MuiOutlinedInput-root': {
+              color: '#EEEEEE',
+              '& fieldset': { borderColor: '#00ADB5' },
+              '&:hover fieldset': { borderColor: '#00ADB5' },
             },
           }}
         />
 
-        {/* Icon Search Autocomplete */}
         <Autocomplete
           fullWidth
           options={filteredIcons}
@@ -198,13 +222,13 @@ const AddDetailedRoomAndAmenities = ({ onAddDetailedRoom }) => {
               label="Search Icon"
               variant="outlined"
               onChange={(e) => handleSearch(e.target.value)}
-              sx={{ 
-                backgroundColor: '#2D2D2D', 
-                '& .MuiInputLabel-root': { color: '#EEEEEE' }, // Label color
-                '& .MuiOutlinedInput-root': { 
-                  color: '#EEEEEE', // Input text color
-                  '& fieldset': { borderColor: '#00ADB5' }, // Border color
-                  '&:hover fieldset': { borderColor: '#00ADB5' }, // Hover border color
+              sx={{
+                backgroundColor: '#2D2D2D',
+                '& .MuiInputLabel-root': { color: '#EEEEEE' },
+                '& .MuiOutlinedInput-root': {
+                  color: '#EEEEEE',
+                  '& fieldset': { borderColor: '#00ADB5' },
+                  '&:hover fieldset': { borderColor: '#00ADB5' },
                 },
               }}
             />
@@ -218,18 +242,17 @@ const AddDetailedRoomAndAmenities = ({ onAddDetailedRoom }) => {
           onChange={(_, value) => setNewAmenity({ ...newAmenity, icon: value?.name || '' })}
         />
 
-        {/* Add Amenity Button */}
         <Button
           variant="contained"
           sx={{ backgroundColor: '#00ADB5', color: '#EEEEEE', '&:hover': { backgroundColor: '#008B8B' } }}
           onClick={handleAddAmenity}
         >
-          Add Amenity
+          Add
         </Button>
       </Box>
 
-      {/* Amenities Chips */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+      {/* Display Added Amenities */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
         {amenities.map((amenity, index) => {
           const IconComponent = MuiIcons[amenity.icon];
           return (
@@ -237,7 +260,7 @@ const AddDetailedRoomAndAmenities = ({ onAddDetailedRoom }) => {
               key={index}
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {IconComponent ? React.createElement(IconComponent) : null}
+                  {IconComponent && React.createElement(IconComponent)}
                   {amenity.name}
                 </Box>
               }
@@ -250,6 +273,7 @@ const AddDetailedRoomAndAmenities = ({ onAddDetailedRoom }) => {
 
       {/* Upload Button */}
       <Button
+        fullWidth
         variant="contained"
         onClick={handleUploadAll}
         sx={{
@@ -259,27 +283,17 @@ const AddDetailedRoomAndAmenities = ({ onAddDetailedRoom }) => {
           '&:hover': { backgroundColor: '#008B8B' },
         }}
       >
-        Upload Room and Amenities
+        Save Room Configuration
       </Button>
 
-      {/* Snackbar for Success and Error Messages */}
-      <Snackbar
-        open={!!success}
-        autoHideDuration={3000}
-        onClose={() => setSuccess('')}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert severity="success" sx={{ width: '100%' }}>
+      {/* Notifications */}
+      <Snackbar open={!!success} autoHideDuration={3000} onClose={() => setSuccess('')}>
+        <Alert onClose={() => setSuccess('')} severity="success">
           {success}
         </Alert>
       </Snackbar>
-      <Snackbar
-        open={!!error}
-        autoHideDuration={3000}
-        onClose={() => setError('')}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert severity="error" sx={{ width: '100%' }}>
+      <Snackbar open={!!error} autoHideDuration={3000} onClose={() => setError('')}>
+        <Alert onClose={() => setError('')} severity="error">
           {error}
         </Alert>
       </Snackbar>

@@ -29,12 +29,10 @@ import { debounce } from "lodash";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
-
 // Import logo using ES module syntax
 import logo from '../../assets/logo/logo.png';
 
 // Define the color palette
-
 const colors = {
   primary: "#222831",
   secondary: "#393E46",
@@ -725,7 +723,11 @@ export default function Navbar({
         onClose={() => setSuccess("")}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert severity="success" sx={{ width: "100%" }}>
+        <Alert
+          onClose={() => setSuccess("")}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
           {success}
         </Alert>
       </Snackbar>
@@ -735,7 +737,11 @@ export default function Navbar({
         onClose={() => setError("")}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert severity="error" sx={{ width: "100%" }}>
+        <Alert
+          onClose={() => setError("")}
+          severity="error"
+          sx={{ width: "100%" }}
+        >
           {error}
         </Alert>
       </Snackbar>
