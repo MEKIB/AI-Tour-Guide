@@ -60,26 +60,21 @@ import LakeTanaLakesPage from "./components/Destinations/Lakes,waterfall/LakeTan
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
-
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
   const [user, setUser] = useState(null);
 
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem("token")
-  );
-
-  // Clear token on page load/refresh
   useEffect(() => {
-    localStorage.removeItem("token"); // Remove token on refresh
-    setIsAuthenticated(false); // Reset authentication state
-  }, []); // Empty dependency array means this runs once on mount
-
-  useEffect(() => {
-    // Check for existing user session
+    // Check for existing user session and token
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const token = localStorage.getItem("token");
+    if (token && storedUser) {
       setUser(JSON.parse(storedUser));
       setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+      setUser(null);
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
     }
 
     // Get user location
@@ -108,15 +103,23 @@ function App() {
   };
 
   const handleLogin = (userData) => {
+    const userWithImage = {
+      ...userData,
+      passportOrId: userData.passportOrId
+        ? `http://your-backend.com/${userData.passportOrId}`
+        : "https://via.placeholder.com/32", // Fallback image
+    };
     setIsLoggedIn(true);
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userWithImage);
+    localStorage.setItem("user", JSON.stringify(userWithImage));
+    localStorage.setItem("token", "sample-token"); // Replace with actual token from login response
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUser(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
   };
 
   return (
@@ -136,9 +139,6 @@ function App() {
         user={user}
       />
 
-      {/* Navbar */}
-      <ButtonAppBar isLoggedIn={isAuthenticated} onLogout={handleLogout} />
-
       <Routes>
         <Route path="/worldheritagesites" element={<World />} />
         <Route
@@ -153,12 +153,10 @@ function App() {
           path="/worldheritagesites/fasilghebbi"
           element={<FasilGhebbiHeritagePage />}
         />
-
         <Route
           path="/worldheritagesites/lakeTana"
           element={<LakeTanaHeritagePage />}
         />
-
         <Route path="/religioussites" element={<ReligiousHome />} />
         <Route path="/national-parks" element={<NationalParksHome />} />
         <Route
@@ -187,7 +185,6 @@ function App() {
         />
         <Route path="/national-parks/alitash" element={<AlitashPage />} />
         <Route path="/lakeAndWaterfall" element={<LakesAndWaterfallHome />} />
-
         <Route
           path="/lakes-hot-springs-waterfalls/lake-zengena"
           element={<LakeZengenaPage />}
@@ -197,7 +194,7 @@ function App() {
           element={<LakeTirbaPage />}
         />
         <Route
-          path="/lakes-hot-springs-waterfalls/wanzaye-hot-spring"
+          path="/lakes-hot-springs-waterfalls/wanzaye-hot spring"
           element={<WanzayeHotspringPage />}
         />
         <Route
@@ -235,22 +232,14 @@ function App() {
         <Route path="/hoteldetails" element={<HotelDetails />} />
         <Route path="/hotel/:id" element={<HotelsLodges />} />
         <Route path="/signup" element={<SignupPage />} />
-
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-
-        <Route
-          path="/login"
-          element={<LoginPage onLogin={handleLogin} onLogout={handleLogout} />}
-        />
-
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/amhara" element={<AmharaBoth />} />
         <Route path="/bureau" element={<Bureau />} />
         <Route path="/mandate" element={<Merge />} />
-        <Route path="/managment" element={<Managment />} />
+        <Route path="/management" element={<Managment />} />
         <Route path="/bookings" element={<Bookings />} />
-
         <Route path="/reserve" element={<Reserve />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
