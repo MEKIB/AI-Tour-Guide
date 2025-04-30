@@ -28,7 +28,7 @@ const AddRoomForm = ({ onRoomAdded }) => {
       try {
         const token = localStorage.getItem('token');
         const response = await axios.get(`${baseUrl}/api/room-types`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         setRoomTypes(response.data.data);
       } catch (err) {
@@ -51,23 +51,23 @@ const AddRoomForm = ({ onRoomAdded }) => {
       }
 
       const token = localStorage.getItem('token');
-      
+
       const response = await axios.post(
         `${baseUrl}/api/room-types`,
         {
           type: newRoom.type,
           rate: Number(newRoom.rate),
-          roomNumbers: newRoom.roomNumbers
+          roomNumbers: newRoom.roomNumbers,
         },
         {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       // Update local state and parent component
-      setRoomTypes(prev => [...prev, response.data.data]);
+      setRoomTypes((prev) => [...prev, response.data.data]);
       if (onRoomAdded) onRoomAdded(response.data.data);
-      
+
       setSuccess('Room type added successfully!');
       setNewRoom({ type: '', rate: '', roomNumbers: '' });
     } catch (err) {
@@ -78,7 +78,17 @@ const AddRoomForm = ({ onRoomAdded }) => {
   };
 
   return (
-    <Box component="form" sx={{ maxWidth: 600, mb: 4, backgroundColor: '#1A1A1A', p: 3, borderRadius: 2, boxShadow: 3 }}>
+    <Box
+      component="form"
+      sx={{
+        maxWidth: 600,
+        mb: 4,
+        backgroundColor: '#1A1A1A',
+        p: 3,
+        borderRadius: 2,
+        boxShadow: 3,
+      }}
+    >
       <Typography variant="h6" gutterBottom sx={{ color: '#00ADB5', fontWeight: 'bold' }}>
         Room Management
       </Typography>
@@ -90,21 +100,24 @@ const AddRoomForm = ({ onRoomAdded }) => {
             Existing Room Types:
           </Typography>
           {roomTypes.map((roomType, index) => (
-            <Box key={index} sx={{ 
-              mb: 1, 
-              p: 1.5,
-              backgroundColor: '#393E46',
-              borderRadius: 1,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
+            <Box
+              key={index}
+              sx={{
+                mb: 1,
+                p: 1.5,
+                backgroundColor: '#393E46',
+                borderRadius: 1,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <div>
                 <Typography variant="body2" sx={{ color: '#00ADB5' }}>
                   {roomType.type} - ${roomType.rate}/night
                 </Typography>
                 <Typography variant="caption" sx={{ color: '#EEEEEE' }}>
-                  Rooms: {roomType.roomNumbers.join(', ')}
+                  Rooms: {roomType.roomNumbers.map((r) => r.number).join(', ')}
                 </Typography>
               </div>
             </Box>
@@ -122,7 +135,7 @@ const AddRoomForm = ({ onRoomAdded }) => {
         <Select
           value={newRoom.type}
           onChange={(e) => setNewRoom({ ...newRoom, type: e.target.value })}
-          sx={{ 
+          sx={{
             color: '#EEEEEE',
             '& .MuiSvgIcon-root': { color: '#00ADB5' },
           }}
@@ -138,9 +151,8 @@ const AddRoomForm = ({ onRoomAdded }) => {
             },
           }}
         >
-          <MenuItem value="Standard">Standard</MenuItem>
-          <MenuItem value="Deluxe">Deluxe</MenuItem>
-          <MenuItem value="Suite">Suite</MenuItem>
+          <MenuItem value="Single">Single</MenuItem>
+          <MenuItem value="Double">Double</MenuItem>
         </Select>
       </FormControl>
 
@@ -172,7 +184,7 @@ const AddRoomForm = ({ onRoomAdded }) => {
         margin="normal"
         value={newRoom.roomNumbers}
         onChange={(e) => setNewRoom({ ...newRoom, roomNumbers: e.target.value })}
-        placeholder="e.g., 101, 102, 103"
+        placeholder="e.g., R101, R102, R103"
         sx={{
           backgroundColor: '#2D2D2D',
           borderRadius: 1,
@@ -209,13 +221,13 @@ const AddRoomForm = ({ onRoomAdded }) => {
 
       {/* Notifications */}
       <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
-        <Alert severity="error" sx={{ width: '100%' }}>
+        <Alert onClose={() => setError('')} severity="error" sx={{ width: '100%' }}>
           {error}
         </Alert>
       </Snackbar>
 
       <Snackbar open={!!success} autoHideDuration={6000} onClose={() => setSuccess('')}>
-        <Alert severity="success" sx={{ width: '100%' }}>
+        <Alert onClose={() => setSuccess('')} severity="success" sx={{ width: '100%' }}>
           {success}
         </Alert>
       </Snackbar>

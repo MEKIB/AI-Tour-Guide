@@ -759,7 +759,11 @@ export default function Navbar({
         onClose={() => setSuccess("")}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert severity="success" sx={{ width: "100%" }}>
+        <Alert
+          onClose={() => setSuccess("")}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
           {success}
         </Alert>
       </Snackbar>
@@ -769,7 +773,11 @@ export default function Navbar({
         onClose={() => setError("")}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert severity="error" sx={{ width: "100%" }}>
+        <Alert
+          onClose={() => setError("")}
+          severity="error"
+          sx={{ width: "100%" }}
+        >
           {error}
         </Alert>
       </Snackbar>

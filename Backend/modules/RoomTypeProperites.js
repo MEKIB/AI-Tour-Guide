@@ -1,35 +1,41 @@
 import mongoose from 'mongoose';
 
-const roomTypeSchemas = new mongoose.Schema({
+const roomTypeProperitesSchema = new mongoose.Schema({
   hotelAdminId: {
     type: String,
     required: true,
-    index: true
   },
   type: {
     type: String,
     required: true,
-    enum: ['Standard', 'Deluxe', 'Suite', 'Single', 'Double']
+    enum: ['Single', 'Double'],
   },
-  rate: Number,
-  roomNumbers: [{
-    number: String,
-    availability: [Date]
-  }],
-  details: {
-    bathrooms: Number,
-    size: String,
-    amenities: [{
-      name: String,
-      icon: String
-    }]
+  bathrooms: {
+    type: Number,
+    required: true,
+    min: 1,
   },
+  size: {
+    type: String,
+    required: true, // e.g., "40 m²"
+  },
+  amenities: [
+    {
+      name: {
+        type: String,
+        required: true,
+      },
+      icon: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
-const RoomTypeProperites= mongoose.model('RoomTypeDetails', roomTypeSchemas);
-
-export default RoomTypeProperites
+const RoomTypeProperites = mongoose.model('RoomTypeProperites', roomTypeProperitesSchema);
+export default RoomTypeProperites;

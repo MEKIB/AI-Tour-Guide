@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -12,9 +12,9 @@ import {
   Select,
   FormHelperText,
   Table,
+  TableContainer,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Paper,
@@ -23,6 +23,8 @@ import {
   ListItemIcon,
   ListItemText,
   Chip,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -33,151 +35,18 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import {
-  Kitchen as KitchenIcon,
-  Balcony as BalconyIcon,
-  Landscape as LandscapeIcon,
-  Tv as TvIcon,
-  Wifi as WifiIcon,
-  LocalLaundryService as LaundryIcon,
-  Bathtub as BathtubIcon,
-  KingBed as BedIcon,
-  CleaningServices as CleaningIcon,
-  Chair as ChairIcon,
-  Coffee as CoffeeIcon,
-  Microwave as MicrowaveIcon,
-  DryCleaning as DryCleaningIcon,
-  LocalDining as DiningIcon,
-  AcUnit as AirConditionerIcon,
-  LocalParking as ParkingIcon,
-  Elevator as ElevatorIcon,
-  Pool as PoolIcon,
-  FitnessCenter as GymIcon,
-  Pets as PetsIcon,
-  SmokingRooms as SmokingIcon,
-  RoomService as RoomServiceIcon,
-} from '@mui/icons-material';
+import * as MuiIcons from '@mui/icons-material';
+import axios from 'axios';
 
 // Color Palette
 const colors = {
-  dark: '#222831', // Dark Gray
-  mediumDark: '#393E46', // Medium Gray
-  primary: '#00ADB5', // Teal
-  light: '#EEEEEE', // Light Gray
+  dark: '#222831',
+  mediumDark: '#393E46',
+  primary: '#00ADB5',
+  light: '#EEEEEE',
 };
 
-// Mock data for available rooms - updated to only Single and Double
-const availableRooms = [
-  { id: 1, type: 'Double', roomNumber: 'R101', price: 200 },
-  { id: 2, type: 'Single', roomNumber: 'R102', price: 150 },
-  { id: 3, type: 'Single', roomNumber: 'R103', price: 100 },
-  { id: 4, type: 'Double', roomNumber: 'R104', price: 220 },
-  { id: 5, type: 'Single', roomNumber: 'R105', price: 160 },
-];
-
-// Room details - updated for Single and Double rooms
-const roomDetails = {
-  'Double': {
-    bedrooms: [
-      { name: 'Bedroom', beds: '1 queen bed' },
-    ],
-    bathrooms: 1,
-    size: '40 m²',
-    amenities: [
-      'Flat-screen TV',
-      'Free Wifi',
-      'Free toiletries',
-      'Bathtub or shower',
-      'Towels and linens provided',
-      'Socket near the bed',
-      'Cleaning products',
-      'Tile/Marble floor',
-      'Sitting area',
-      'Slippers',
-      'Refrigerator',
-      'Ironing facilities',
-      'Tea/Coffee maker',
-      'Iron',
-      'Hairdryer',
-      'Carpeted flooring',
-      'Electric kettle',
-      'Alarm clock',
-      'Toilet paper',
-      'Hand sanitizer',
-    ],
-  },
-  'Single': {
-    bedrooms: [
-      { name: 'Bedroom', beds: '1 single bed' },
-    ],
-    bathrooms: 1,
-    size: '25 m²',
-    amenities: [
-      'Flat-screen TV',
-      'Free Wifi',
-      'Free toiletries',
-      'Bathtub or shower',
-      'Towels and linens provided',
-      'Socket near the bed',
-      'Cleaning products',
-      'Tile/Marble floor',
-      'Slippers',
-      'Tea/Coffee maker',
-      'Hairdryer',
-      'Carpeted flooring',
-      'Electric kettle',
-      'Alarm clock',
-      'Toilet paper',
-      'Hand sanitizer',
-    ],
-  },
-};
-
-// Amenity icons mapping
-const amenityIcons = {
-  'Private kitchen': <KitchenIcon sx={{ color: colors.primary }} />,
-  Balcony: <BalconyIcon sx={{ color: colors.primary }} />,
-  'Mountain view': <LandscapeIcon sx={{ color: colors.primary }} />,
-  'City view': <LandscapeIcon sx={{ color: colors.primary }} />,
-  Patio: <LandscapeIcon sx={{ color: colors.primary }} />,
-  'Flat-screen TV': <TvIcon sx={{ color: colors.primary }} />,
-  'Free Wifi': <WifiIcon sx={{ color: colors.primary }} />,
-  'Free toiletries': <CleaningIcon sx={{ color: colors.primary }} />,
-  'Kitchen with washing machine': <LaundryIcon sx={{ color: colors.primary }} />,
-  Sofa: <ChairIcon sx={{ color: colors.primary }} />,
-  'Bathtub or shower': <BathtubIcon sx={{ color: colors.primary }} />,
-  'Towels and linens provided': <BedIcon sx={{ color: colors.primary }} />,
-  'Socket near the bed': <CoffeeIcon sx={{ color: colors.primary }} />,
-  'Cleaning products': <CleaningIcon sx={{ color: colors.primary }} />,
-  'Tile/Marble floor': <ChairIcon sx={{ color: colors.primary }} />,
-  'Sitting area': <ChairIcon sx={{ color: colors.primary }} />,
-  Slippers: <ChairIcon sx={{ color: colors.primary }} />,
-  Refrigerator: <KitchenIcon sx={{ color: colors.primary }} />,
-  'Ironing facilities': <CleaningIcon sx={{ color: colors.primary }} />,
-  'Tea/Coffee maker': <CoffeeIcon sx={{ color: colors.primary }} />,
-  Iron: <CleaningIcon sx={{ color: colors.primary }} />,
-  'Interconnecting room(s) available': <ChairIcon sx={{ color: colors.primary }} />,
-  Microwave: <MicrowaveIcon sx={{ color: colors.primary }} />,
-  Hairdryer: <DryCleaningIcon sx={{ color: colors.primary }} />,
-  Kitchenware: <KitchenIcon sx={{ color: colors.primary }} />,
-  Kitchenette: <KitchenIcon sx={{ color: colors.primary }} />,
-  'Guest bathroom': <BathtubIcon sx={{ color: colors.primary }} />,
-  'Carpeted flooring': <ChairIcon sx={{ color: colors.primary }} />,
-  'Electric kettle': <CoffeeIcon sx={{ color: colors.primary }} />,
-  'Alarm clock': <CoffeeIcon sx={{ color: colors.primary }} />,
-  Oven: <KitchenIcon sx={{ color: colors.primary }} />,
-  Stovetop: <KitchenIcon sx={{ color: colors.primary }} />,
-  Toaster: <KitchenIcon sx={{ color: colors.primary }} />,
-  'Dining area': <DiningIcon sx={{ color: colors.primary }} />,
-  'Upper floors accessible by stairs only': <ElevatorIcon sx={{ color: colors.primary }} />,
-  'Private apartment in building': <ChairIcon sx={{ color: colors.primary }} />,
-  'Clothes rack': <ChairIcon sx={{ color: colors.primary }} />,
-  'Drying rack for clothing': <LaundryIcon sx={{ color: colors.primary }} />,
-  'Toilet paper': <CleaningIcon sx={{ color: colors.primary }} />,
-  'Hand sanitizer': <CleaningIcon sx={{ color: colors.primary }} />,
-};
-
-const Availability = () => {
+const Availability = ({ hotelAdminId }) => {
   const [checkInDate, setCheckInDate] = useState(null);
   const [checkOutDate, setCheckOutDate] = useState(null);
   const [adults, setAdults] = useState(2);
@@ -190,18 +59,44 @@ const Availability = () => {
   const [selectedRooms, setSelectedRooms] = useState([]);
   const [selectedRoomType, setSelectedRoomType] = useState('');
   const [showBookingForm, setShowBookingForm] = useState(false);
-  const [reservePopoverAnchorEl, setReservePopoverAnchorEl] = useState(null);
+  const [availableRooms, setAvailableRooms] = useState([]);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSearch = () => {
-    console.log('Check-in Date:', checkInDate);
-    console.log('Check-out Date:', checkOutDate);
-    console.log('Adults:', adults);
-    console.log('Children:', children);
-    console.log('Children Ages:', childrenAges);
-    console.log('Rooms:', rooms);
-    setShowBookingForm(true);
+  // Fetch available rooms from backend
+  const fetchAvailableRooms = async () => {
+    if (!checkInDate || !checkOutDate) return;
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `http://localhost:2000/api/rooms/available/${hotelAdminId}`,
+        {
+          params: {
+            checkInDate: checkInDate.toISOString(),
+            checkOutDate: checkOutDate.toISOString(),
+          },
+        }
+      );
+      setAvailableRooms(response.data.data);
+      setShowBookingForm(true);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch available rooms');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Handle search button click
+  const handleSearch = () => {
+    if (!checkInDate || !checkOutDate) {
+      setError('Please select check-in and check-out dates');
+      return;
+    }
+    fetchAvailableRooms();
+  };
+
+  // Calendar popover handlers
   const handleOpenCalendar = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -210,6 +105,7 @@ const Availability = () => {
     setAnchorEl(null);
   };
 
+  // Guest popover handlers
   const handleOpenGuestPopover = (event) => {
     setGuestPopoverAnchorEl(event.currentTarget);
     setAgeError(false);
@@ -225,16 +121,6 @@ const Availability = () => {
     }
   };
 
-  const handleReservePopoverOpen = (event) => {
-    setReservePopoverAnchorEl(event.currentTarget);
-  };
-
-  const handleReservePopoverClose = () => {
-    setReservePopoverAnchorEl(null);
-  };
-
-  const reservePopoverOpen = Boolean(reservePopoverAnchorEl);
-
   const handleForceCloseGuestPopover = () => {
     const validatedChildren = childrenAges.filter((age) => age !== null && age !== '').length;
     setChildren(validatedChildren);
@@ -242,6 +128,7 @@ const Availability = () => {
     setAgeError(false);
   };
 
+  // Guest and room count handlers
   const handleAdultsChange = (delta) => {
     setAdults((prev) => Math.max(1, prev + delta));
   };
@@ -267,6 +154,7 @@ const Availability = () => {
     setAgeError(false);
   };
 
+  // Room selection handlers
   const handleRoomTypeSelection = (event) => {
     setSelectedRoomType(event.target.value);
     setSelectedRooms([]);
@@ -279,12 +167,56 @@ const Availability = () => {
     }
   };
 
-  const handleReserve = () => {
-    console.log('Selected Room Type:', selectedRoomType);
-    console.log('Selected Rooms:', selectedRooms);
-    setShowBookingForm(true);
+  // Handle reservation submission
+  const handleReserve = async () => {
+    if (!selectedRoomType || selectedRooms.length === 0) {
+      setError('Please select a room type and at least one room');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please log in to make a reservation');
+        return;
+      }
+
+      // Create a reservation for each selected room
+      const promises = selectedRooms.map((roomNumber) =>
+        axios.post(
+          'http://localhost:2000/api/reservations',
+          {
+            hotelAdminId,
+            roomType: selectedRoomType,
+            roomNumber,
+            checkInDate: checkInDate.toISOString(),
+            checkOutDate: checkOutDate.toISOString(),
+            adults,
+            children,
+            childrenAges,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        )
+      );
+
+      await Promise.all(promises);
+
+      setSuccess('Reservation(s) created successfully!');
+      setSelectedRooms([]);
+      setSelectedRoomType('');
+      setShowBookingForm(false);
+      fetchAvailableRooms(); // Refresh available rooms
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to create reservation');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Get unique room types
   const roomTypes = [...new Set(availableRooms.map((room) => room.type))];
   const filteredRooms = selectedRoomType
     ? availableRooms.filter((room) => room.type === selectedRoomType)
@@ -331,8 +263,7 @@ const Availability = () => {
             transformOrigin={{ vertical: 'top', horizontal: 'left' }}
             disableRestoreFocus
           >
-            <Box sx={{ display: 'flex', p: 2, backgroundColor: colors.mediumDark, borderRadius: 2, boxShadow: 3 }}>
-              {/* Check-in Calendar */}
+            <Box sx={{ display: 'flex', p: 2, backgroundColor: colors.mediumDark, borderRadius: 2, boxShadow: 2 }}>
               <Box sx={{ marginRight: 2, backgroundColor: colors.dark, borderRadius: 2, p: 2, boxShadow: 2 }}>
                 <Typography variant="subtitle1" align="center" gutterBottom sx={{ color: colors.primary, fontWeight: 'bold' }}>
                   Check-in
@@ -364,8 +295,6 @@ const Availability = () => {
                   }}
                 />
               </Box>
-
-              {/* Check-out Calendar */}
               <Box sx={{ backgroundColor: colors.dark, borderRadius: 2, p: 2, boxShadow: 2 }}>
                 <Typography variant="subtitle1" align="center" gutterBottom sx={{ color: colors.primary, fontWeight: 'bold' }}>
                   Check-out
@@ -519,8 +448,14 @@ const Availability = () => {
 
           {/* Search Button */}
           <Grid item xs={12} md={2}>
-            <Button variant="contained" fullWidth onClick={handleSearch} sx={{ backgroundColor: colors.primary, color: colors.light }}>
-              Search
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleSearch}
+              disabled={loading}
+              sx={{ backgroundColor: colors.primary, color: colors.light }}
+            >
+              {loading ? 'Loading...' : 'Search'}
             </Button>
           </Grid>
         </Grid>
@@ -532,193 +467,145 @@ const Availability = () => {
           <Typography variant="h6" gutterBottom sx={{ color: colors.primary }}>
             Available Rooms
           </Typography>
-          <TableContainer component={Paper} sx={{ backgroundColor: colors.mediumDark, color: colors.light }}>
-            <Table>
-              <TableHead sx={{ backgroundColor: colors.primary }}>
-                <TableRow>
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Room Type</TableCell>
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Room Number</TableCell>
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Price</TableCell>
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Number of Rooms</TableCell>
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Your Choice</TableCell>
-                  <TableCell sx={{ color: colors.light }}></TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow>
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
-                    <FormControl fullWidth>
-                      <Select
-                        value={selectedRoomType}
-                        onChange={handleRoomTypeSelection}
-                        displayEmpty
-                        sx={{ backgroundColor: colors.dark, color: colors.light }}
-                      >
-                        <MenuItem value="" disabled>
-                          Select Room Type
-                        </MenuItem>
-                        {roomTypes.map((type, index) => (
-                          <MenuItem key={index} value={type} sx={{ backgroundColor: colors.mediumDark, color: colors.light }}>
-                            {type}
+          {availableRooms.length === 0 ? (
+            <Typography sx={{ color: colors.light }}>
+              No rooms available for the selected dates.
+            </Typography>
+          ) : (
+            <TableContainer component={Paper} sx={{ backgroundColor: colors.mediumDark, color: colors.light }}>
+              <Table>
+                <TableHead sx={{ backgroundColor: colors.primary }}>
+                  <TableRow>
+                    <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Room Type</TableCell>
+                    <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Room Number</TableCell>
+                    <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Price</TableCell>
+                    <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Number of Rooms</TableCell>
+                    <TableCell sx={{ borderRight: '1px solid #e0e0e0', color: colors.light }}>Your Choice</TableCell>
+                    <TableCell sx={{ color: colors.light }}></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
+                      <FormControl fullWidth>
+                        <Select
+                          value={selectedRoomType}
+                          onChange={handleRoomTypeSelection}
+                          displayEmpty
+                          sx={{ backgroundColor: colors.dark, color: colors.light }}
+                        >
+                          <MenuItem value="" disabled>
+                            Select Room Type
                           </MenuItem>
-                        ))}
-                      </Select>
-                      {selectedRoomType && (
-                        <Box sx={{ mt: 4 }}>
-                          <Typography variant="h6" gutterBottom sx={{ color: colors.primary }}>
-                            {selectedRoomType} Room Details
-                          </Typography>
-                          <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: '4px', backgroundColor: colors.dark }}>
-                            <Typography variant="subtitle1" gutterBottom sx={{ color: colors.light }}>
-                              Bedrooms:
+                          {roomTypes.map((type, index) => (
+                            <MenuItem key={index} value={type} sx={{ backgroundColor: colors.mediumDark, color: colors.light }}>
+                              {type}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                        {selectedRoomType && (
+                          <Box sx={{ mt: 4 }}>
+                            <Typography variant="h6" gutterBottom sx={{ color: colors.primary }}>
+                              {selectedRoomType} Room Details
                             </Typography>
-                            <List>
-                              {roomDetails[selectedRoomType].bedrooms.map((bedroom, index) => (
-                                <ListItem key={index}>
-                                  <ListItemText primary={`${bedroom.name}: ${bedroom.beds}`} sx={{ color: colors.light }} />
-                                </ListItem>
-                              ))}
-                            </List>
-                            <Typography variant="subtitle1" gutterBottom sx={{ color: colors.light }}>
-                              Bathrooms: {roomDetails[selectedRoomType].bathrooms}
-                            </Typography>
-                            <Typography variant="subtitle1" gutterBottom sx={{ color: colors.light }}>
-                              Size: {roomDetails[selectedRoomType].size}
-                            </Typography>
-                            <Typography variant="subtitle1" gutterBottom sx={{ color: colors.light }}>
-                              Amenities:
-                            </Typography>
-                            <List>
-                              {roomDetails[selectedRoomType].amenities.map((amenity, index) => (
-                                <ListItem key={index}>
-                                  <ListItemIcon>{amenityIcons[amenity] || <ChairIcon sx={{ color: colors.primary }} />}</ListItemIcon>
-                                  <ListItemText primary={amenity} sx={{ color: colors.light }} />
-                                </ListItem>
-                              ))}
-                            </List>
-                          </Box>
-                        </Box>
-                      )}
-                    </FormControl>
-                  </TableCell>
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
-                    <FormControl fullWidth>
-                      <Select
-                        multiple
-                        value={selectedRooms}
-                        onChange={handleRoomSelection}
-                        displayEmpty
-                        disabled={!selectedRoomType}
-                        renderValue={(selected) => (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {selected.map((roomNumber) => (
-                              <Chip key={roomNumber} label={roomNumber} sx={{ backgroundColor: colors.primary, color: colors.light }} />
-                            ))}
+                            <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: '4px', backgroundColor: colors.dark }}>
+                              <Typography variant="subtitle1" gutterBottom sx={{ color: colors.light }}>
+                                Bathrooms: {availableRooms.find((r) => r.type === selectedRoomType)?.bathrooms || 1}
+                              </Typography>
+                              <Typography variant="subtitle1" gutterBottom sx={{ color: colors.light }}>
+                                Size: {availableRooms.find((r) => r.type === selectedRoomType)?.size || 'Unknown'}
+                              </Typography>
+                              <Typography variant="subtitle1" gutterBottom sx={{ color: colors.light }}>
+                                Amenities:
+                              </Typography>
+                              <List>
+                                {(availableRooms.find((r) => r.type === selectedRoomType)?.amenities || []).map((amenity, index) => (
+                                  <ListItem key={index}>
+                                    <ListItemIcon>
+                                      {MuiIcons[amenity.icon] ? React.createElement(MuiIcons[amenity.icon], { sx: { color: colors.primary } }) : <MuiIcons.Chair sx={{ color: colors.primary }} />}
+                                    </ListItemIcon>
+                                    <ListItemText primary={amenity.name} sx={{ color: colors.light }} />
+                                  </ListItem>
+                                ))}
+                              </List>
+                            </Box>
                           </Box>
                         )}
-                        sx={{ backgroundColor: colors.dark, color: colors.light }}
-                      >
-                        <MenuItem value="" disabled>
-                          Select Room(s)
-                        </MenuItem>
-                        {filteredRooms.map((room) => (
-                          <MenuItem
-                            key={room.id}
-                            value={room.roomNumber}
-                            disabled={
-                              selectedRooms.length >= rooms && !selectedRooms.includes(room.roomNumber)
-                            }
-                            sx={{ backgroundColor: colors.mediumDark, color: colors.light }}
-                          >
-                            {room.roomNumber}
+                      </FormControl>
+                    </TableCell>
+                    <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
+                      <FormControl fullWidth>
+                        <Select
+                          multiple
+                          value={selectedRooms}
+                          onChange={handleRoomSelection}
+                          displayEmpty
+                          disabled={!selectedRoomType}
+                          renderValue={(selected) => (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {selected.map((roomNumber) => (
+                                <Chip key={roomNumber} label={roomNumber} sx={{ backgroundColor: colors.primary, color: colors.light }} />
+                              ))}
+                            </Box>
+                          )}
+                          sx={{ backgroundColor: colors.dark, color: colors.light }}
+                        >
+                          <MenuItem value="" disabled>
+                            Select Room(s)
                           </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </TableCell>
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
-                    {selectedRooms.length > 0 &&
-                      selectedRooms.map((roomNumber) => (
-                        <Typography key={roomNumber} sx={{ color: colors.light }}>
-                          ${availableRooms.find((room) => room.roomNumber === roomNumber)?.price} per night
-                        </Typography>
-                      ))}
-                  </TableCell>
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
-                    <FormControl fullWidth>
-                      <Select
-                        value={rooms}
-                        onChange={(e) => setRooms(e.target.value)}
-                        displayEmpty
-                        sx={{ backgroundColor: colors.dark, color: colors.light }}
-                      >
-                        {Array.from({ length: 6 }, (_, i) => {
-                          const optionValue = i + 1;
-                          return (
-                            <MenuItem key={optionValue} value={optionValue} sx={{ backgroundColor: colors.mediumDark, color: colors.light }}>
-                              {optionValue}
+                          {filteredRooms.map((room) => (
+                            <MenuItem
+                              key={room.id}
+                              value={room.roomNumber}
+                              disabled={
+                                selectedRooms.length >= rooms && !selectedRooms.includes(room.roomNumber)
+                              }
+                              sx={{ backgroundColor: colors.mediumDark, color: colors.light }}
+                            >
+                              {room.roomNumber}
                             </MenuItem>
-                          );
-                        })}
-                      </Select>
-                    </FormControl>
-                  </TableCell>
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
-                    {selectedRooms.length > 0 && (
-                      <Box>
-                        {selectedRooms.map((roomNumber) => (
-                          <Typography key={roomNumber} sx={{ color: colors.light }}>
-                            {selectedRoomType} - {roomNumber}
-                          </Typography>
-                        ))}
-                      </Box>
-                    )}
-                  </TableCell>
-                  <TableCell sx={{ verticalAlign: 'top' }}>
-                    {selectedRooms.length > 0 && (
-                      <Box>
-                        <Button
-                          variant="contained"
-                          onClick={handleReserve}
-                          onMouseEnter={handleReservePopoverOpen}
-                          onMouseLeave={handleReservePopoverClose}
-                          sx={{ backgroundColor: colors.primary, color: colors.light }}
-                        >
-                          I Will Reserve
-                        </Button>
-                        <Popover
-                          open={reservePopoverOpen}
-                          anchorEl={reservePopoverAnchorEl}
-                          onClose={handleReservePopoverClose}
-                          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-                          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-                          disableRestoreFocus
-                          sx={{ pointerEvents: 'none' }}
-                        >
-                          <Box sx={{ p: 2, backgroundColor: colors.mediumDark, color: colors.light }}>
-                            <Typography variant="body1">
-                              <strong>Hotel Name:</strong> Your Hotel Name
-                            </Typography>
-                            <Typography variant="body1">
-                              <strong>Room Type:</strong> {selectedRoomType}
-                            </Typography>
-                            <Typography variant="body1">
-                              <strong>Check-in Date:</strong> {checkInDate ? checkInDate.format('MM/DD/YYYY') : 'Not selected'}
-                            </Typography>
-                            <Typography variant="body1">
-                              <strong>Check-out Date:</strong> {checkOutDate ? checkOutDate.format('MM/DD/YYYY') : 'Not selected'}
-                            </Typography>
-                          </Box>
-                        </Popover>
-                      </Box>
-                    )}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </TableCell>
+                    <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
+                      ${availableRooms.find((r) => r.type === selectedRoomType)?.price || 'N/A'} / night
+                    </TableCell>
+                    <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
+                      {rooms}
+                    </TableCell>
+                    <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
+                      {selectedRooms.length} room{selectedRooms.length !== 1 ? 's' : ''} selected
+                    </TableCell>
+                    <TableCell sx={{ verticalAlign: 'top' }}>
+                      <Button
+                        variant="contained"
+                        onClick={handleReserve}
+                        disabled={selectedRooms.length === 0 || loading}
+                        sx={{ backgroundColor: colors.primary, color: colors.light }}
+                      >
+                        {loading ? 'Reserving...' : 'Reserve'}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </Box>
       )}
+
+      {/* Notifications */}
+      <Snackbar open={!!success} autoHideDuration={6000} onClose={() => setSuccess('')}>
+        <Alert onClose={() => setSuccess('')} severity="success" sx={{ width: '100%' }}>
+          {success}
+        </Alert>
+      </Snackbar>
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
+        <Alert onClose={() => setError('')} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

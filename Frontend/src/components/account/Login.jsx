@@ -56,7 +56,7 @@ const userAccount = {
   name: "John Doe" // Added name for the user menu
 };
 
-const LoginPage = ({ onLogin }) => {
+const LoginPage = ({  }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -84,7 +84,6 @@ const LoginPage = ({ onLogin }) => {
       if (response.ok) {
         setSuccess("Login successful!");
         localStorage.setItem("token", data.token); // Store JWT token
-        onLogin(data.user || userAccount); // Use API user data or fallback to local account
         setTimeout(() => navigate("/"), 2000); // Redirect to home page after 2 seconds
       } else {
         setError(data.message || "Login failed");

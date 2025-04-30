@@ -17,6 +17,7 @@ import Amenity from './modules/Facilities.js';
 import RoomTypeProperites from './modules/RoomTypeProperites.js';
 import AmenityFacilities from './modules/Amenity.js';
 import HotelRules from './modules/HotelRules.js'; 
+import Reservation from './modules/Reservation.js';
 import HotelAdminList from './modules/HotelAdminList.js'; 
 import ApprovedHotelAdmin from './modules/ApprovedHotelAdminLists.js';
 import SystemAdminModel from './modules/SystemAdminLists.js';
@@ -551,16 +552,17 @@ const getHotelAdminId = async (req, res, next) => {
 app.post('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
   try {
     const { type, rate, roomNumbers } = req.body;
-    
+
     // Validation
     if (!type || !rate || !roomNumbers) {
-      return res.status(400).json({ message: 'All fields are required' });
+      return res.status(400).json({ message: 'Type, rate, and room numbers are required' });
     }
 
     // Split and clean room numbers
-    const numbersArray = roomNumbers.split(',')
-      .map(num => num.trim().toUpperCase())
-      .filter(num => num !== '');
+    const numbersArray = roomNumbers
+      .split(',')
+      .map((num) => num.trim().toUpperCase())
+      .filter((num) => num !== '');
 
     if (numbersArray.length === 0) {
       return res.status(400).json({ message: 'At least one room number required' });
@@ -569,7 +571,7 @@ app.post('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
     // Check for existing room type
     const existingType = await RoomType.findOne({
       hotelAdminId: req.hotelAdminId,
-      type: type
+      type,
     });
 
     if (existingType) {
@@ -581,16 +583,18 @@ app.post('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
       hotelAdminId: req.hotelAdminId,
       type,
       rate: parseFloat(rate),
-      roomNumbers: numbersArray
+      roomNumbers: numbersArray.map((number) => ({
+        number,
+        availability: [], // Initialize empty availability
+      })),
     });
 
     await newRoomType.save();
-    
-    res.status(201).json({ 
-      message: 'Room type added successfully',
-      data: newRoomType
-    });
 
+    res.status(201).json({
+      message: 'Room type added successfully',
+      data: newRoomType,
+    });
   } catch (error) {
     console.error('Error creating room type:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -609,7 +613,6 @@ app.get('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
 });
 
 
-
 // Get all room types
 app.get('/', verifyToken, getHotelAdminId, async (req, res) => {
   try {
@@ -619,6 +622,8 @@ app.get('/', verifyToken, getHotelAdminId, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+
 
 // Create new room type
 app.post('/', verifyToken, getHotelAdminId, async (req, res) => {
@@ -646,32 +651,282 @@ app.post('/', verifyToken, getHotelAdminId, async (req, res) => {
 
 
 
-// Bulk upload amenities
-app.post('/upload', verifyToken, getHotelAdminId, async (req, res) => {
-  try {
-    const { amenities } = req.body;
-    
-    const amenitiesWithHotelId = amenities.map(amenity => ({
-      hotelAdminId: req.hotelAdminId,
-      ...amenity
-    }));
 
-    const result = await AmenityFacilities.insertMany(amenitiesWithHotelId);
-    res.status(201).json(result);
+
+
+// Create room type properties
+app.post('/api/rooms/upload', verifyToken, async (req, res) => {
+  try {
+    const { type, bathrooms, size, amenities } = req.body;
+
+    // Get hotelAdminId from token
+    const email = req.user.email;
+    const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
+    if (!approvedAdmin) {
+      return res.status(404).json({ message: 'Hotel admin not found' });
+    }
+    const hotelAdminId = approvedAdmin.hotelAdminId;
+
+    // Validation
+    if (!type || !bathrooms || !size || !amenities || !Array.isArray(amenities)) {
+      return res.status(400).json({ message: 'Type, bathrooms, size, and amenities array are required' });
+    }
+
+    // Check if room type exists in RoomType
+    const roomType = await RoomType.findOne({ hotelAdminId, type });
+    if (!roomType) {
+      return res.status(400).json({ message: `Room type ${type} not found. Please add it via /api/room-types first.` });
+    }
+
+    // Check for existing properties for this type
+    const existingProperties = await RoomTypeProperites.findOne({ hotelAdminId, type });
+    if (existingProperties) {
+      return res.status(400).json({ message: `Properties for room type ${type} already exist` });
+    }
+
+    // Create new room type properties
+    const newRoomProperties = new RoomTypeProperites({
+      hotelAdminId,
+      type,
+      bathrooms: parseInt(bathrooms),
+      size,
+      amenities,
+    });
+
+    await newRoomProperties.save();
+
+    res.status(201).json({
+      message: 'Room properties and amenities uploaded successfully',
+      data: newRoomProperties,
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Error uploading room properties:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Get all amenities
-app.get('/', verifyToken, getHotelAdminId, async (req, res) => {
+// Get all room properties for current hotel admin
+app.get('/api/rooms', verifyToken, async (req, res) => {
   try {
-    const amenities = await AmenityFacilities.find({ hotelAdminId: req.hotelAdminId });
-    res.json(amenities);
+    const email = req.user.email;
+    const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
+    if (!approvedAdmin) return res.status(404).json({ message: 'Hotel admin not found' });
+
+    const rooms = await RoomTypeProperites.find({
+      hotelAdminId: approvedAdmin.hotelAdminId,
+    });
+
+    res.json({ data: rooms });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+// Get room properties by hotelAdminID (public)
+app.get('/api/rooms/by-hotel/:hotelAdminId', async (req, res) => {
+  try {
+    const rooms = await RoomTypeProperites.find({
+      hotelAdminId: req.params.hotelAdminId,
+    });
+
+    res.json({ data: rooms });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Create a reservation
+app.post('/api/reservations', verifyToken, async (req, res) => {
+  try {
+    const {
+      hotelAdminId,
+      roomType,
+      roomNumber,
+      checkInDate,
+      checkOutDate,
+      adults,
+      children,
+      childrenAges,
+    } = req.body;
+
+    // Validation
+    if (
+      !hotelAdminId ||
+      !roomType ||
+      !roomNumber ||
+      !checkInDate ||
+      !checkOutDate ||
+      !adults
+    ) {
+      return res.status(400).json({ message: 'All required fields must be provided' });
+    }
+
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+    if (checkIn >= checkOut) {
+      return res.status(400).json({ message: 'Check-out date must be after check-in date' });
+    }
+
+    // Find the room type
+    const roomTypeDoc = await RoomType.findOne({ hotelAdminId, type: roomType });
+    if (!roomTypeDoc) {
+      return res.status(404).json({ message: `Room type ${roomType} not found` });
+    }
+
+    // Find the specific room
+    const room = roomTypeDoc.roomNumbers.find((r) => r.number === roomNumber);
+    if (!room) {
+      return res.status(404).json({ message: `Room number ${roomNumber} not found` });
+    }
+
+    // Check availability
+    const isBooked = room.availability.some((booking) => {
+      const bookingStart = new Date(booking.startDate);
+      const bookingEnd = new Date(booking.endDate);
+      return (
+        (checkIn >= bookingStart && checkIn < bookingEnd) ||
+        (checkOut > bookingStart && checkOut <= bookingEnd) ||
+        (checkIn <= bookingStart && checkOut >= bookingEnd)
+      );
+    });
+
+    if (isBooked) {
+      return res.status(400).json({ message: `Room ${roomNumber} is already booked for the selected dates` });
+    }
+
+    // Calculate total price (rate * number of nights)
+    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    const totalPrice = roomTypeDoc.rate * nights;
+
+    // Create reservation
+    const reservation = new Reservation({
+      hotelAdminId,
+      userId: req.user.id,
+      roomType,
+      roomNumber,
+      checkInDate: checkIn,
+      checkOutDate: checkOut,
+      adults,
+      children: children || 0,
+      childrenAges: childrenAges || [],
+      totalPrice,
+    });
+
+    // Update room availability
+    room.availability.push({ startDate: checkIn, endDate: checkOut });
+    await roomTypeDoc.save();
+
+    await reservation.save();
+
+    res.status(201).json({
+      message: 'Reservation created successfully',
+      data: reservation,
+    });
+  } catch (error) {
+    console.error('Error creating reservation:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get available rooms for specific dates (public)
+app.get('/api/rooms/available/:hotelAdminId', async (req, res) => {
+  try {
+    const { checkInDate, checkOutDate } = req.query;
+
+    if (!checkInDate || !checkOutDate) {
+      return res.status(400).json({ message: 'Check-in and check-out dates are required' });
+    }
+
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+    if (checkIn >= checkOut) {
+      return res.status(400).json({ message: 'Check-out date must be after check-in date' });
+    }
+
+    // Fetch room types
+    const roomTypes = await RoomType.find({ hotelAdminId: req.params.hotelAdminId });
+    if (!roomTypes.length) {
+      return res.status(200).json({ message: 'No rooms found', data: [] });
+    }
+
+    // Fetch room properties
+    const roomProperties = await RoomTypeProperites.find({
+      hotelAdminId: req.params.hotelAdminId,
+    });
+
+    // Combine room types and properties, filter available rooms
+    const availableRooms = roomTypes.flatMap((roomType) => {
+      const properties = roomProperties.find((p) => p.type === roomType.type) || {};
+      return roomType.roomNumbers
+        .filter((room) => {
+          // Check if room is available (no overlapping bookings)
+          return !room.availability.some((booking) => {
+            const bookingStart = new Date(booking.startDate);
+            const bookingEnd = new Date(booking.endDate);
+            return (
+              (checkIn >= bookingStart && checkIn < bookingEnd) ||
+              (checkOut > bookingStart && checkOut <= bookingEnd) ||
+              (checkIn <= bookingStart && checkOut >= bookingEnd)
+            );
+          });
+        })
+        .map((room) => ({
+          id: `${roomType._id}-${room.number}`,
+          type: roomType.type,
+          roomNumber: room.number,
+          price: roomType.rate,
+          bathrooms: properties.bathrooms || 1,
+          size: properties.size || 'Unknown',
+          amenities: properties.amenities || [],
+        }));
+    });
+
+    res.json({ data: availableRooms });
+  } catch (error) {
+    console.error('Error fetching available rooms:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 
 
 
