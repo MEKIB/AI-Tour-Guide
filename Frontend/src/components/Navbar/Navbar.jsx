@@ -113,10 +113,10 @@ const ProfileImage = styled("img")({
 });
 
 // Logo styles
-const LogoImage = styled('img')({
-  height: '40px',
-  marginRight: '10px',
-  verticalAlign: 'middle'
+const LogoImage = styled("img")({
+  height: "40px",
+  marginRight: "10px",
+  verticalAlign: "middle",
 });
 
 // List of supported languages
@@ -263,6 +263,11 @@ export default function Navbar({
     navigate("/login");
     handleCloseUserMenu();
   };
+
+  // Compute full name
+  const fullName = user?.firstName && user?.middleName
+    ? `${user.firstName} ${user.middleName}`
+    : "My Profile";
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -467,17 +472,31 @@ export default function Navbar({
                 color="inherit"
                 sx={{ display: "flex", alignItems: "center" }}
               >
-                {isLoggedInState && user?.profileImage ? (
-                  <>
-                    <ProfileImage src={user.profileImage} alt="Profile" />
-                    <ArrowDropDown />
-                  </>
-                ) : (
-                  <>
-                    <AccountCircle />
-                    <ArrowDropDown />
-                  </>
-                )}
+              {isLoggedInState && user?.passportOrId ? (
+  (() => {
+    // Extract relative path by removing the absolute URL prefix
+    let relativePath = user.passportOrId.replace(/^https?:\/\/[^\/]+\/?/, '');
+    // Normalize slashes: replace backslashes with forward slashes
+    relativePath = relativePath.replace(/\\/g, '/');
+    // Prepend http://localhost:2000/ and ensure 'Uploads' case matches backend
+    const fullPath = `http://localhost:2000/${relativePath.replace('uploads', 'Uploads')}`;
+    console.log('Debug - Image Path:', {
+      originalPath: user.passportOrId,
+      constructedPath: fullPath,
+      userData: user
+    });
+    return (
+      <ProfileImage
+        src={fullPath}
+        alt="Profile"
+        sx={{ mr: 2 }}
+      />
+    );
+  })()
+) : (
+  <AccountCircle sx={{ fontSize: 32 }} />
+)}
+                <ArrowDropDown />
               </StyledAccountButton>
               <StyledMenu
                 id="user-menu"
@@ -511,25 +530,42 @@ export default function Navbar({
                           width: "100%",
                         }}
                       >
-                        {user?.profileImage && (
-                          <ProfileImage
-                            src={user.profileImage}
-                            alt="Profile"
-                            sx={{ mr: 2 }}
-                          />
-                        )}
+                    {user.passportOrId ? (
+  (() => {
+    // Extract relative path by removing the absolute URL prefix
+    let relativePath = user.passportOrId.replace(/^https?:\/\/[^\/]+\/?/, '');
+    // Normalize slashes: replace backslashes with forward slashes
+    relativePath = relativePath.replace(/\\/g, '/');
+    // Prepend ../../ and ensure 'Uploads' case matches backend
+    const fullPath = `http://localhost:2000/${relativePath.replace('uploads', 'uploads')}`;
+    console.log('Debug - Image Path:', {
+      originalPath: user.passportOrId,
+      constructedPath: fullPath,
+      userData: user
+    });
+    return (
+      <ProfileImage
+        src={fullPath}
+        alt="Profile"
+        sx={{ mr: 2 }}
+      />
+    );
+  })()
+) : (
+  <AccountCircle sx={{ mr: 2, fontSize: 32 }} />
+)}
                         <Box>
                           <Typography
                             variant="subtitle1"
                             sx={{ fontWeight: "bold" }}
                           >
-                            {user?.name || "My Profile"}
+                            {fullName}
                           </Typography>
                           <Typography
                             variant="body2"
                             sx={{ color: colors.accent }}
                           >
-                            {user?.email || ""}
+                            {user?.email || "No email provided"}
                           </Typography>
                         </Box>
                       </Box>
@@ -545,7 +581,7 @@ export default function Navbar({
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
-                        navigate("/reservations");
+                        navigate("/reserve");
                         handleCloseUserMenu();
                       }}
                     >
