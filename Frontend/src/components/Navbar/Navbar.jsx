@@ -419,7 +419,7 @@ export default function Navbar({
               <StyledMenu
                 id="tourist-menu"
                 anchorEl={anchorElTourist}
-                open={Boolean(anchorElTourist)}
+                open={Boolean(anchorElDestination)}
                 onClose={handleCloseTourist}
                 MenuListProps={{
                   "aria-labelledby": "tourist-button",
@@ -472,30 +472,30 @@ export default function Navbar({
                 color="inherit"
                 sx={{ display: "flex", alignItems: "center" }}
               >
-              {isLoggedInState && user?.passportOrId ? (
-  (() => {
-    // Extract relative path by removing the absolute URL prefix
-    let relativePath = user.passportOrId.replace(/^https?:\/\/[^\/]+\/?/, '');
-    // Normalize slashes: replace backslashes with forward slashes
-    relativePath = relativePath.replace(/\\/g, '/');
-    // Prepend http://localhost:2000/ and ensure 'Uploads' case matches backend
-    const fullPath = `http://localhost:2000/${relativePath.replace('uploads', 'Uploads')}`;
-    console.log('Debug - Image Path:', {
-      originalPath: user.passportOrId,
-      constructedPath: fullPath,
-      userData: user
-    });
-    return (
-      <ProfileImage
-        src={fullPath}
-        alt="Profile"
-        sx={{ mr: 2 }}
-      />
-    );
-  })()
-) : (
-  <AccountCircle sx={{ fontSize: 32 }} />
-)}
+                {isLoggedInState && user?.passportOrId ? (
+                  (() => {
+                    // Extract relative path by removing the absolute URL prefix
+                    let relativePath = user.passportOrId.replace(/^https?:\/\/[^\/]+\/?/, '');
+                    // Normalize slashes: replace backslashes with forward slashes
+                    relativePath = relativePath.replace(/\\/g, '/');
+                    // Prepend http://localhost:2000/ and ensure 'Uploads' case matches backend
+                    const fullPath = `http://localhost:2000/${relativePath.replace('uploads', 'Uploads')}`;
+                    console.log('Debug - Image Path:', {
+                      originalPath: user.passportOrId,
+                      constructedPath: fullPath,
+                      userData: user
+                    });
+                    return (
+                      <ProfileImage
+                        src={fullPath}
+                        alt="Profile"
+                        sx={{ mr: 2 }}
+                      />
+                    );
+                  })()
+                ) : (
+                  <AccountCircle sx={{ fontSize: 32 }} />
+                )}
                 <ArrowDropDown />
               </StyledAccountButton>
               <StyledMenu
@@ -530,30 +530,30 @@ export default function Navbar({
                           width: "100%",
                         }}
                       >
-                    {user.passportOrId ? (
-  (() => {
-    // Extract relative path by removing the absolute URL prefix
-    let relativePath = user.passportOrId.replace(/^https?:\/\/[^\/]+\/?/, '');
-    // Normalize slashes: replace backslashes with forward slashes
-    relativePath = relativePath.replace(/\\/g, '/');
-    // Prepend ../../ and ensure 'Uploads' case matches backend
-    const fullPath = `http://localhost:2000/${relativePath.replace('uploads', 'uploads')}`;
-    console.log('Debug - Image Path:', {
-      originalPath: user.passportOrId,
-      constructedPath: fullPath,
-      userData: user
-    });
-    return (
-      <ProfileImage
-        src={fullPath}
-        alt="Profile"
-        sx={{ mr: 2 }}
-      />
-    );
-  })()
-) : (
-  <AccountCircle sx={{ mr: 2, fontSize: 32 }} />
-)}
+                        {isLoggedInState && user?.passportOrId ? (
+                          (() => {
+                            // Extract relative path by removing the absolute URL prefix
+                            let relativePath = user.passportOrId.replace(/^https?:\/\/[^\/]+\/?/, '');
+                            // Normalize slashes: replace backslashes with forward slashes
+                            relativePath = relativePath.replace(/\\/g, '/');
+                            // Prepend http://localhost:2000/ and ensure 'Uploads' case matches backend
+                            const fullPath = `http://localhost:2000/${relativePath.replace('uploads', 'Uploads')}`;
+                            console.log('Debug - Image Path:', {
+                              originalPath: user.passportOrId,
+                              constructedPath: fullPath,
+                              userData: user
+                            });
+                            return (
+                              <ProfileImage
+                                src={fullPath}
+                                alt="Profile"
+                                sx={{ mr: 2 }}
+                              />
+                            );
+                          })()
+                        ) : (
+                          <AccountCircle sx={{ mr: 2, fontSize: 32 }} />
+                        )}
                         <Box>
                           <Typography
                             variant="subtitle1"
