@@ -1,5 +1,4 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
 import axios from "axios";
@@ -18,7 +17,7 @@ import Footer from "./components/Footer/Footer";
 import SignupPage from "./components/account/Signup";
 import LoginPage from "./components/account/Login";
 import ForgotPasswordPage from "./components/account/ForgotPassword";
-import ResetPasswordPage from "./components/account/ForgotPassword";
+import ResetPasswordPage from "./components/account/ResetPassword";
 import ChatbotLogic from "./components/Chatbot/ChatbotLogic";
 import Bureau from "./components/About/Bureau";
 import AmharaBoth from "./components/About/Amhara/AmharaBoth";
@@ -64,53 +63,37 @@ function App() {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-<<<<<<< HEAD
-
-  useEffect(() => {
-    // Check for existing user session and token
-    const storedUser = localStorage.getItem("user");
-    const token = localStorage.getItem("token");
-    if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-      setUser(null);
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-    }
-
-  // Clear token on initial load/refresh
-  useEffect(() => {
-    const clearTokenOnRefresh = () => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      setIsAuthenticated(false);
-    };
-    
-    // Check if it's a page refresh
-    if (performance.navigation.type === 1) { // 1 means TYPE_RELOAD
-      clearTokenOnRefresh();
-    }
-  }, []);
-
-=======
->>>>>>> 70349fc8e3daa068d2b5cc232bb9832423ad7978
   // Authentication check and user data fetch
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
-      if (token) {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+
+      console.log("App.js: checkAuth - storedUser:", storedUser);
+      console.log("App.js: checkAuth - token:", token);
+
+      if (token && storedUser) {
         try {
-          const response = await axios.get("/me", {
+          const response = await axios.get("http://localhost:2000/me", {
             headers: { Authorization: `Bearer ${token}` },
           });
-          setUser(response.data);
+          const userData = response.data;
+          const userWithImage = {
+            ...userData,
+            passportOrId: userData.passportOrId.includes("http://localhost:2000/uploads/")
+              ? userData.passportOrId
+              : `http://localhost:2000/uploads/${userData.passportOrId.split('\\').pop()}` || "https://via.placeholder.com/32",
+          };
+          console.log("App.js: checkAuth - Fetched user data:", userWithImage);
+          console.log("App.js: checkAuth - passportOrId:", userWithImage.passportOrId);
+          setUser(userWithImage);
           setIsAuthenticated(true);
+          localStorage.setItem("user", JSON.stringify(userWithImage));
         } catch (error) {
-          console.error("Session validation failed:", error);
+          console.error("App.js: Session validation failed:", error);
           handleLogout();
         }
       } else {
@@ -119,6 +102,7 @@ function App() {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
       }
+      setIsLoading(false);
     };
     checkAuth();
   }, []);
@@ -152,14 +136,17 @@ function App() {
   const handleLogin = (userData) => {
     const userWithImage = {
       ...userData,
-      passportOrId: userData.passportOrId
-        ? `http://your-backend.com/${userData.passportOrId}`
-        : "https://via.placeholder.com/32",
+      passportOrId: userData.passportOrId.includes("http://localhost:2000/uploads/")
+        ? userData.passportOrId
+        : `http://localhost:2000/uploads/${userData.passportOrId.split('\\').pop()}` || "https://via.placeholder.com/32",
     };
+    console.log("App.js: handleLogin - Logged in user:", userWithImage);
+    console.log("App.js: handleLogin - passportOrId:", userWithImage.passportOrId);
     setIsAuthenticated(true);
     setUser(userWithImage);
     localStorage.setItem("user", JSON.stringify(userWithImage));
-    localStorage.setItem("token", "sample-token"); // Replace with actual token
+    localStorage.setItem("token", userData.token);
+    navigate("/");
   };
 
   const handleLogout = () => {
@@ -169,6 +156,10 @@ function App() {
     setIsAuthenticated(false);
     navigate("/login");
   };
+
+  if (isLoading) {
+    return <Box>Loading...</Box>;
+  }
 
   return (
     <Box
@@ -270,7 +261,7 @@ function App() {
         <Route path="/events/mewlid" element={<MewlidPage />} />
         <Route path="/events/ashenda" element={<AshendaPage />} />
         <Route path="/events/meskel" element={<MeskelPage />} />
-        <Route path="/events/genna" element={<GennaPage />} />
+        <Route path="/events/gen recognized" element={<GennaPage />} />
         <Route path="/events/timket" element={<TimketPage />} />
         <Route path="/events/fasika" element={<FasikaPage />} />
         <Route path="/things" element={<ThingsToDo />} />
@@ -287,8 +278,6 @@ function App() {
         <Route path="/bureau" element={<Bureau />} />
         <Route path="/mandate" element={<Merge />} />
         <Route path="/management" element={<Managment />} />
-
-        {/* Protected Routes */}
         {isAuthenticated && (
           <>
             <Route path="/profile" element={<Profile />} />

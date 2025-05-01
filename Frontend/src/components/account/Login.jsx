@@ -15,9 +15,6 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate, Link } from "react-router-dom";
 import { Email, Lock } from "@mui/icons-material";
 
-import Img from "../../assets/11.png";
-
-// Define the color palette for dark theme
 const colors = {
   primary: "#00ADB5",
   secondary: "#393E46",
@@ -28,19 +25,10 @@ const colors = {
 const theme = createTheme({
   palette: {
     mode: "dark",
-    primary: {
-      main: colors.primary,
-    },
-    secondary: {
-      main: colors.secondary,
-    },
-    background: {
-      default: colors.background,
-      paper: colors.secondary,
-    },
-    text: {
-      primary: colors.text,
-    },
+    primary: { main: colors.primary },
+    secondary: { main: colors.secondary },
+    background: { default: colors.background, paper: colors.secondary },
+    text: { primary: colors.text },
   },
   typography: {
     fontFamily: "Roboto, sans-serif",
@@ -48,15 +36,7 @@ const theme = createTheme({
   },
 });
 
-// Predefined user account with profile image
-const userAccount = {
-  email: "user@example.com",
-  password: "pass",
-  profileImage: Img,
-  name: "John Doe" // Added name for the user menu
-};
-
-const LoginPage = ({  }) => {
+const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -73,9 +53,7 @@ const LoginPage = ({  }) => {
     try {
       const response = await fetch("http://localhost:2000/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
@@ -83,8 +61,19 @@ const LoginPage = ({  }) => {
 
       if (response.ok) {
         setSuccess("Login successful!");
-        localStorage.setItem("token", data.token); // Store JWT token
-        setTimeout(() => navigate("/"), 2000); // Redirect to home page after 2 seconds
+        const userWithImage = {
+          ...data.user,
+          passportOrId: data.user.passportOrId.includes("http://localhost:2000/uploads/")
+            ? data.user.passportOrId
+            : `http://localhost:2000/uploads/${data.user.passportOrId.split('\\').pop()}` || "https://via.placeholder.com/32",
+          token: data.token,
+        };
+        console.log("LoginPage.js: Storing user in localStorage:", userWithImage);
+        console.log("LoginPage.js: passportOrId:", userWithImage.passportOrId);
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(userWithImage));
+        onLogin(userWithImage);
+        setTimeout(() => navigate("/"), 1000);
       } else {
         setError(data.message || "Login failed");
       }

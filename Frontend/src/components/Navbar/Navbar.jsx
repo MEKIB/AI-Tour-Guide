@@ -29,10 +29,9 @@ import { debounce } from "lodash";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
-// Import logo using ES module syntax
+// Import logo - make sure this path is correct
 import logo from '../../assets/logo/logo.png';
 
-// Define the color palette
 const colors = {
   primary: "#222831",
   secondary: "#393E46",
@@ -41,7 +40,6 @@ const colors = {
   searchModalBackground: "#393E46",
 };
 
-// Styled components
 const StyledLinkButton = styled(Button)(({ theme }) => ({
   textDecoration: "none",
   color: colors.background,
@@ -112,14 +110,12 @@ const ProfileImage = styled("img")({
   marginRight: "8px",
 });
 
-// Logo styles
 const LogoImage = styled("img")({
   height: "40px",
   marginRight: "10px",
   verticalAlign: "middle",
 });
 
-// List of supported languages
 const languages = [
   { name: "English", code: "US" },
   { name: "Amharic", code: "ET" },
@@ -127,11 +123,7 @@ const languages = [
   { name: "Spanish", code: "ES" },
 ];
 
-export default function Navbar({
-  isLoggedIn = false,
-  onLogout = () => {},
-  user = null,
-}) {
+export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user = null }) {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
@@ -141,19 +133,69 @@ export default function Navbar({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [anchorElUser, setAnchorElUser] = useState(null);
-  const [isLoggedInState, setIsLoggedIn] = useState(
-    !!localStorage.getItem("token")
-  );
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Sync local state with props
-  useEffect(() => {
-    setIsLoggedIn(isLoggedIn);
-  }, [isLoggedIn]);
+  // Initialize localUser and localIsLoggedIn from localStorage
+  const [localUser, setLocalUser] = useState(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    console.log("Navbar.js: Initializing localUser from localStorage:", storedUser);
+    if (storedUser) {
+      const correctedPassportOrId = storedUser.passportOrId.includes("http://localhost:2000/uploads/http://localhost:2000/uploads/")
+        ? storedUser.passportOrId.replace("http://localhost:2000/uploads/http://localhost:2000/uploads/", "http://localhost:2000/uploads/")
+        : storedUser.passportOrId || "https://via.placeholder.com/32";
+      return {
+        ...storedUser,
+        passportOrId: correctedPassportOrId,
+      };
+    }
+    return null;
+  });
+  const [localIsLoggedIn, setLocalIsLoggedIn] = useState(() => {
+    return !!localStorage.getItem("token");
+  });
 
-  // Expanded search data to include all searchable items
+  // Sync localUser and localIsLoggedIn with props
+  useEffect(() => {
+    console.log("Navbar.js: user prop:", user);
+    console.log("Navbar.js: isLoggedIn prop:", isLoggedIn);
+    console.log("Navbar.js: localStorage user:", JSON.parse(localStorage.getItem("user")));
+
+    if (user) {
+      const correctedPassportOrId = user.passportOrId.includes("http://localhost:2000/uploads/http://localhost:2000/uploads/")
+        ? user.passportOrId.replace("http://localhost:2000/uploads/http://localhost:2000/uploads/", "http://localhost:2000/uploads/")
+        : user.passportOrId || "https://via.placeholder.com/32";
+      const updatedUser = {
+        ...user,
+        passportOrId: correctedPassportOrId,
+      };
+      console.log("Navbar.js: Updating localUser with user prop:", updatedUser);
+      setLocalUser(updatedUser);
+      setLocalIsLoggedIn(isLoggedIn);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    } else {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      const token = localStorage.getItem("token");
+      if (storedUser && token) {
+        const correctedPassportOrId = storedUser.passportOrId.includes("http://localhost:2000/uploads/http://localhost:2000/uploads/")
+          ? storedUser.passportOrId.replace("http://localhost:2000/uploads/http://localhost:2000/uploads/", "http://localhost:2000/uploads/")
+          : storedUser.passportOrId || "https://via.placeholder.com/32";
+        const updatedUser = {
+          ...storedUser,
+          passportOrId: correctedPassportOrId,
+        };
+        console.log("Navbar.js: Setting localUser from localStorage:", updatedUser);
+        setLocalUser(updatedUser);
+        setLocalIsLoggedIn(true);
+      } else {
+        console.log("Navbar.js: No user data found, clearing localUser");
+        setLocalUser(null);
+        setLocalIsLoggedIn(false);
+      }
+    }
+  }, [user, isLoggedIn]);
+
   const searchData = [
     { name: "Hotels and Locations", path: "/hotelslocation" },
     { name: "Filtered Hotels", path: "/filtered-hotels" },
@@ -163,7 +205,6 @@ export default function Navbar({
     { name: "Sign Up", path: "/signup" },
   ];
 
-  // Debounced search function
   const handleSearch = debounce((query) => {
     if (query.trim() === "") {
       setSearchResults([]);
@@ -175,14 +216,12 @@ export default function Navbar({
     setSearchResults(results);
   }, 300);
 
-  // Handle search input change
   const handleSearchInputChange = (event) => {
     const query = event.target.value;
     setSearchQuery(query);
     handleSearch(query);
   };
 
-  // Handle search result click
   const handleSearchResultClick = (path) => {
     navigate(path);
     setSearchBoxOpen(false);
@@ -190,7 +229,6 @@ export default function Navbar({
     setSearchResults([]);
   };
 
-  // Close search box when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchBoxOpen && !event.target.closest(".search-box")) {
@@ -203,7 +241,6 @@ export default function Navbar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [searchBoxOpen]);
 
-  // Handlers for Destinations menu
   const handleOpenDestination = (event) => {
     setAnchorElDestination(event.currentTarget);
   };
@@ -212,7 +249,6 @@ export default function Navbar({
     setAnchorElDestination(null);
   };
 
-  // Handlers for Tourist Facilities menu
   const handleOpenTourist = (event) => {
     setAnchorElTourist(event.currentTarget);
   };
@@ -221,7 +257,6 @@ export default function Navbar({
     setAnchorElTourist(null);
   };
 
-  // Handlers for About menu
   const handleOpenAbout = (event) => {
     setAnchorElAbout(event.currentTarget);
   };
@@ -230,7 +265,6 @@ export default function Navbar({
     setAnchorElAbout(null);
   };
 
-  // Handlers for User menu
   const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
   };
@@ -239,7 +273,6 @@ export default function Navbar({
     setAnchorElUser(null);
   };
 
-  // Handlers for Language menu
   const handleOpenLanguage = (event) => {
     setAnchorElLanguage(event.currentTarget);
   };
@@ -253,20 +286,18 @@ export default function Navbar({
     handleCloseLanguage();
   };
 
-  // Handle logout
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    setIsLoggedIn(false);
+    onLogout();
     setSuccess("Logged out successfully!");
     setError("");
-    onLogout();
+    setLocalUser(null);
+    setLocalIsLoggedIn(false);
     navigate("/login");
     handleCloseUserMenu();
   };
 
-  // Compute full name
-  const fullName = user?.firstName && user?.middleName
-    ? `${user.firstName} ${user.middleName}`
+  const fullName = localUser?.firstName && localUser?.middleName
+    ? `${localUser.firstName} ${localUser.middleName}`
     : "My Profile";
 
   return (
@@ -290,7 +321,6 @@ export default function Navbar({
           </Typography>
           
           <Box sx={{ display: "flex", gap: 4, alignItems: "center" }}>
-            {/* Search Icon and Search Box */}
             <Box className="search-box">
               {searchBoxOpen ? (
                 <SearchBox>
@@ -327,7 +357,6 @@ export default function Navbar({
               )}
             </Box>
 
-            {/* Destinations Menu */}
             <Box
               onMouseEnter={handleOpenDestination}
               onMouseLeave={handleCloseDestination}
@@ -402,7 +431,6 @@ export default function Navbar({
               </StyledMenu>
             </Box>
 
-            {/* Tourist Facilities Menu */}
             <Box
               onMouseEnter={handleOpenTourist}
               onMouseLeave={handleCloseTourist}
@@ -419,7 +447,7 @@ export default function Navbar({
               <StyledMenu
                 id="tourist-menu"
                 anchorEl={anchorElTourist}
-                open={Boolean(anchorElDestination)}
+                open={Boolean(anchorElTourist)}
                 onClose={handleCloseTourist}
                 MenuListProps={{
                   "aria-labelledby": "tourist-button",
@@ -456,7 +484,6 @@ export default function Navbar({
               </StyledMenu>
             </Box>
 
-            {/* Events Link */}
             <Link
               to="/events"
               style={{ textDecoration: "none", color: colors.background }}
@@ -464,7 +491,6 @@ export default function Navbar({
               Events
             </Link>
 
-            {/* Account Button with Profile Image */}
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <StyledAccountButton
                 id="account-button"
@@ -472,27 +498,16 @@ export default function Navbar({
                 color="inherit"
                 sx={{ display: "flex", alignItems: "center" }}
               >
-                {isLoggedInState && user?.passportOrId ? (
-                  (() => {
-                    // Extract relative path by removing the absolute URL prefix
-                    let relativePath = user.passportOrId.replace(/^https?:\/\/[^\/]+\/?/, '');
-                    // Normalize slashes: replace backslashes with forward slashes
-                    relativePath = relativePath.replace(/\\/g, '/');
-                    // Prepend http://localhost:2000/ and ensure 'Uploads' case matches backend
-                    const fullPath = `http://localhost:2000/${relativePath.replace('uploads', 'Uploads')}`;
-                    console.log('Debug - Image Path:', {
-                      originalPath: user.passportOrId,
-                      constructedPath: fullPath,
-                      userData: user
-                    });
-                    return (
-                      <ProfileImage
-                        src={fullPath}
-                        alt="Profile"
-                        sx={{ mr: 2 }}
-                      />
-                    );
-                  })()
+                {localIsLoggedIn && localUser?.passportOrId ? (
+                  <>
+                    {console.log("Navbar.js: Rendering ProfileImage in account button - passportOrId:", localUser.passportOrId)}
+                    {console.log("Navbar.js: Rendering ProfileImage in account button - localUser:", localUser)}
+                    <ProfileImage
+                      src={localUser.passportOrId}
+                      alt="Profile"
+                      sx={{ mr: 2 }}
+                    />
+                  </>
                 ) : (
                   <AccountCircle sx={{ fontSize: 32 }} />
                 )}
@@ -515,7 +530,7 @@ export default function Navbar({
                   horizontal: 'right',
                 }}
               >
-                {isLoggedInState ? (
+                {localIsLoggedIn ? (
                   <>
                     <MenuItem
                       onClick={() => {
@@ -530,27 +545,16 @@ export default function Navbar({
                           width: "100%",
                         }}
                       >
-                        {isLoggedInState && user?.passportOrId ? (
-                          (() => {
-                            // Extract relative path by removing the absolute URL prefix
-                            let relativePath = user.passportOrId.replace(/^https?:\/\/[^\/]+\/?/, '');
-                            // Normalize slashes: replace backslashes with forward slashes
-                            relativePath = relativePath.replace(/\\/g, '/');
-                            // Prepend http://localhost:2000/ and ensure 'Uploads' case matches backend
-                            const fullPath = `http://localhost:2000/${relativePath.replace('uploads', 'Uploads')}`;
-                            console.log('Debug - Image Path:', {
-                              originalPath: user.passportOrId,
-                              constructedPath: fullPath,
-                              userData: user
-                            });
-                            return (
-                              <ProfileImage
-                                src={fullPath}
-                                alt="Profile"
-                                sx={{ mr: 2 }}
-                              />
-                            );
-                          })()
+                        {localIsLoggedIn && localUser?.passportOrId ? (
+                          <>
+                            {console.log("Navbar.js: Rendering ProfileImage in user menu - passportOrId:", localUser.passportOrId)}
+                            {console.log("Navbar.js: Rendering ProfileImage in user menu - localUser:", localUser)}
+                            <ProfileImage
+                              src={localUser.passportOrId}
+                              alt="Profile"
+                              sx={{ mr: 2 }}
+                            />
+                          </>
                         ) : (
                           <AccountCircle sx={{ mr: 2, fontSize: 32 }} />
                         )}
@@ -565,7 +569,7 @@ export default function Navbar({
                             variant="body2"
                             sx={{ color: colors.accent }}
                           >
-                            {user?.email || "No email provided"}
+                            {localUser?.email || "No email provided"}
                           </Typography>
                         </Box>
                       </Box>
@@ -645,7 +649,6 @@ export default function Navbar({
               </StyledMenu>
             </Box>
 
-            {/* About Menu */}
             <Box onMouseEnter={handleOpenAbout} onMouseLeave={handleCloseAbout}>
               <Button
                 id="about-button"
@@ -701,7 +704,6 @@ export default function Navbar({
               </StyledMenu>
             </Box>
 
-            {/* Language Dropdown */}
             <Box
               onMouseEnter={handleOpenLanguage}
               onMouseLeave={handleCloseLanguage}
@@ -749,10 +751,8 @@ export default function Navbar({
         </Toolbar>
       </AppBar>
 
-      {/* Add padding to prevent content overlap */}
       <Box sx={{ paddingTop: "64px" }}></Box>
 
-      {/* Success and Error Messages */}
       <Snackbar
         open={!!success}
         autoHideDuration={3000}
