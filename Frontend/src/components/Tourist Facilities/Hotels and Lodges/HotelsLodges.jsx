@@ -55,11 +55,12 @@ function HotelsLodges() {
         {breadcrumbItems}
       </Breadcrumbs>
       <HotelDetails hotelAdminId={hotelAdminId}/>
-      <Availability />
+      <Availability hotelAdminId={hotelAdminId}/>
       <Facilities hotelAdminId={hotelAdminId} hotelName={hotelName} />
       <HouseRules hotelAdminId={hotelAdminId} />
     </Box>
   );
 }
+
 
 export default HotelsLodges;

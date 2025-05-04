@@ -37,6 +37,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import * as MuiIcons from '@mui/icons-material';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 // Color Palette
 const colors = {
@@ -63,12 +64,27 @@ const Availability = ({ hotelAdminId }) => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loginPrompt, setLoginPrompt] = useState(false);
+  const navigate = useNavigate();
+
+  // Check login status
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user'));
+  const isLoggedIn = !!token && !!user && !!user._id;
 
   // Fetch available rooms from backend
   const fetchAvailableRooms = async () => {
-    if (!checkInDate || !checkOutDate) return;
+    if (!checkInDate || !checkOutDate) {
+      setError('Please select check-in and check-out dates');
+      return;
+    }
+    if (!hotelAdminId) {
+      setError('Hotel ID is missing. Please try again.');
+      return;
+    }
     try {
       setLoading(true);
+      console.log('Fetching rooms for hotelAdminId:', hotelAdminId);
       const response = await axios.get(
         `http://localhost:2000/api/rooms/available/${hotelAdminId}`,
         {
@@ -78,8 +94,20 @@ const Availability = ({ hotelAdminId }) => {
           },
         }
       );
-      setAvailableRooms(response.data.data);
+      const rooms = response.data.data;
+      console.log('Available rooms:', rooms);
+      // Filter out invalid rooms
+      const validRooms = rooms.filter(
+        (room) => room.type && room.roomNumber
+      );
+      if (validRooms.length < rooms.length) {
+        console.warn('Some rooms were filtered out due to missing type or roomNumber');
+      }
+      setAvailableRooms(validRooms);
       setShowBookingForm(true);
+      if (validRooms.length === 0) {
+        setError('No valid rooms available for the selected dates.');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch available rooms');
     } finally {
@@ -156,14 +184,17 @@ const Availability = ({ hotelAdminId }) => {
 
   // Room selection handlers
   const handleRoomTypeSelection = (event) => {
-    setSelectedRoomType(event.target.value);
+    const newRoomType = event.target.value;
+    setSelectedRoomType(newRoomType);
     setSelectedRooms([]);
+    console.log('Selected room type:', newRoomType);
   };
 
   const handleRoomSelection = (event) => {
     const selectedRoomNumbers = event.target.value;
     if (selectedRoomNumbers.length <= rooms) {
       setSelectedRooms(selectedRoomNumbers);
+      console.log('Selected rooms:', selectedRoomNumbers);
     }
   };
 
@@ -174,13 +205,23 @@ const Availability = ({ hotelAdminId }) => {
       return;
     }
 
+    if (!isLoggedIn) {
+      setLoginPrompt(true);
+      return;
+    }
+
+    // Validate selected rooms exist in availableRooms
+    const invalidRooms = selectedRooms.filter(
+      (roomNumber) => !availableRooms.some((room) => room.roomNumber === roomNumber && room.type === selectedRoomType)
+    );
+    if (invalidRooms.length > 0) {
+      setError(`Invalid room numbers selected: ${invalidRooms.join(', ')}`);
+      return;
+    }
+
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('Please log in to make a reservation');
-        return;
-      }
+      console.log('Creating reservations:', { selectedRoomType, selectedRooms });
 
       // Create a reservation for each selected room
       const promises = selectedRooms.map((roomNumber) =>
@@ -188,6 +229,7 @@ const Availability = ({ hotelAdminId }) => {
           'http://localhost:2000/api/reservations',
           {
             hotelAdminId,
+            userId: user._id,
             roomType: selectedRoomType,
             roomNumber,
             checkInDate: checkInDate.toISOString(),
@@ -202,18 +244,30 @@ const Availability = ({ hotelAdminId }) => {
         )
       );
 
-      await Promise.all(promises);
+      const responses = await Promise.all(promises);
+      console.log('Reservation responses:', responses);
 
       setSuccess('Reservation(s) created successfully!');
+      // Reset form only on success
       setSelectedRooms([]);
       setSelectedRoomType('');
       setShowBookingForm(false);
-      fetchAvailableRooms(); // Refresh available rooms
+      fetchAvailableRooms();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create reservation');
+      console.error('Reservation error:', err);
+      setError(
+        err.response?.data?.message ||
+          `Failed to create reservation: ${err.message}`
+      );
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle login prompt close and redirect
+  const handleLoginPromptClose = () => {
+    setLoginPrompt(false);
+    navigate('/login');
   };
 
   // Get unique room types
@@ -224,6 +278,13 @@ const Availability = ({ hotelAdminId }) => {
 
   return (
     <Box sx={{ p: 3, maxWidth: '1200px', margin: '0 auto', backgroundColor: colors.dark, color: colors.light }}>
+      {/* Display login status */}
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="body1" sx={{ color: colors.light }}>
+          Booking as: {isLoggedIn ? `${user.firstName} ${user.lastName}` : 'Guest'}
+        </Typography>
+      </Box>
+
       <Typography variant="h5" gutterBottom sx={{ color: colors.primary }}>
         Select dates to see this property's availability and prices
       </Typography>
@@ -581,7 +642,7 @@ const Availability = ({ hotelAdminId }) => {
                       <Button
                         variant="contained"
                         onClick={handleReserve}
-                        disabled={selectedRooms.length === 0 || loading}
+                        disabled={!selectedRoomType || selectedRooms.length === 0 || loading || !isLoggedIn}
                         sx={{ backgroundColor: colors.primary, color: colors.light }}
                       >
                         {loading ? 'Reserving...' : 'Reserve'}
@@ -604,6 +665,11 @@ const Availability = ({ hotelAdminId }) => {
       <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
         <Alert onClose={() => setError('')} severity="error" sx={{ width: '100%' }}>
           {error}
+        </Alert>
+      </Snackbar>
+      <Snackbar open={loginPrompt} autoHideDuration={6000} onClose={handleLoginPromptClose}>
+        <Alert onClose={handleLoginPromptClose} severity="warning" sx={{ width: '100%' }}>
+          Please log in to make a reservation. Redirecting to login page...
         </Alert>
       </Snackbar>
     </Box>

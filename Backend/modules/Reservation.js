@@ -13,7 +13,7 @@ const reservationSchema = new mongoose.Schema({
   roomType: {
     type: String,
     required: true,
-    enum: ['Single', 'Double'],
+    enum: ['Single', 'Double'], // Adjust as needed
   },
   roomNumber: {
     type: String,
@@ -34,20 +34,15 @@ const reservationSchema = new mongoose.Schema({
   },
   children: {
     type: Number,
-    required: true,
-    min: 0,
+    default: 0,
   },
-  childrenAges: [
-    {
-      type: Number,
-      min: 0,
-      max: 17,
-    },
-  ],
+  childrenAges: {
+    type: [Number],
+    default: [],
+  },
   totalPrice: {
     type: Number,
     required: true,
-    min: 0,
   },
   createdAt: {
     type: Date,
@@ -55,5 +50,4 @@ const reservationSchema = new mongoose.Schema({
   },
 });
 
-const Reservation = mongoose.model('Reservation', reservationSchema);
-export default Reservation;
+export default mongoose.model('Reservation', reservationSchema);
