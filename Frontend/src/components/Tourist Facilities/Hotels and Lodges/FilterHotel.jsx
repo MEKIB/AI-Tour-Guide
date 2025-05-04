@@ -16,7 +16,7 @@ import axios from 'axios';
 const ALL_LOCATIONS = 'All Locations';
 const ALL_FACILITY_TYPES = 'All Facility Types';
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/400x200?text=No+Image+Available';
-const BACKEND_URL = 'http://localhost:2000'; // Backend base URL
+const BACKEND_URL = 'http://localhost:2000';
 
 const backgroundImage = 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&q=80';
 
@@ -66,6 +66,15 @@ const HotelFilter = () => {
           HotelAdminId: hotel.HotelAdminId,
         };
       });
+
+      // Save filter criteria to localStorage
+      localStorage.setItem(
+        'filterCriteria',
+        JSON.stringify({
+          location: selectedLocation,
+          facilityType: selectedFacilityType,
+        })
+      );
 
       navigate('/filtered-hotels', { state: { filteredHotels } });
     } catch (error) {
@@ -137,7 +146,7 @@ const HotelFilter = () => {
               labelId="facility-type-filter-label"
               id="facility-type-filter"
               value={selectedFacilityType}
-              onChange={handleFacilityTypeChange} // Fixed missing closing parenthesis
+              onChange={handleFacilityTypeChange}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': { borderColor: '#00ADB5' },

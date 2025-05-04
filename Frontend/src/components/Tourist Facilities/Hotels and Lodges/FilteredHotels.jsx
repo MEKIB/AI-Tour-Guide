@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -11,26 +11,61 @@ import {
   Link,
   Rating,
 } from '@mui/material';
+import axios from 'axios';
 
-// Fallback placeholder image
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/400x200?text=No+Image+Available';
+const BACKEND_URL = 'http://localhost:2000';
 
 const FilteredHotels = () => {
   const location = useLocation();
-  const filteredHotels = location.state?.filteredHotels || [];
   const navigate = useNavigate();
+  const [filteredHotels, setFilteredHotels] = useState(location.state?.filteredHotels || []);
 
-  // Log hotel data for debugging
-  console.log('Filtered hotels:', filteredHotels);
+  useEffect(() => {
+    if (!filteredHotels.length) {
+      const fetchHotels = async () => {
+        try {
+          const criteria = JSON.parse(localStorage.getItem('filterCriteria') || '{}');
+          const { location = '', facilityType = '' } = criteria;
+          const response = await axios.get('http://localhost:2000/api/hotels', {
+            params: {
+              location: location === 'All Locations' ? '' : location,
+              facilityType: facilityType === 'All Facility Types' ? '' : facilityType,
+            },
+          });
+
+          console.log('Fetched hotels:', response.data.data);
+
+          const hotels = response.data.data.map((hotel) => ({
+            id: hotel._id,
+            name: hotel.name,
+            location: hotel.location,
+            image: hotel.images?.[0]?.url
+              ? `${BACKEND_URL}${hotel.images[0].url}`
+              : PLACEHOLDER_IMAGE,
+            rating: hotel.rating || 4.5,
+            HotelAdminId: hotel.HotelAdminId,
+          }));
+
+          setFilteredHotels(hotels);
+        } catch (error) {
+          console.error('Error fetching hotels:', error.response?.data || error.message);
+          setFilteredHotels([]);
+        }
+      };
+      fetchHotels();
+    }
+  }, [filteredHotels.length]);
 
   const sortedHotels = [...filteredHotels].sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
   const handleHotelClick = (hotel) => {
     console.log('Navigating to hotel:', hotel);
-    navigate(`/hotel/${hotel.id}`, { state: { hotel } });
+    navigate(`/hotel/${hotel.id}`, {
+      state: { hotel, filteredHotels },
+    });
   };
 
-  // Handle image loading errors
   const handleImageError = (e) => {
     console.warn('Image failed to load:', e.target.src);
     e.target.src = PLACEHOLDER_IMAGE;
@@ -86,7 +121,7 @@ const FilteredHotels = () => {
                   component="img"
                   sx={{
                     height: { xs: 150, sm: 200 },
-                    minHeight: 150, // Prevent collapse
+                    minHeight: 150,
                     width: '100%',
                     objectFit: 'cover',
                     borderTopLeftRadius: '16px',

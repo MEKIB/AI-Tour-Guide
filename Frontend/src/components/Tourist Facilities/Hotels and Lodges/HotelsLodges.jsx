@@ -11,29 +11,78 @@ function HotelsLodges() {
   const { id } = useParams();
   const location = useLocation();
   const [hotel, setHotel] = useState(location.state?.hotel);
+  const [filteredHotels, setFilteredHotels] = useState(location.state?.filteredHotels || []);
 
   useEffect(() => {
-    if (!hotel) {
-      const fetchHotel = async () => {
-        try {
+    const fetchData = async () => {
+      try {
+        // Fetch hotel if not in state
+        if (!hotel) {
           const response = await axios.get(`http://localhost:2000/api/hotels/${id}`);
           setHotel(response.data.data);
-        } catch (err) {
-          console.error('Failed to fetch hotel:', err);
         }
-      };
-      fetchHotel();
-    }
-  }, [id, hotel]);
+
+        // Fetch filtered hotels if not in state
+        if (!filteredHotels.length) {
+          const criteria = JSON.parse(localStorage.getItem('filterCriteria') || '{}');
+          const { location = '', facilityType = '' } = criteria;
+          const response = await axios.get('http://localhost:2000/api/hotels', {
+            params: {
+              location: location === 'All Locations' ? '' : location,
+              facilityType: facilityType === 'All Facility Types' ? '' : facilityType,
+            },
+          });
+
+          console.log('Fetched filtered hotels:', response.data.data);
+
+          const hotels = response.data.data.map((hotel) => ({
+            id: hotel._id,
+            name: hotel.name,
+            location: hotel.location,
+            image: hotel.images?.[0]?.url
+              ? `http://localhost:2000${hotel.images[0].url}`
+              : 'https://via.placeholder.com/400x200?text=No+Image+Available',
+            rating: hotel.rating || 4.5,
+            HotelAdminId: hotel.HotelAdminId,
+          }));
+
+          setFilteredHotels(hotels);
+        }
+      } catch (err) {
+        console.error('Failed to fetch data:', err);
+        if (!hotel) setHotel(null);
+        if (!filteredHotels.length) setFilteredHotels([]);
+      }
+    };
+
+    fetchData();
+  }, [id, hotel, filteredHotels.length]);
 
   const hotelName = hotel?.name || 'Hotel';
   const hotelAdminId = hotel?.HotelAdminId;
 
   const breadcrumbItems = [
-    <Link component={RouterLink} to="/" key="home" underline="hover" color="#EEEEEE" sx={{ fontSize: '1rem', '&:hover': { color: '#00ADB5' } }}>
+    <Link
+      component={RouterLink}
+      to="/"
+      key="home"
+      underline="hover"
+      color="#EEEEEE"
+      sx={{ fontSize: '1rem', '&:hover': { color: '#00ADB5' } }}
+    >
       Home
     </Link>,
-    <Link component={RouterLink} to="/filtered-hotels" key="filtered-hotels" underline="hover" color="#EEEEEE" sx={{ fontSize: '1rem', '&:hover': { color: '#00ADB5' } }}>
+    <Link
+      component={RouterLink}
+      to={{
+        pathname: '/filtered-hotels',
+        state: { filteredHotels },
+      }}
+      key="filtered-hotels"
+      underline="hover"
+      color="#EEEEEE"
+      sx={{ fontSize: '1rem', '&:hover': { color: '#00ADB5' } }}
+    >
       Filtered Hotels
     </Link>,
     <Typography key="hotels-lodges" color="#00ADB5" sx={{ fontSize: '1rem' }}>
@@ -54,13 +103,12 @@ function HotelsLodges() {
       <Breadcrumbs separator="›" aria-label="breadcrumb" sx={{ mb: 3, color: '#EEEEEE' }}>
         {breadcrumbItems}
       </Breadcrumbs>
-      <HotelDetails hotelAdminId={hotelAdminId}/>
-      <Availability hotelAdminId={hotelAdminId}/>
+      <HotelDetails hotelAdminId={hotelAdminId} />
+      <Availability hotelAdminId={hotelAdminId} />
       <Facilities hotelAdminId={hotelAdminId} hotelName={hotelName} />
       <HouseRules hotelAdminId={hotelAdminId} />
     </Box>
   );
 }
-
 
 export default HotelsLodges;
