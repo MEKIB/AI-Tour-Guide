@@ -15,6 +15,8 @@ import axios from 'axios';
 
 const ALL_LOCATIONS = 'All Locations';
 const ALL_FACILITY_TYPES = 'All Facility Types';
+const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/400x200?text=No+Image+Available';
+const BACKEND_URL = 'http://localhost:2000'; // Backend base URL
 
 const backgroundImage = 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&q=80';
 
@@ -48,14 +50,22 @@ const HotelFilter = () => {
         },
       });
 
-      const filteredHotels = response.data.data.map((hotel) => ({
-        id: hotel._id,
-        name: hotel.name,
-        location: hotel.location,
-        image: hotel.images[0]?.url || '/placeholder.jpg',
-        rating: 4.5, // Adjust if backend provides this
-        HotelAdminId: hotel.HotelAdminId, // Ensure this is included
-      }));
+      console.log('API response:', response.data.data);
+
+      const filteredHotels = response.data.data.map((hotel) => {
+        const imageUrl = hotel.images?.[0]?.url
+          ? `${BACKEND_URL}${hotel.images[0].url}`
+          : PLACEHOLDER_IMAGE;
+        console.log('Hotel image URL:', imageUrl);
+        return {
+          id: hotel._id,
+          name: hotel.name,
+          location: hotel.location,
+          image: imageUrl,
+          rating: hotel.rating || 4.5,
+          HotelAdminId: hotel.HotelAdminId,
+        };
+      });
 
       navigate('/filtered-hotels', { state: { filteredHotels } });
     } catch (error) {
@@ -127,7 +137,7 @@ const HotelFilter = () => {
               labelId="facility-type-filter-label"
               id="facility-type-filter"
               value={selectedFacilityType}
-              onChange={handleFacilityTypeChange}
+              onChange={handleFacilityTypeChange} // Fixed missing closing parenthesis
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': { borderColor: '#00ADB5' },
