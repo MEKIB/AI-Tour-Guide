@@ -70,11 +70,11 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
   const TEST_CVV = '123';
 
   // URLs for testing
-  const CALLBACK_URL = 'https://74c2-213-55-102-49.ngrok-free.app/webhook/chapa';
-  const RETURN_URL = 'https://74c2-213-55-102-49.ngrok-free.app/payment-complete';
+  const CALLBACK_URL = 'https://e0e8-213-55-102-49.ngrok-free.app/webhook/chapa';
+  const RETURN_URL = ' https://e0e8-213-55-102-49.ngrok-free.app/payment-complete';
 
   // Backend API base URL
-  const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:3000';
+  const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:2000';
 
   // Utility function to generate transaction reference
   const generateTxRef = (options = {}) => {
