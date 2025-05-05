@@ -21,6 +21,7 @@
     "antd": "^5.24.3",
     "axios": "^1.7.9",
     "dayjs": "^1.11.13",
+    "framer-motion": "^12.9.7",
     "leaflet": "^1.9.4",
     "lodash": "^4.17.21",
     "qrcode.react": "^4.2.0",
