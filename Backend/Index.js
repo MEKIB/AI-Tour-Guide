@@ -2,7 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import axios from 'axios'
+import axios  from 'axios';
 import multer from 'multer';
 import path from 'path';
 import nodemailer from 'nodemailer';
