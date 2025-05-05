@@ -212,13 +212,16 @@ const Reserve = () => {
 
   return (
     <Box
-      sx={{
-        backgroundColor: '#222831',
-        minHeight: '100vh',
-        padding: { xs: 2, md: 3 },
-        color: '#EEEEEE',
-      }}
-    >
+  sx={{
+    backgroundColor: '#222831',
+    minHeight: '100vh',
+    padding: { xs: 3, md: 4 },
+    color: '#EEEEEE',
+    maxWidth: '2400px', // Increased width beyond 'xl' (~1920px) to ~2400px
+    width: '100%',
+    mx: 'auto',
+  }}
+>
       <PaymentModal
         open={openPaymentModal}
         onClose={() => setOpenPaymentModal(false)}
@@ -256,12 +259,12 @@ const Reserve = () => {
 
       <Breadcrumbs
         separator={<NavigateNext fontSize="small" sx={{ color: '#00ADB5' }} />}
-        sx={{ mb: 2 }}
+        sx={{ mb: 3 }}
       >
         <Link underline="hover" color="#EEEEEE" href="/">
           Home
         </Link>
-        <Typography color="#00ADB5" sx={{ fontWeight: 'bold' }}>
+        <Typography color="#00ADB5" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>
           Reservations
         </Typography>
       </Breadcrumbs>
@@ -272,8 +275,8 @@ const Reserve = () => {
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
           alignItems: { xs: 'flex-start', sm: 'center' },
-          gap: 1,
-          mb: 3,
+          gap: 2,
+          mb: 4,
         }}
       >
         <Typography
@@ -281,13 +284,13 @@ const Reserve = () => {
           sx={{
             fontWeight: 'bold',
             color: '#00ADB5',
-            fontSize: '1.4rem',
+            fontSize: { xs: '1.6rem', md: '1.8rem' },
           }}
         >
           My Reservations
         </Typography>
 
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
           <Badge
             badgeContent={savedCount}
             color="primary"
@@ -303,18 +306,18 @@ const Reserve = () => {
             <Button
               variant={activeTab === 'saved' ? 'contained' : 'outlined'}
               onClick={() => setActiveTab('saved')}
-              size="small"
+              size="medium"
               sx={{
                 backgroundColor: activeTab === 'saved' ? '#00ADB5' : 'transparent',
                 color: '#EEEEEE',
                 borderColor: '#00ADB5',
-                minWidth: 90,
-                fontSize: '0.8rem',
+                minWidth: 100,
+                fontSize: '0.9rem',
                 '&:hover': {
                   backgroundColor: activeTab === 'saved' ? '#008B8B' : '#393E46',
                 },
               }}
-              startIcon={<Favorite sx={{ fontSize: '1rem' }} />}
+              startIcon={<Favorite sx={{ fontSize: '1.2rem' }} />}
             >
               Saved
             </Button>
@@ -323,13 +326,13 @@ const Reserve = () => {
           <Button
             variant={activeTab === 'recommended' ? 'contained' : 'outlined'}
             onClick={() => setActiveTab('recommended')}
-            size="small"
+            size="medium"
             sx={{
               backgroundColor: activeTab === 'recommended' ? '#00ADB5' : 'transparent',
               color: '#EEEEEE',
               borderColor: '#00ADB5',
-              minWidth: 90,
-              fontSize: '0.8rem',
+              minWidth: 100,
+              fontSize: '0.9rem',
               '&:hover': {
                 backgroundColor: activeTab === 'recommended' ? '#008B8B' : '#393E46',
               },
@@ -340,7 +343,7 @@ const Reserve = () => {
         </Box>
       </Box>
 
-      <Divider sx={{ backgroundColor: '#393E46', mb: 2 }} />
+      <Divider sx={{ backgroundColor: '#393E46', mb: 3 }} />
 
       {activeTab === 'saved' ? (
         <>
@@ -351,52 +354,55 @@ const Reserve = () => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: { xs: '40vh', md: '50vh' },
+                minHeight: '50vh',
                 textAlign: 'center',
-                p: 2,
+                p: 3,
+                maxWidth: '600px',
+                mx: 'auto',
               }}
             >
               <Avatar
                 sx={{
                   bgcolor: '#393E46',
-                  width: 60,
-                  height: 60,
-                  mb: 1.5,
+                  width: 70,
+                  height: 70,
+                  mb: 2,
                 }}
               >
-                <Favorite sx={{ color: '#00ADB5', fontSize: '1.8rem' }} />
+                <Favorite sx={{ color: '#00ADB5', fontSize: '2rem' }} />
               </Avatar>
               <Typography
                 variant="h6"
                 sx={{
-                  mb: 1,
+                  mb: 1.5,
                   color: '#00ADB5',
                   fontWeight: 'bold',
-                  fontSize: '1.2rem',
+                  fontSize: '1.4rem',
                 }}
               >
                 Please Log In
               </Typography>
               <Typography
-                variant="body2"
+                variant="body1"
                 sx={{
                   color: '#EEEEEE',
-                  maxWidth: '300px',
+                  maxWidth: '400px',
                   opacity: 0.8,
-                  mb: 2,
-                  fontSize: '0.9rem',
+                  mb: 3,
+                  fontSize: '1rem',
                 }}
               >
                 Log in to view your saved reservations.
               </Typography>
               <Button
                 variant="outlined"
-                size="small"
+                size="medium"
                 sx={{
                   color: '#00ADB5',
                   borderColor: '#00ADB5',
-                  px: 2,
-                  fontSize: '0.8rem',
+                  px: 3,
+                  fontSize: '0.9rem',
+                  '&:hover': { backgroundColor: 'rgba(0, 173, 181, 0.1)' },
                 }}
                 onClick={() => navigate('/login')}
               >
@@ -412,52 +418,55 @@ const Reserve = () => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: { xs: '40vh', md: '50vh' },
+                minHeight: '50vh',
                 textAlign: 'center',
-                p: 2,
+                p: 3,
+                maxWidth: '600px',
+                mx: 'auto',
               }}
             >
               <Avatar
                 sx={{
                   bgcolor: '#393E46',
-                  width: 60,
-                  height: 60,
-                  mb: 1.5,
+                  width: 70,
+                  height: 70,
+                  mb: 2,
                 }}
               >
-                <Favorite sx={{ color: '#00ADB5', fontSize: '1.8rem' }} />
+                <Favorite sx={{ color: '#00ADB5', fontSize: '2rem' }} />
               </Avatar>
               <Typography
                 variant="h6"
                 sx={{
-                  mb: 1,
+                  mb: 1.5,
                   color: '#00ADB5',
                   fontWeight: 'bold',
-                  fontSize: '1.2rem',
+                  fontSize: '1.4rem',
                 }}
               >
                 Access Restricted
               </Typography>
               <Typography
-                variant="body2"
+                variant="body1"
                 sx={{
                   color: '#EEEEEE',
-                  maxWidth: '300px',
+                  maxWidth: '400px',
                   opacity: 0.8,
-                  mb: 2,
-                  fontSize: '0.9rem',
+                  mb: 3,
+                  fontSize: '1rem',
                 }}
               >
                 Only regular users can view reservations. Please log in as a regular user.
               </Typography>
               <Button
                 variant="outlined"
-                size="small"
+                size="medium"
                 sx={{
                   color: '#00ADB5',
                   borderColor: '#00ADB5',
-                  px: 2,
-                  fontSize: '0.8rem',
+                  px: 3,
+                  fontSize: '0.9rem',
+                  '&:hover': { backgroundColor: 'rgba(0, 173, 181, 0.1)' },
                 }}
                 onClick={() => navigate('/login')}
               >
@@ -467,28 +476,31 @@ const Reserve = () => {
           )}
 
           {isLoggedIn && isRegularUser && (
-            <Grid container spacing={3}>
+            <Grid container spacing={4}>
               {reservations.filter((r) => r.saved).map((reservation) => (
                 <Grid item xs={12} key={reservation.id}>
                   <Card
                     sx={{
                       backgroundColor: '#393E46',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       display: 'flex',
                       flexDirection: { xs: 'column', md: 'row' },
                       transition: 'all 0.2s ease',
+                      maxWidth: '100%',
+                      mx: 'auto',
                       '&:hover': {
-                        transform: 'translateY(-3px)',
-                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 6px 12px rgba(0, 0, 0, 0.3)',
                       },
                     }}
                   >
                     <CardMedia
                       component="img"
                       sx={{
-                        width: { xs: '100%', md: 280 },
-                        height: { xs: 180, md: 'auto' },
+                        width: { xs: '100%', md: 320 },
+                        height: { xs: 200, md: 'auto' },
                         objectFit: 'cover',
+                        borderRadius: '12px 0 0 12px',
                       }}
                       image={reservation.image}
                       alt={reservation.title}
@@ -499,27 +511,29 @@ const Reserve = () => {
                         flex: 1,
                         display: 'flex',
                         flexDirection: 'column',
-                        p: 3,
+                        p: 4,
                       }}
                     >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                         <Typography
                           variant="h6"
                           sx={{
                             fontWeight: 'bold',
-                            fontSize: '1.2rem',
+                            fontSize: '1.4rem',
+                            color: '#EEEEEE',
                           }}
                         >
                           {reservation.hotelName}
                         </Typography>
                         <Chip
-                          icon={<Star sx={{ color: '#FFD700', fontSize: '1rem' }} />}
+                          icon={<Star sx={{ color: '#FFD700', fontSize: '1.2rem' }} />}
                           label={`${reservation.rating}/5`}
                           size="medium"
                           sx={{
                             backgroundColor: 'rgba(0, 173, 181, 0.2)',
                             color: '#EEEEEE',
-                            height: 28,
+                            height: 32,
+                            fontSize: '0.9rem',
                           }}
                         />
                       </Box>
@@ -528,8 +542,8 @@ const Reserve = () => {
                         variant="body1"
                         sx={{
                           color: '#00ADB5',
-                          mb: 2,
-                          fontSize: '0.95rem',
+                          mb: 3,
+                          fontSize: '1rem',
                         }}
                       >
                         {reservation.location}
@@ -539,43 +553,53 @@ const Reserve = () => {
                         sx={{
                           display: 'flex',
                           flexWrap: 'wrap',
-                          gap: 2,
-                          mb: 2,
+                          gap: 3,
+                          mb: 3,
                         }}
                       >
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <KingBed sx={{ color: '#00ADB5', mr: 1 }} />
-                          <Typography variant="body2">{reservation.roomType}</Typography>
+                          <KingBed sx={{ color: '#00ADB5', mr: 1.5, fontSize: '1.4rem' }} />
+                          <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>
+                            {reservation.roomType}
+                          </Typography>
                         </Box>
 
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Hotel sx={{ color: '#00ADB5', mr: 1 }} />
-                          <Typography variant="body2">
+                          <Hotel sx={{ color: '#00ADB5', mr: 1.5, fontSize: '1.4rem' }} />
+                          <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>
                             Rooms: {reservation.roomNumbers.join(', ')}
                           </Typography>
                         </Box>
 
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <NightsStay sx={{ color: '#00ADB5', mr: 1 }} />
-                          <Typography variant="body2">{reservation.duration}</Typography>
+                          <NightsStay sx={{ color: '#00ADB5', mr: 1.5, fontSize: '1.4rem' }} />
+                          <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>
+                            {reservation.duration}
+                          </Typography>
                         </Box>
                       </Box>
 
                       <Box
                         sx={{
                           backgroundColor: 'rgba(0, 173, 181, 0.1)',
-                          p: 1.5,
-                          borderRadius: 1,
-                          mb: 2,
+                          p: 2,
+                          borderRadius: 2,
+                          mb: 3,
                         }}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                          <CalendarToday sx={{ color: '#00ADB5', mr: 1.5 }} />
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                          <CalendarToday sx={{ color: '#00ADB5', mr: 1.5, fontSize: '1.4rem' }} />
                           <Box>
-                            <Typography variant="body2" sx={{ fontWeight: '500' }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: '500', fontSize: '0.9rem' }}
+                            >
                               Check-in: {reservation.checkInDate}
                             </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: '500' }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: '500', fontSize: '0.9rem' }}
+                            >
                               Check-out: {reservation.checkOutDate}
                             </Typography>
                           </Box>
@@ -588,13 +612,13 @@ const Reserve = () => {
                           sx={{
                             color: '#00ADB5',
                             fontWeight: 'bold',
-                            fontSize: '1.2rem',
+                            fontSize: '1.4rem',
                             mb: 0.5,
                           }}
                         >
                           Total: ${reservation.totalPrice}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: '#EEEEEE' }}>
+                        <Typography variant="body2" sx={{ color: '#EEEEEE', fontSize: '0.9rem' }}>
                           (${reservation.price} per night)
                         </Typography>
                       </Box>
@@ -605,9 +629,9 @@ const Reserve = () => {
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
-                        p: 2,
+                        p: 3,
                         borderLeft: { md: '1px solid #555' },
-                        minWidth: 140,
+                        minWidth: 160,
                       }}
                     >
                       <IconButton
@@ -632,9 +656,9 @@ const Reserve = () => {
                         sx={{
                           backgroundColor: '#00ADB5',
                           color: '#EEEEEE',
-                          px: 3,
+                          px: 4,
                           py: 1.5,
-                          borderRadius: 1,
+                          borderRadius: 2,
                           fontSize: '1rem',
                           fontWeight: 'bold',
                           '&:hover': {
@@ -658,52 +682,55 @@ const Reserve = () => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: { xs: '40vh', md: '50vh' },
+                minHeight: '50vh',
                 textAlign: 'center',
-                p: 2,
+                p: 3,
+                maxWidth: '600px',
+                mx: 'auto',
               }}
             >
               <Avatar
                 sx={{
                   bgcolor: '#393E46',
-                  width: 60,
-                  height: 60,
-                  mb: 1.5,
+                  width: 70,
+                  height: 70,
+                  mb: 2,
                 }}
               >
-                <Favorite sx={{ color: '#00ADB5', fontSize: '1.8rem' }} />
+                <Favorite sx={{ color: '#00ADB5', fontSize: '2rem' }} />
               </Avatar>
               <Typography
                 variant="h6"
                 sx={{
-                  mb: 1,
+                  mb: 1.5,
                   color: '#00ADB5',
                   fontWeight: 'bold',
-                  fontSize: '1.2rem',
+                  fontSize: '1.4rem',
                 }}
               >
                 No Saved Reservations
               </Typography>
               <Typography
-                variant="body2"
+                variant="body1"
                 sx={{
                   color: '#EEEEEE',
-                  maxWidth: '300px',
+                  maxWidth: '400px',
                   opacity: 0.8,
-                  mb: 2,
-                  fontSize: '0.9rem',
+                  mb: 3,
+                  fontSize: '1rem',
                 }}
               >
                 Save your favorite hotels to see them here
               </Typography>
               <Button
                 variant="outlined"
-                size="small"
+                size="medium"
                 sx={{
                   color: '#00ADB5',
                   borderColor: '#00ADB5',
-                  px: 2,
-                  fontSize: '0.8rem',
+                  px: 3,
+                  fontSize: '0.9rem',
+                  '&:hover': { backgroundColor: 'rgba(0, 173, 181, 0.1)' },
                 }}
                 onClick={() => navigate('/hotels')}
               >
