@@ -16,6 +16,9 @@ import axios from 'axios';
 
 const AddRoomForm = ({ onRoomAdded }) => {
   const [newRoom, setNewRoom] = useState({ type: '', rate: '', roomNumbers: '' });
+  const [editMode, setEditMode] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState('');
+  const [hasBothTypes, setHasBothTypes] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -30,7 +33,28 @@ const AddRoomForm = ({ onRoomAdded }) => {
         const response = await axios.get(`${baseUrl}/api/room-types`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setRoomTypes(response.data.data);
+        console.log('Fetched room types:', response.data.data);
+        const fetchedRoomTypes = response.data.data;
+        setRoomTypes(fetchedRoomTypes);
+
+        // Check if both Single and Double exist
+        const types = fetchedRoomTypes.map((room) => room.type);
+        const hasSingle = types.includes('Single');
+        const hasDouble = types.includes('Double');
+        const bothExist = hasSingle && hasDouble;
+        setHasBothTypes(bothExist);
+
+        // Auto-select first existing room type if both exist
+        if (bothExist && fetchedRoomTypes.length > 0) {
+          const firstRoom = fetchedRoomTypes[0];
+          setEditMode(true);
+          setSelectedRoomId(firstRoom._id);
+          setNewRoom({
+            type: firstRoom.type,
+            rate: firstRoom.rate.toString(),
+            roomNumbers: firstRoom.roomNumbers.map((r) => r.number).join(', '),
+          });
+        }
       } catch (err) {
         setError('Failed to load existing room types');
       }
@@ -39,13 +63,40 @@ const AddRoomForm = ({ onRoomAdded }) => {
     fetchRoomTypes();
   }, []);
 
+  // Handle room type selection
+  const handleRoomTypeChange = (e) => {
+    const value = e.target.value;
+    console.log('Selected room type:', value);
+
+    if (value === 'New Type') {
+      setEditMode(false);
+      setSelectedRoomId('');
+      setNewRoom({ type: '', rate: '', roomNumbers: '' });
+    } else {
+      const selectedRoom = roomTypes.find((room) => room._id === value);
+      if (selectedRoom) {
+        setEditMode(true);
+        setSelectedRoomId(selectedRoom._id);
+        setNewRoom({
+          type: selectedRoom.type,
+          rate: selectedRoom.rate.toString(),
+          roomNumbers: selectedRoom.roomNumbers.map((r) => r.number).join(', '),
+        });
+      } else {
+        setEditMode(false);
+        setSelectedRoomId('');
+        setNewRoom({ type: value, rate: '', roomNumbers: '' });
+      }
+    }
+  };
+
   const handleAddRoom = async () => {
     try {
       setLoading(true);
       setError('');
       setSuccess('');
 
-      // Basic validation
+      // Validation
       if (!newRoom.type || !newRoom.rate || !newRoom.roomNumbers) {
         throw new Error('All fields are required');
       }
@@ -65,17 +116,84 @@ const AddRoomForm = ({ onRoomAdded }) => {
       );
 
       // Update local state and parent component
-      setRoomTypes((prev) => [...prev, response.data.data]);
-      if (onRoomAdded) onRoomAdded(response.data.data);
+      const newRoomData = response.data.data;
+      setRoomTypes((prev) => [...prev, newRoomData]);
+      if (onRoomAdded) onRoomAdded(newRoomData);
+
+      // Check if both types now exist
+      const types = [...roomTypes, newRoomData].map((room) => room.type);
+      const hasSingle = types.includes('Single');
+      const hasDouble = types.includes('Double');
+      setHasBothTypes(hasSingle && hasDouble);
 
       setSuccess('Room type added successfully!');
       setNewRoom({ type: '', rate: '', roomNumbers: '' });
+      setEditMode(false);
+      setSelectedRoomId('');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to add room type');
     } finally {
       setLoading(false);
     }
   };
+
+  const handleUpdateRoom = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      setSuccess('');
+
+      // Validation
+      if (!newRoom.type || !newRoom.rate || !newRoom.roomNumbers) {
+        throw new Error('All fields are required');
+      }
+
+      const token = localStorage.getItem('token');
+
+      const response = await axios.put(
+        `${baseUrl}/api/room-types/${selectedRoomId}`,
+        {
+          type: newRoom.type,
+          rate: Number(newRoom.rate),
+          roomNumbers: newRoom.roomNumbers,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Update local state
+      const updatedRoom = response.data.data;
+      setRoomTypes((prev) =>
+        prev.map((room) => (room._id === updatedRoom._id ? updatedRoom : room))
+      );
+      if (onRoomAdded) onRoomAdded(updatedRoom);
+
+      setSuccess('Room type updated successfully!');
+      setNewRoom({ type: '', rate: '', roomNumbers: '' });
+      setEditMode(false);
+      setSelectedRoomId('');
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Failed to update room type');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditMode(false);
+    setSelectedRoomId('');
+    setNewRoom({ type: '', rate: '', roomNumbers: '' });
+  };
+
+  // Determine available types for adding
+  const availableTypes = [];
+  if (!roomTypes.some((room) => room.type === 'Single')) {
+    availableTypes.push('Single');
+  }
+  if (!roomTypes.some((room) => room.type === 'Double')) {
+    availableTypes.push('Double');
+  }
 
   return (
     <Box
@@ -125,16 +243,22 @@ const AddRoomForm = ({ onRoomAdded }) => {
         </Box>
       )}
 
-      {/* Add New Room Form */}
+      {/* Add/Edit Room Form */}
       <Typography variant="subtitle1" sx={{ color: '#EEEEEE', mb: 2 }}>
-        Add New Room Type
+        {editMode ? 'Edit Room Type' : 'Add New Room Type'}
       </Typography>
 
+      {hasBothTypes && (
+        <Typography variant="body2" sx={{ color: '#00ADB5', mb: 2 }}>
+          All room types (Single and Double) have been added. You can only edit existing types.
+        </Typography>
+      )}
+
       <FormControl fullWidth sx={{ mb: 2, backgroundColor: '#2D2D2D', borderRadius: 1 }}>
-        <InputLabel sx={{ color: '#EEEEEE' }}>Room Type</InputLabel>
+        <InputLabel sx={{ color: '#EEEEEE' }}>Select Room Type</InputLabel>
         <Select
-          value={newRoom.type}
-          onChange={(e) => setNewRoom({ ...newRoom, type: e.target.value })}
+          value={selectedRoomId || newRoom.type}
+          onChange={handleRoomTypeChange}
           sx={{
             color: '#EEEEEE',
             '& .MuiSvgIcon-root': { color: '#00ADB5' },
@@ -151,10 +275,41 @@ const AddRoomForm = ({ onRoomAdded }) => {
             },
           }}
         >
-          <MenuItem value="Single">Single</MenuItem>
-          <MenuItem value="Double">Double</MenuItem>
+          {!hasBothTypes && <MenuItem value="New Type">New Type</MenuItem>}
+          {!hasBothTypes &&
+            availableTypes.map((type) => (
+              <MenuItem key={type} value={type}>
+                {type}
+              </MenuItem>
+            ))}
+          {roomTypes.map((room) => (
+            <MenuItem key={room._id} value={room._id}>
+              {room.type} (Edit)
+            </MenuItem>
+          ))}
         </Select>
       </FormControl>
+
+      <TextField
+        fullWidth
+        label="Room Type Name"
+        variant="outlined"
+        margin="normal"
+        value={newRoom.type}
+        onChange={(e) => setNewRoom({ ...newRoom, type: e.target.value })}
+        disabled={editMode}
+        sx={{
+          backgroundColor: '#2D2D2D',
+          borderRadius: 1,
+          '& .MuiInputLabel-root': { color: '#EEEEEE' },
+          '& .MuiOutlinedInput-root': {
+            '& fieldset': { borderColor: '#00ADB5' },
+            '&:hover fieldset': { borderColor: '#00ADB5' },
+            '&.Mui-focused fieldset': { borderColor: '#00ADB5' },
+          },
+          '& .MuiInputBase-input': { color: '#EEEEEE' },
+        }}
+      />
 
       <TextField
         fullWidth
@@ -198,26 +353,68 @@ const AddRoomForm = ({ onRoomAdded }) => {
         }}
       />
 
-      <Button
-        variant="contained"
-        disabled={loading}
-        sx={{
-          mt: 2,
-          backgroundColor: '#00ADB5',
-          color: '#EEEEEE',
-          '&:hover': { backgroundColor: '#008B8B' },
-          fontWeight: 'bold',
-          fontSize: '1rem',
-          borderRadius: 1,
-        }}
-        onClick={handleAddRoom}
-      >
-        {loading ? (
-          <CircularProgress size={24} sx={{ color: '#EEEEEE' }} />
+      <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+        {editMode ? (
+          <>
+            <Button
+              variant="contained"
+              disabled={loading}
+              sx={{
+                backgroundColor: '#00ADB5',
+                color: '#EEEEEE',
+                '&:hover': { backgroundColor: '#008B8B' },
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                borderRadius: 1,
+              }}
+              onClick={handleUpdateRoom}
+            >
+              {loading ? (
+                <CircularProgress size={24} sx={{ color: '#EEEEEE' }} />
+              ) : (
+                'Update Room Type'
+              )}
+            </Button>
+            <Button
+              variant="outlined"
+              disabled={loading}
+              sx={{
+                borderColor: '#00ADB5',
+                color: '#00ADB5',
+                '&:hover': { borderColor: '#008B8B', color: '#008B8B' },
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                borderRadius: 1,
+              }}
+              onClick={handleCancelEdit}
+            >
+              Cancel
+            </Button>
+          </>
         ) : (
-          'Add Room Type'
+          !hasBothTypes && (
+            <Button
+              variant="contained"
+              disabled={loading}
+              sx={{
+                backgroundColor: '#00ADB5',
+                color: '#EEEEEE',
+                '&:hover': { backgroundColor: '#008B8B' },
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                borderRadius: 1,
+              }}
+              onClick={handleAddRoom}
+            >
+              {loading ? (
+                <CircularProgress size={24} sx={{ color: '#EEEEEE' }} />
+              ) : (
+                'Add Room Type'
+              )}
+            </Button>
+          )
         )}
-      </Button>
+      </Box>
 
       {/* Notifications */}
       <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>

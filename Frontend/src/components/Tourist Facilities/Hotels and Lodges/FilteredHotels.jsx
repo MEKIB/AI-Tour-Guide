@@ -20,13 +20,22 @@ const FilteredHotels = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [filteredHotels, setFilteredHotels] = useState(location.state?.filteredHotels || []);
+  const [loading, setLoading] = useState(!location.state?.filteredHotels);
 
   useEffect(() => {
-    if (!filteredHotels.length) {
+    if (!filteredHotels.length && loading) {
       const fetchHotels = async () => {
         try {
           const criteria = JSON.parse(localStorage.getItem('filterCriteria') || '{}');
+          console.log('Filter criteria from localStorage:', criteria);
           const { location = '', facilityType = '' } = criteria;
+          if (!location && !facilityType) {
+            console.warn('No filter criteria found in localStorage');
+            setFilteredHotels([]);
+            setLoading(false);
+            return;
+          }
+
           const response = await axios.get('http://localhost:2000/api/hotels', {
             params: {
               location: location === 'All Locations' ? '' : location,
@@ -51,11 +60,13 @@ const FilteredHotels = () => {
         } catch (error) {
           console.error('Error fetching hotels:', error.response?.data || error.message);
           setFilteredHotels([]);
+        } finally {
+          setLoading(false);
         }
       };
       fetchHotels();
     }
-  }, [filteredHotels.length]);
+  }, [filteredHotels.length, loading]);
 
   const sortedHotels = [...filteredHotels].sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
@@ -86,6 +97,24 @@ const FilteredHotels = () => {
       Filtered Hotels
     </Typography>,
   ];
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          backgroundImage: `url(https://images.unsplash.com/photo-1564501049412-61c2a3083791)`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          minHeight: '100vh',
+          p: 3,
+        }}
+      >
+        <Box sx={{ background: 'rgba(34, 40, 49, 0.8)', minHeight: '100vh', p: 3 }}>
+          <Typography sx={{ color: '#EEEEEE' }}>Loading hotels...</Typography>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -157,7 +186,7 @@ const FilteredHotels = () => {
           {sortedHotels.length === 0 && (
             <Grid item xs={12}>
               <Typography variant="h6" color="#EEEEEE" align="center" sx={{ mt: 4 }}>
-                No hotels found matching your criteria.
+                No hotels found. Please try different search criteria.
               </Typography>
             </Grid>
           )}
@@ -166,5 +195,6 @@ const FilteredHotels = () => {
     </Box>
   );
 };
+
 
 export default FilteredHotels;

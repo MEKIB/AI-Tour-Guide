@@ -305,6 +305,7 @@ app.get('/api/amenities/by-hotel', async (req, res) => {
   }
 });
 
+
 // Hotel Rules Routes
 app.post('/api/hotel-rules', verifyToken, async (req, res) => {
   try {
@@ -423,11 +424,18 @@ const getHotelAdminId = async (req, res, next) => {
   }
 };
 
+
+// POST /api/room-types
 app.post('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
   try {
     const { type, rate, roomNumbers } = req.body;
     if (!type || !rate || !roomNumbers) {
       return res.status(400).json({ message: 'Type, rate, and room numbers are required' });
+    }
+
+    // Validate type
+    if (!['Single', 'Double'].includes(type)) {
+      return res.status(400).json({ message: 'Room type must be Single or Double' });
     }
 
     const numbersArray = roomNumbers
@@ -439,6 +447,13 @@ app.post('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
       return res.status(400).json({ message: 'At least one room number required' });
     }
 
+    // Check if both types already exist
+    const existingTypes = await RoomType.find({ hotelAdminId: req.hotelAdminId });
+    if (existingTypes.length >= 2) {
+      return res.status(400).json({ message: 'Both Single and Double room types already exist' });
+    }
+
+    // Check for duplicate type
     const existingType = await RoomType.findOne({
       hotelAdminId: req.hotelAdminId,
       type,
@@ -470,12 +485,75 @@ app.post('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
   }
 });
 
+// GET /api/room-types
 app.get('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
   try {
     const roomTypes = await RoomType.find({ hotelAdminId: req.hotelAdminId });
     res.json({ data: roomTypes });
   } catch (error) {
     console.error('Error fetching room types:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// PUT /api/room-types/:id
+app.put('/api/room-types/:id', verifyToken, getHotelAdminId, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type, rate, roomNumbers } = req.body;
+
+    if (!type || !rate || !roomNumbers) {
+      return res.status(400).json({ message: 'Type, rate, and room numbers are required' });
+    }
+
+    // Validate type
+    if (!['Single', 'Double'].includes(type)) {
+      return res.status(400).json({ message: 'Room type must be Single or Double' });
+    }
+
+    const numbersArray = roomNumbers
+      .split(',')
+      .map((num) => num.trim().toUpperCase())
+      .filter((num) => num !== '');
+
+    if (numbersArray.length === 0) {
+      return res.status(400).json({ message: 'At least one room number required' });
+    }
+
+    // Check if another room type with the same type exists (excluding this room)
+    const existingType = await RoomType.findOne({
+      hotelAdminId: req.hotelAdminId,
+      type,
+      _id: { $ne: id },
+    });
+
+    if (existingType) {
+      return res.status(400).json({ message: 'Room type already exists' });
+    }
+
+    const updatedRoomType = await RoomType.findOneAndUpdate(
+      { _id: id, hotelAdminId: req.hotelAdminId },
+      {
+        type,
+        rate: parseFloat(rate),
+        roomNumbers: numbersArray.map((number) => ({
+          number,
+          availability: [], // Preserve existing availability or reset
+        })),
+      },
+      { new: true }
+    );
+
+    if (!updatedRoomType) {
+      return res.status(404).json({ message: 'Room type not found' });
+    }
+
+    res.json({
+      message: 'Room type updated successfully',
+      data: updatedRoomType,
+    });
+  } catch (error) {
+    console.error('Error updating room type:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -510,6 +588,8 @@ app.post('/', verifyToken, getHotelAdminId, async (req, res) => {
   }
 });
 
+
+// POST /api/rooms/upload
 app.post('/api/rooms/upload', verifyToken, async (req, res) => {
   try {
     const { type, bathrooms, size, amenities } = req.body;
@@ -524,13 +604,24 @@ app.post('/api/rooms/upload', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'Type, bathrooms, size, and amenities array are required' });
     }
 
+    // Validate type
+    if (!['Single', 'Double'].includes(type)) {
+      return res.status(400).json({ message: 'Room type must be Single or Double' });
+    }
+
+    // Check if both types already exist
+    const existingProperties = await RoomTypeProperites.find({ hotelAdminId });
+    if (existingProperties.length >= 2) {
+      return res.status(400).json({ message: 'Both Single and Double room properties already exist' });
+    }
+
     const roomType = await RoomType.findOne({ hotelAdminId, type });
     if (!roomType) {
       return res.status(400).json({ message: `Room type ${type} not found. Please add it via /api/room-types first.` });
     }
 
-    const existingProperties = await RoomTypeProperites.findOne({ hotelAdminId, type });
-    if (existingProperties) {
+    const existingTypeProperties = await RoomTypeProperites.findOne({ hotelAdminId, type });
+    if (existingTypeProperties) {
       return res.status(400).json({ message: `Properties for room type ${type} already exist` });
     }
 
@@ -554,6 +645,7 @@ app.post('/api/rooms/upload', verifyToken, async (req, res) => {
   }
 });
 
+// GET /api/rooms
 app.get('/api/rooms', verifyToken, async (req, res) => {
   try {
     const email = req.user.email;
@@ -566,11 +658,13 @@ app.get('/api/rooms', verifyToken, async (req, res) => {
 
     res.json({ data: rooms });
   } catch (error) {
+    console.error('Error fetching room properties:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-app.get('/api/rooms/by-hotel/:hotelAdminId', async (req, res) => {
+// GET /api/rooms/by-hotel/:hotelAdminId
+app.get('/by-hotel/:hotelAdminId', async (req, res) => {
   try {
     const rooms = await RoomTypeProperites.find({
       hotelAdminId: req.params.hotelAdminId,
@@ -578,9 +672,100 @@ app.get('/api/rooms/by-hotel/:hotelAdminId', async (req, res) => {
 
     res.json({ data: rooms });
   } catch (error) {
+    console.error('Error fetching room properties by hotel:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+// PUT /api/rooms/:id
+app.put('/api/rooms/:id', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type, bathrooms, size, amenities } = req.body;
+    const email = req.user.email;
+    const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
+    if (!approvedAdmin) {
+      return res.status(404).json({ message: 'Hotel admin not found' });
+    }
+    const hotelAdminId = approvedAdmin.hotelAdminId;
+
+    if (!type || !bathrooms || !size || !amenities || !Array.isArray(amenities)) {
+      return res.status(400).json({ message: 'Type, bathrooms, size, and amenities array are required' });
+    }
+
+    // Validate type
+    if (!['Single', 'Double'].includes(type)) {
+      return res.status(400).json({ message: 'Room type must be Single or Double' });
+    }
+
+    // Check if room type exists in RoomType
+    const roomType = await RoomType.findOne({ hotelAdminId, type });
+    if (!roomType) {
+      return res.status(400).json({ message: `Room type ${type} not found. Please add it via /api/room-types first.` });
+    }
+
+    // Check if another room type with the same type exists (excluding this room)
+    const existingTypeProperties = await RoomTypeProperites.findOne({
+      hotelAdminId,
+      type,
+      _id: { $ne: id },
+    });
+    if (existingTypeProperties) {
+      return res.status(400).json({ message: `Properties for room type ${type} already exist` });
+    }
+
+    const updatedRoomProperties = await RoomTypeProperites.findOneAndUpdate(
+      { _id: id, hotelAdminId },
+      {
+        type,
+        bathrooms: parseInt(bathrooms),
+        size,
+        amenities,
+      },
+      { new: true }
+    );
+
+    if (!updatedRoomProperties) {
+      return res.status(404).json({ message: 'Room properties not found' });
+    }
+
+    res.json({
+      message: 'Room properties updated successfully',
+      data: updatedRoomProperties,
+    });
+  } catch (error) {
+    console.error('Error updating room properties:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 app.post('/api/reservations', verifyToken, async (req, res) => {
   try {

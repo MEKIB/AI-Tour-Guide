@@ -12,6 +12,7 @@ function HotelsLodges() {
   const location = useLocation();
   const [hotel, setHotel] = useState(location.state?.hotel);
   const [filteredHotels, setFilteredHotels] = useState(location.state?.filteredHotels || []);
+  const [loading, setLoading] = useState(!location.state?.hotel || !location.state?.filteredHotels);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -19,13 +20,22 @@ function HotelsLodges() {
         // Fetch hotel if not in state
         if (!hotel) {
           const response = await axios.get(`http://localhost:2000/api/hotels/${id}`);
+          console.log('Fetched hotel:', response.data.data);
           setHotel(response.data.data);
         }
 
         // Fetch filtered hotels if not in state
         if (!filteredHotels.length) {
           const criteria = JSON.parse(localStorage.getItem('filterCriteria') || '{}');
+          console.log('Filter criteria from localStorage:', criteria);
           const { location = '', facilityType = '' } = criteria;
+          if (!location && !facilityType) {
+            console.warn('No filter criteria found in localStorage');
+            setFilteredHotels([]);
+            setLoading(false);
+            return;
+          }
+
           const response = await axios.get('http://localhost:2000/api/hotels', {
             params: {
               location: location === 'All Locations' ? '' : location,
@@ -49,14 +59,16 @@ function HotelsLodges() {
           setFilteredHotels(hotels);
         }
       } catch (err) {
-        console.error('Failed to fetch data:', err);
+        console.error('Failed to fetch data:', err.response?.data || err.message);
         if (!hotel) setHotel(null);
         if (!filteredHotels.length) setFilteredHotels([]);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchData();
-  }, [id, hotel, filteredHotels.length]);
+    if (loading) fetchData();
+  }, [id, hotel, filteredHotels.length, loading]);
 
   const hotelName = hotel?.name || 'Hotel';
   const hotelAdminId = hotel?.HotelAdminId;
@@ -90,7 +102,7 @@ function HotelsLodges() {
     </Typography>,
   ];
 
-  if (!hotel) {
+  if (loading || !hotel) {
     return (
       <Box sx={{ bgcolor: '#222831', color: '#EEEEEE', minHeight: '100vh', p: 3 }}>
         <Typography variant="h6">Loading hotel data...</Typography>

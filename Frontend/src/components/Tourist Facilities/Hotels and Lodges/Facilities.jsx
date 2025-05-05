@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
-import StarIcon from '@mui/icons-material/Star';
+import * as MuiIcons from '@mui/icons-material';
 import axios from 'axios';
 
 const Facilities = ({ hotelAdminId, hotelName }) => {
@@ -17,8 +17,10 @@ const Facilities = ({ hotelAdminId, hotelName }) => {
           params: { hotelAdminId },
         });
 
+        console.log('Facilities fetched:', response.data.data);
         setFacilities(response.data.data || []);
       } catch (err) {
+        console.error('Error fetching facilities:', err.response?.data || err.message);
         setError(err.response?.data?.message || 'Failed to load facilities');
       } finally {
         setLoading(false);
@@ -28,27 +30,36 @@ const Facilities = ({ hotelAdminId, hotelName }) => {
     if (hotelAdminId) fetchFacilities();
   }, [hotelAdminId]);
 
-  if (loading) return <Typography>Loading facilities...</Typography>;
-  if (error) return <Typography color="error">{error}</Typography>;
+  if (loading) return <Typography sx={{ color: '#EEEEEE' }}>Loading facilities...</Typography>;
+  if (error) return <Typography sx={{ color: '#FF6B6B' }}>{error}</Typography>;
 
   return (
     <Box sx={{ mt: 3 }}>
-      <Typography variant="h5" sx={{ color: '#00ADB5', mb: 2 }}>
+      <Typography variant="h5" sx={{ color: '#00ADB5', mb: 2, fontWeight: 'bold' }}>
         Facilities at {hotelName}
       </Typography>
       {facilities.length > 0 ? (
         <List>
-          {facilities.map((facility, index) => (
-            <ListItem key={index}>
-              <ListItemIcon>
-                <StarIcon sx={{ color: '#00ADB5' }} />
-              </ListItemIcon>
-              <ListItemText primary={facility.name} secondary={facility.description} sx={{ color: '#EEEEEE' }} />
-            </ListItem>
-          ))}
+          {facilities.map((facility, index) => {
+            const IconComponent = MuiIcons[facility.icon] || MuiIcons.Star; // Fallback to StarIcon
+            console.log('Facility icon:', facility.icon); // Debug icon name
+            return (
+              <ListItem key={index} sx={{ borderBottom: '1px solid #393E46', py: 1 }}>
+                <ListItemIcon>
+                  <IconComponent sx={{ color: '#00ADB5' }} />
+                </ListItemIcon>
+                <ListItemText
+                  primary={facility.name}
+                  secondary={facility.description}
+                  primaryTypographyProps={{ color: '#EEEEEE', fontWeight: 'medium' }}
+                  secondaryTypographyProps={{ color: '#AAAAAA' }}
+                />
+              </ListItem>
+            );
+          })}
         </List>
       ) : (
-        <Typography>No facilities available for this hotel.</Typography>
+        <Typography sx={{ color: '#EEEEEE' }}>No facilities available for this hotel.</Typography>
       )}
     </Box>
   );

@@ -28,6 +28,7 @@ const Amenities = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        
         if (response.data.data && Array.isArray(response.data.data)) {
           // The backend now returns an array of amenities directly
           setAmenitiesList(response.data.data);
