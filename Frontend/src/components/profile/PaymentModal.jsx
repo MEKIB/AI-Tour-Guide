@@ -1,4 +1,4 @@
-import React, { useState, Fragment } from 'react';
+import React, { useState, Fragment, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -46,22 +46,54 @@ const SuccessDialog = styled(Dialog)(({ theme }) => ({
 }));
 
 const PaymentModal = ({ open, onClose, bookingDetails }) => {
+  // State to hold user data from localStorage
+  const [userDetails, setUserDetails] = useState(null);
+
+  // Fetch user data from localStorage on mount
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser) {
+      setUserDetails({
+        email: storedUser.email || '',
+        firstName: storedUser.firstName || '',
+        middleName: storedUser.middleName || '',
+        phone: storedUser.phone || '',
+      });
+    }
+  }, []);
+
   const [paymentMethod, setPaymentMethod] = useState('chapa');
   const [selectedChapaOption, setSelectedChapaOption] = useState(null);
   const [cardDetails, setCardDetails] = useState({
-    name: '',
-    email: '',
+    name: userDetails ? `${userDetails.firstName} ${userDetails.middleName}`.trim() : '',
+    email: userDetails ? userDetails.email : '',
     cardNumber: '',
     expiry: '',
     cvv: '',
   });
   const [mobilePaymentDetails, setMobilePaymentDetails] = useState({
-    phoneNumber: '',
-    fullName: '',
+    phoneNumber: userDetails ? userDetails.phone : '',
+    fullName: userDetails ? `${userDetails.firstName} ${userDetails.middleName}`.trim() : '',
   });
   const [loading, setLoading] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Update state when userDetails changes
+  useEffect(() => {
+    if (userDetails) {
+      setCardDetails((prev) => ({
+        ...prev,
+        name: `${userDetails.firstName} ${userDetails.middleName}`.trim(),
+        email: userDetails.email,
+      }));
+      setMobilePaymentDetails((prev) => ({
+        ...prev,
+        phoneNumber: userDetails.phone,
+        fullName: `${userDetails.firstName} ${userDetails.middleName}`.trim(),
+      }));
+    }
+  }, [userDetails]);
 
   // Chapa test mode credentials
   const TEST_PHONE_NUMBER = '0912345678';
@@ -70,8 +102,8 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
   const TEST_CVV = '123';
 
   // URLs for testing
-  const CALLBACK_URL = 'https://e0e8-213-55-102-49.ngrok-free.app/webhook/chapa';
-  const RETURN_URL = ' https://e0e8-213-55-102-49.ngrok-free.app/payment-complete';
+  const CALLBACK_URL = 'https://708b-2a09-bac1-2400-8-00-58-73.ngrok-free.app/webhook/chapa';
+  const RETURN_URL = 'https://708b-2a09-bac1-2400-8-00-58-73.ngrok-free.app/payment-complete';
 
   // Backend API base URL
   const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:2000';
@@ -116,15 +148,24 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
   const handlePaymentMethodChange = (event) => {
     setPaymentMethod(event.target.value);
     setSelectedChapaOption(null);
-    setMobilePaymentDetails({ phoneNumber: TEST_PHONE_NUMBER, fullName: 'Test User' });
-    setCardDetails({ name: '', email: '', cardNumber: '', expiry: '', cvv: '' });
+    setMobilePaymentDetails({
+      phoneNumber: userDetails ? userDetails.phone : TEST_PHONE_NUMBER,
+      fullName: userDetails ? `${userDetails.firstName} ${userDetails.middleName}`.trim() : 'Test User',
+    });
+    setCardDetails({
+      name: userDetails ? `${userDetails.firstName} ${userDetails.middleName}`.trim() : '',
+      email: userDetails ? userDetails.email : '',
+      cardNumber: '',
+      expiry: '',
+      cvv: '',
+    });
   };
 
   const handleChapaOptionChange = (option) => {
     setSelectedChapaOption(option);
     setMobilePaymentDetails({
-      phoneNumber: TEST_PHONE_NUMBER,
-      fullName: 'Test User',
+      phoneNumber: userDetails ? userDetails.phone : TEST_PHONE_NUMBER,
+      fullName: userDetails ? `${userDetails.firstName} ${userDetails.middleName}`.trim() : 'Test User',
     });
   };
 
@@ -227,7 +268,7 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
         const initData = {
           amount: etbAmount,
           currency: 'ETB',
-          email: `test+${tx_ref}@gmail.com`,
+          email: userDetails ? userDetails.email : `test+${tx_ref}@gmail.com`,
           first_name,
           last_name,
           phone_number: mobilePaymentDetails.phoneNumber,
@@ -531,6 +572,7 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
                         fullWidth
                         label="Phone Number"
                         variant="outlined"
+                        InputProps={{ readOnly: true }}
                         value={mobilePaymentDetails.phoneNumber}
                         onChange={(e) => {
                           const value = e.target.value.replace(/\D/g, '').slice(0, 10);
@@ -579,6 +621,7 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
                         label="Full Name"
                         variant="outlined"
                         value={mobilePaymentDetails.fullName}
+                        InputProps={{ readOnly: true }}
                         onChange={handleMobilePaymentChange('fullName')}
                         sx={{
                           mb: 2,
@@ -652,6 +695,7 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
                         fullWidth
                         label="Phone Number"
                         variant="outlined"
+                        InputProps={{ readOnly: true }}
                         value={mobilePaymentDetails.phoneNumber}
                         onChange={(e) => {
                           const value = e.target.value.replace(/\D/g, '').slice(0, 10);
@@ -700,6 +744,7 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
                         label="Full Name"
                         variant="outlined"
                         value={mobilePaymentDetails.fullName}
+                        InputProps={{ readOnly: true }}
                         onChange={handleMobilePaymentChange('fullName')}
                         sx={{
                           mb: 2,
@@ -757,8 +802,8 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
                   variant="outlined"
                   onClick={() => {
                     setCardDetails({
-                      name: 'Test User',
-                      email: `test+${generateTxRef()}@example.com`,
+                      name: userDetails ? `${userDetails.firstName} ${userDetails.middleName}`.trim() : 'Test User',
+                      email: userDetails ? userDetails.email : `test+${generateTxRef()}@example.com`,
                       cardNumber: TEST_CARD_NUMBER,
                       expiry: TEST_EXPIRY,
                       cvv: TEST_CVV,
@@ -782,6 +827,7 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
                     <TextField
                       fullWidth
                       label="Cardholder Name"
+                      InputProps={{ readOnly: true }}
                       variant="outlined"
                       value={cardDetails.name}
                       onChange={handleCardDetailChange('name')}
@@ -811,6 +857,7 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
                       fullWidth
                       label="Email"
                       variant="outlined"
+                      InputProps={{ readOnly: true }}
                       value={cardDetails.email}
                       onChange={handleCardDetailChange('email')}
                       error={cardDetails.email && !validateEmail(cardDetails.email)}

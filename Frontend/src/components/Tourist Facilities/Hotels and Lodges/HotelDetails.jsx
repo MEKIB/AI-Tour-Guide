@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -22,8 +22,63 @@ import CloseIcon from '@mui/icons-material/Close';
 import StarIcon from '@mui/icons-material/Star';
 import { Carousel } from 'react-responsive-carousel';
 import "react-responsive-carousel/lib/styles/carousel.min.css";
+import L from 'leaflet';
+import "leaflet/dist/leaflet.css";
 import axios from 'axios';
 import HotelReviews from './HotelReview';
+
+// Fix for Leaflet default marker icons
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+// MapComponent using vanilla Leaflet
+const MapComponent = ({ lat, long, name, hotelLocation }) => {
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    // Initialize the map
+    mapInstanceRef.current = L.map(mapRef.current, {
+      center: [lat || 11.59578, long || 37.38544],
+      zoom: 15,
+    });
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(mapInstanceRef.current);
+
+    // Add marker with popup
+    L.marker([lat || 11.59578, long || 37.38544])
+      .addTo(mapInstanceRef.current)
+      .bindPopup(`
+        <b>${name}</b><br>
+        <span style="font-size: 12px;">${hotelLocation}</span>
+      `)
+      .openPopup();
+
+    // Cleanup on unmount
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [lat, long, name, hotelLocation]);
+
+  return (
+    <div
+      ref={mapRef}
+      style={{ height: '100%', width: '100%' }}
+    />
+  );
+};
 
 const HotelDetails = ({ hotelAdminId }) => {
   const [openModal, setOpenModal] = useState(false);
@@ -42,6 +97,7 @@ const HotelDetails = ({ hotelAdminId }) => {
         
         // Fetch hotel details
         const hotelResponse = await axios.get(`${baseUrl}/api/hotels/admin/${hotelAdminId}`);
+        console.log('Hotel Response:', hotelResponse.data.data);
         setHotel(hotelResponse.data.data);
 
         // Fetch reviews
@@ -111,7 +167,7 @@ const HotelDetails = ({ hotelAdminId }) => {
     );
   }
 
-  const { name, description, location: hotelLocation, images = [], facilityType } = hotel;
+  const { name, description, location: hotelLocation, images = [], facilityType, lat, long } = hotel;
 
   const facilityIcons = {
     'Free Wifi': <WifiIcon />,
@@ -262,9 +318,14 @@ const HotelDetails = ({ hotelAdminId }) => {
                 <HotelReviews hotelAdminId={hotelAdminId} />
               </Box>
 
-              {/* Map Placeholder */}
-              <Box sx={{ mt: 2, height: 200, backgroundColor: '#222831', borderRadius: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <Typography variant="body1">Location Map</Typography>
+              {/* Map */}
+              <Box sx={{ mt: 2, height: 200, borderRadius: 2, overflow: 'hidden' }}>
+                <MapComponent
+                  lat={lat}
+                  long={long}
+                  name={name}
+                  hotelLocation={hotelLocation}
+                />
               </Box>
             </CardContent>
           </Card>

@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
 const SystemAdminSchema=new mongoose.Schema({
-    firstname:String,
-    lastname:String,
+    firstName:String,
+    lastName:String,
     email:String,
     password:String
 })

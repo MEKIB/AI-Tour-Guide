@@ -1480,7 +1480,7 @@ app.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role, firstName: user.firstName, middleName: user.middleName, passportOrId: user.passportOrId },
+      { id: user._id, role: user.role, firstName: user.firstName, middleName: user.middleName, passportOrId: user.passportOrId, phone: user.phone },  
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -1494,6 +1494,7 @@ app.post('/login', async (req, res) => {
         firstName: user.firstName,
         middleName: user.middleName,
         passportOrId: user.passportOrId,
+        phone: user.phone,
       },
     });
   } catch (error) {

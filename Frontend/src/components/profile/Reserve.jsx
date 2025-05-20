@@ -116,13 +116,17 @@ const Reserve = () => {
               const checkOut = new Date(reservation.checkOutDate);
               const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
               const duration = `${nights} night${nights !== 1 ? 's' : ''}`;
-
+              // If images are stored with relative paths (e.g., "/uploads/image.jpg")
+const imageUrl = hotel.images[0]?.url 
+? `http://localhost:2000${hotel.images[0].url.startsWith('/') ? '' : '/'}${hotel.images[0].url}`
+: '/default-hotel.jpg';
+              console.log(`Reservation `,imageUrl);
               return {
                 id: reservation._id,
                 title: hotel.name,
                 price: (reservation.totalPrice / nights).toLocaleString(),
                 duration,
-                image: hotel.images[0]?.url || 'https://via.placeholder.com/500x180?text=No+Image',
+                image: imageUrl || 'https://via.placeholder.com/500x180?text=No+Image',
                 saved: true,
                 location: hotel.location,
                 date: `${checkIn.toLocaleDateString('en-US', {

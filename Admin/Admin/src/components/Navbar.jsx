@@ -6,9 +6,11 @@ import MenuIcon from '@mui/icons-material/Menu';
 const Navbar = ({ userRole, userEmail, userName, setUserRole, collapsed, onToggleSidebar }) => {
   const navigate = useNavigate();
 
+  console.log('Navbar props:', { userRole, userEmail, userName }); // Debug props
+
   const handleLogout = () => {
     setUserRole(null);
-    localStorage.removeItem('token'); // Remove the token from local storage
+    localStorage.removeItem('token');
     navigate('/');
   };
 
@@ -64,7 +66,7 @@ const Navbar = ({ userRole, userEmail, userName, setUserRole, collapsed, onToggl
           {userRole ? (
             <>
               <Typography variant="body1" sx={{ mr: 2, color: '#EEEEEE' }}>
-                Welcome, {userName}
+                Welcome, {userName || userEmail || 'User'}
               </Typography>
               <Button
                 color="inherit"
@@ -75,14 +77,13 @@ const Navbar = ({ userRole, userEmail, userName, setUserRole, collapsed, onToggl
               </Button>
             </>
           ) : (
-            <>
-              <Button
-                color="inherit"
-                onClick={() => navigate('/login')}
-                sx={{ fontWeight: 'bold', fontSize: '1rem', color: '#EEEEEE' }}
-              >
-              </Button>
-            </>
+            <Button
+              color="inherit"
+              onClick={() => navigate('/login')}
+              sx={{ fontWeight: 'bold', fontSize: '1rem', color: '#EEEEEE' }}
+            >
+              Login
+            </Button>
           )}
         </Box>
       </Toolbar>

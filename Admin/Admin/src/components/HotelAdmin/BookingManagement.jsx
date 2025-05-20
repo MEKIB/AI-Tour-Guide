@@ -32,7 +32,7 @@ const BookingManagement = () => {
       roomType: 'Standard',
       checkIn: '2025-03-19',
       checkOut: '2025-03-21',
-      status: 'Booked', // Initial status
+      status: 'Booked',
       paymentStatus: 'Confirmed',
     },
     {
@@ -50,7 +50,7 @@ const BookingManagement = () => {
       roomType: 'Suite',
       checkIn: '2025-03-18',
       checkOut: '2025-03-20',
-      status: 'Checked-In', // Already checked in
+      status: 'Checked-In',
       paymentStatus: 'Confirmed',
     },
     {
@@ -136,34 +136,11 @@ const BookingManagement = () => {
     },
   ]);
 
-  const [selectedDate, setSelectedDate] = useState(new Date('2025-03-20')); // Default to March 20, 2025
-  const [filterType, setFilterType] = useState('date'); // 'date', 'today', 'week', 'month', 'year'
-  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'checked-in', 'not-checked-in'
+  const [selectedDate, setSelectedDate] = useState(new Date('2025-03-20'));
+  const [filterType, setFilterType] = useState('date');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
-  const [selectedBookingId, setSelectedBookingId] = useState(null);
   const itemsPerPage = 10;
-
-  // Handle check-in confirmation
-  const handleCheckIn = (id) => {
-    setSelectedBookingId(id);
-    setOpenConfirmDialog(true);
-  };
-
-  // Confirm check-in
-  const confirmCheckIn = () => {
-    setBookings((prevBookings) =>
-      prevBookings.map((booking) =>
-        booking.id === selectedBookingId ? { ...booking, status: 'Checked-In' } : booking
-      )
-    );
-    setOpenConfirmDialog(false);
-  };
-
-  // Close confirmation dialog
-  const closeConfirmDialog = () => {
-    setOpenConfirmDialog(false);
-  };
 
   // Filter bookings based on the selected filter type
   const filteredBookings = bookings.filter((booking) => {
@@ -177,7 +154,6 @@ const BookingManagement = () => {
     const startOfYear = new Date(today.getFullYear(), 0, 1);
     const endOfYear = new Date(today.getFullYear(), 11, 31);
 
-    // Filter by date range
     let dateFilterPassed = false;
     switch (filterType) {
       case 'date':
@@ -199,7 +175,6 @@ const BookingManagement = () => {
         dateFilterPassed = true;
     }
 
-    // Filter by status
     let statusFilterPassed = false;
     switch (statusFilter) {
       case 'all':
@@ -241,12 +216,12 @@ const BookingManagement = () => {
             MenuProps={{
               PaperProps: {
                 sx: {
-                  backgroundColor: '#2D2D2D', // Dropdown modal background color
-                  color: '#EEEEEE', // Dropdown text color
+                  backgroundColor: '#2D2D2D',
+                  color: '#EEEEEE',
                   '& .MuiMenuItem-root': {
-                    color: '#EEEEEE', // Menu item text color
+                    color: '#EEEEEE',
                     '&:hover': {
-                      backgroundColor: '#393E46', // Hover background color
+                      backgroundColor: '#393E46',
                     },
                   },
                 },
@@ -270,27 +245,27 @@ const BookingManagement = () => {
                   {...params}
                   fullWidth
                   sx={{
-                    backgroundColor: '#00ADB5 !important', // Background color of the input field
+                    backgroundColor: '#00ADB5 !important',
                     borderRadius: 1,
                     '& .MuiInputBase-input': {
-                      color: '#EEEEEE !important', // Text color for the date input
+                      color: '#EEEEEE !important',
                     },
                     '& .MuiInputLabel-root': {
-                      color: '#EEEEEE !important', // Label color
+                      color: '#EEEEEE !important',
                     },
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {
-                        borderColor: '#00ADB5 !important', // Border color
+                        borderColor: '#00ADB5 !important',
                       },
                       '&:hover fieldset': {
-                        borderColor: '#00ADB5 !important', // Hover border color
+                        borderColor: '#00ADB5 !important',
                       },
                       '&.Mui-focused fieldset': {
-                        borderColor: '#00ADB5 !important', // Focus border color
+                        borderColor: '#00ADB5 !important',
                       },
                     },
                     '& .MuiSvgIcon-root': {
-                      color: '#EEEEEE !important', // Calendar icon color
+                      color: '#EEEEEE !important',
                     },
                   }}
                 />
@@ -347,23 +322,20 @@ const BookingManagement = () => {
                     <TableCell sx={{ color: '#EEEEEE' }}>{booking.status}</TableCell>
                     <TableCell sx={{ color: '#EEEEEE' }}>{booking.paymentStatus}</TableCell>
                     <TableCell>
-                      {booking.status === 'Booked' ? (
-                        <Button
-                          variant="contained"
-                          sx={{ backgroundColor: '#00ADB5', color: '#EEEEEE' }}
-                          onClick={() => handleCheckIn(booking.id)}
-                        >
-                          Check-In
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="contained"
-                          sx={{ backgroundColor: '#393E46', color: '#00ADB5' }} // Text color changed to #00ADB5
-                          disabled
-                        >
-                          Checked-In
-                        </Button>
-                      )}
+                      <Button
+                        variant="contained"
+                        sx={{
+                          backgroundColor: booking.status === 'Booked' ? '#00ADB5' : '#393E46',
+                          color: '#EEEEEE',
+                          cursor: 'default',
+                          '&:hover': {
+                            backgroundColor: booking.status === 'Booked' ? '#00ADB5' : '#393E46',
+                          },
+                        }}
+                     
+                      >
+                        {booking.status === 'Booked' ? 'Check-In' : 'Checked-In'}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -387,35 +359,19 @@ const BookingManagement = () => {
               onChange={(event, page) => setCurrentPage(page)}
               sx={{
                 '& .MuiPaginationItem-root': {
-                  color: '#EEEEEE !important', // Default text color for all pagination items
+                  color: '#EEEEEE !important',
                 },
                 '& .Mui-selected': {
-                  backgroundColor: '#00ADB5 !important', // Background color for the active page
-                  color: '#EEEEEE !important', // Text color for the active page
+                  backgroundColor: '#00ADB5 !important',
+                  color: '#EEEEEE !important',
                   '&:hover': {
-                    backgroundColor: '#00ADB5 !important', // Hover background color for the active page
+                    backgroundColor: '#00ADB5 !important',
                   },
                 },
               }}
             />
           </Box>
         )}
-
-        {/* Confirmation Dialog */}
-        <Dialog open={openConfirmDialog} onClose={closeConfirmDialog}>
-          <DialogTitle>Confirm Check-In</DialogTitle>
-          <DialogContent>
-            <Typography>Are you sure you want to check in this guest?</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={closeConfirmDialog} sx={{ color: '#00ADB5' }}>
-              Cancel
-            </Button>
-            <Button onClick={confirmCheckIn} sx={{ color: '#00ADB5' }}>
-              Confirm
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Box>
     </LocalizationProvider>
   );
