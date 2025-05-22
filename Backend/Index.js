@@ -1772,6 +1772,43 @@ mongoose
     }
   });
 
+
+ // Endpoint to process Chapa refund
+app.post('/api/chapa/refund/:tx_ref', async (req, res) => {
+  console.log('Refund endpoint called with tx_ref:', req.params.tx_ref);
+  console.log('Request body:', req.body);
+  try {
+    const { reason, amount, meta } = req.body;
+    console.log('Sending refund request to Chapa API:', {
+      tx_ref: req.params.tx_ref,
+      reason,
+      amount,
+      meta,
+    });
+    const response = await axios.post(
+      `https://api.chapa.co/v1/refund/${req.params.tx_ref}`,
+      {
+        reason,
+        amount,
+        meta,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${CHAPA_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    console.log('Chapa refund response:', response.data);
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error('Chapa refund error:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Failed to process refund',
+    });
+  }
+});;
+
 // Utility function to generate booking code
 const generateBookingCode = (options = {}) => {
   const { prefix = 'BOOK', size = 15, removePrefix = false } = options;
