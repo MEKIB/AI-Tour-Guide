@@ -36,18 +36,20 @@ const PaymentMonitoring = () => {
     severity: 'success',
   });
   const [loading, setLoading] = useState(false);
+  const [transactionData, setTransactionData] = useState(null);
 
   // Backend API base URL
   const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:2000';
 
-  // Mock payment data
+  // Mock payment data (assumed to contain real txRef values)
   useEffect(() => {
+    console.log('Loading mock payment data with real txRef values');
     const mockPayments = [
       {
-        txRef: 'TX-TGVMSX6KIQY8D8F',
+        txRef: 'TX-ZC2R4K48IN33MIZ',
         userName: 'Test User',
         hotel: 'Test Hotel',
-        amount: 100,
+        amount: 94, // Corrected to match verified amount
         checkInStatus: 'Check In',
         checkInDate: '2025-06-01',
         checkOutDate: '2025-06-05',
@@ -70,11 +72,12 @@ const PaymentMonitoring = () => {
         amount: 300,
         checkInStatus: 'Checked In',
         checkInDate: '2025-06-15',
-        checkOutDate: 'ස 2025-05-02',
+        checkOutDate: '2025-06-20',
         date: '2025-05-02',
       },
     ];
     setPayments(mockPayments);
+    console.log('Mock payments set:', mockPayments);
   }, []);
 
   // Filter payments by search query
@@ -83,8 +86,10 @@ const PaymentMonitoring = () => {
   );
 
   // Open refund confirmation dialog
-  const openRefundDialog = (payment) => {
+  const openRefundDialog = async (payment) => {
+    console.log('Attempting to open refund dialog for payment:', payment);
     if (payment.checkInStatus === 'Checked In') {
+      console.log('Refund blocked: Payment is already checked in');
       setNotification({
         open: true,
         message: 'Cannot refund: This booking is already checked in.',
@@ -92,29 +97,125 @@ const PaymentMonitoring = () => {
       });
       return;
     }
-    setPaymentToRefund(payment);
-    setRefundDetails({ reason: '', amount: payment.amount.toString() });
-    setRefundDialogOpen(true);
+
+    // Verify transaction before opening dialog
+    console.log('Verifying transaction:', payment.txRef);
+    try {
+      const verifyResponse = await axios.get(
+        `${BACKEND_API_URL}/api/chapa/verify/${payment.txRef}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      console.log('Verification response:', {
+        status: verifyResponse.status,
+        data: verifyResponse.data,
+        fullTransactionData: verifyResponse.data.data, // Log full transaction data
+      });
+      
+      if (verifyResponse.data.status !== 'success') {
+        console.log('Transaction verification failed:', verifyResponse.data);
+        setNotification({
+          open: true,
+          message: 'Cannot refund: Transaction not found or invalid.',
+          severity: 'error',
+        });
+        return;
+      }
+
+      // Check transaction status and get the reference from full data
+      const transactionStatus = verifyResponse.data.data?.status || 'unknown';
+      const refundStatus = verifyResponse.data.data?.refund_status || 'none';
+      const transactionReference = verifyResponse.data.data?.reference; // Get reference from full data
+      
+      console.log('Transaction details:', {
+        status: transactionStatus,
+        refundStatus: refundStatus,
+        amount: verifyResponse.data.data?.amount,
+        reference: transactionReference,
+        fullData: verifyResponse.data.data,
+      });
+      
+      if (transactionStatus !== 'success' && transactionStatus !== 'completed') {
+        console.log('Refund blocked: Transaction status is not refundable:', transactionStatus);
+        setNotification({
+          open: true,
+          message: `Cannot refund: Transaction status is ${transactionStatus}.`,
+          severity: 'error',
+        });
+        return;
+      }
+      
+      if (refundStatus === 'refunded' || refundStatus === 'partially_refunded') {
+        console.log('Refund blocked: Transaction already refunded:', refundStatus);
+        setNotification({
+          open: true,
+          message: `Cannot refund: Transaction is already ${refundStatus}.`,
+          severity: 'error',
+        });
+        return;
+      }
+
+      if (!transactionReference) {
+        console.log('Refund blocked: No reference found in transaction data');
+        setNotification({
+          open: true,
+          message: 'Cannot refund: No valid reference found in transaction data.',
+          severity: 'error',
+        });
+        return;
+      }
+
+      setTransactionData({
+        ...verifyResponse.data.data,
+        reference: transactionReference // Store the reference for refund
+      });
+      setPaymentToRefund(payment);
+      setRefundDetails({ 
+        reason: '', 
+        amount: verifyResponse.data.data.amount.toString() 
+      });
+      setRefundDialogOpen(true);
+      console.log('Refund dialog opened with payment:', payment);
+    } catch (error) {
+      console.error('Verification error:', {
+        status: error.response?.status,
+        data: error.response?.data || error.message,
+      });
+      setNotification({
+        open: true,
+        message:
+          error.response?.data?.message ||
+          'Failed to verify transaction. Please check the transaction reference in the Chapa dashboard.',
+        severity: 'error',
+      });
+    }
   };
 
   // Close refund confirmation dialog
   const closeRefundDialog = () => {
+    console.log('Closing refund dialog');
     setPaymentToRefund(null);
     setRefundDetails({ reason: '', amount: '' });
+    setTransactionData(null);
     setRefundDialogOpen(false);
   };
 
   // Handle refund detail changes
   const handleRefundDetailChange = (field) => (event) => {
+    console.log(`Updating refund detail - ${field}:`, event.target.value);
     setRefundDetails((prev) => ({
       ...prev,
       [field]: event.target.value,
     }));
   };
 
-  // Process refund
+  // Process refund using the reference from transaction data
   const processRefund = async () => {
     if (!refundDetails.reason) {
+      console.log('Refund blocked: No reason provided');
       setNotification({
         open: true,
         message: 'Please provide a reason for the refund.',
@@ -123,19 +224,36 @@ const PaymentMonitoring = () => {
       return;
     }
 
+    console.log('Initiating refund process for reference:', transactionData?.reference);
     setLoading(true);
     try {
+      // Validate refund amount against transaction amount
+      const transactionAmount = transactionData?.amount ? Number(transactionData.amount) : paymentToRefund.amount;
+      const refundAmount = refundDetails.amount ? Number(refundDetails.amount) : transactionAmount;
+      console.log('Validating refund amount:', { transactionAmount, refundAmount });
+      
+      if (refundAmount > transactionAmount) {
+        console.log('Refund blocked: Refund amount exceeds transaction amount');
+        throw new Error('Refund amount cannot exceed the original transaction amount');
+      }
+
       const refundData = {
         reason: refundDetails.reason,
-        amount: refundDetails.amount || undefined, // Omit if empty to refund full amount
+        amount: refundDetails.amount ? Number(refundDetails.amount) : undefined,
         meta: {
           customer_id: paymentToRefund.userName,
-          reference: `REF-${paymentToRefund.txRef}`,
+          reference: transactionData.reference, // Use the reference from transaction data
         },
       };
+      
+      console.log('Sending refund request to backend:', {
+        url: `${BACKEND_API_URL}/api/chapa/refund/${transactionData.reference}`, // Use reference for the API call
+        headers: { 'Content-Type': 'application/json' },
+        data: refundData,
+      });
 
       const response = await axios.post(
-        `${BACKEND_API_URL}/api/chapa/refund/${paymentToRefund.txRef}`,
+        `${BACKEND_API_URL}/api/chapa/refund/${transactionData.reference}`, // Use reference for the API call
         refundData,
         {
           headers: {
@@ -143,8 +261,14 @@ const PaymentMonitoring = () => {
           },
         }
       );
+      
+      console.log('Refund response from backend:', {
+        status: response.status,
+        data: response.data,
+      });
 
       if (response.data.status === 'success') {
+        console.log('Refund successful, updating payment status');
         setPayments((prevPayments) =>
           prevPayments.map((payment) =>
             payment.txRef === paymentToRefund.txRef
@@ -154,29 +278,38 @@ const PaymentMonitoring = () => {
         );
         setNotification({
           open: true,
-          message: `Refund processed successfully for ${paymentToRefund.txRef}.`,
+          message: `Refund processed successfully for ${transactionData.reference}.`,
           severity: 'success',
         });
       } else {
+        console.log('Refund failed with response:', response.data);
         throw new Error(response.data.message || 'Refund failed');
       }
     } catch (error) {
-      console.error('Refund error:', error.response?.data || error.message);
+      console.error('Refund error:', {
+        status: error.response?.status,
+        data: error.response?.data || error.message,
+      });
       setNotification({
         open: true,
         message:
-          error.response?.data?.message ||
-          'Failed to process refund. Please check your available balance or verify the transaction reference.',
+          error.message === 'Refund amount cannot exceed the original transaction amount'
+            ? 'Refund amount exceeds original transaction amount.'
+            : error.response?.data?.message.includes('Transaction not found')
+            ? 'Failed to process refund: Transaction not found. Please check the transaction status in the Chapa dashboard or contact Chapa support.'
+            : error.response?.data?.message || 'Failed to process refund. Please verify the transaction reference or contact Chapa support.',
         severity: 'error',
       });
     } finally {
       setLoading(false);
+      console.log('Refund process completed, closing dialog');
       closeRefundDialog();
     }
   };
 
   // Close notification
   const handleCloseNotification = () => {
+    console.log('Closing notification');
     setNotification((prev) => ({ ...prev, open: false }));
   };
 
@@ -196,7 +329,7 @@ const PaymentMonitoring = () => {
       {/* Search Bar */}
       <TextField
         fullWidth
-        placeholder="Search by transaction reference (e.g., APsl2RfSSaNyv)"
+        placeholder="Search by transaction reference (e.g., TX-ZC2R4K48IN33MIZ)"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         InputProps={{
@@ -340,7 +473,7 @@ const PaymentMonitoring = () => {
             value={refundDetails.amount}
             onChange={handleRefundDetailChange('amount')}
             type="number"
-            helperText={`Leave blank to refund the full amount (${paymentToRefund?.amount} ETB).`}
+            helperText={`Leave blank to refund the full amount (${transactionData?.amount || paymentToRefund?.amount} ETB).`}
             sx={{
               mb: 2,
               '& .MuiOutlinedInput-root': {
