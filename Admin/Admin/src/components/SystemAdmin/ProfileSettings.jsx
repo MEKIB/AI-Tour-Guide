@@ -5,18 +5,17 @@ import {
   TextField,
   Button,
   Paper,
-  Input,
   Snackbar,
   Alert,
 } from '@mui/material';
-import { Close, PhotoCamera } from '@mui/icons-material';
+import axios from 'axios';
 
 const ProfileSettings = () => {
-  const [profile, setProfile] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
     password: '',
-    profileImage: null,
   });
 
   const [notification, setNotification] = useState({
@@ -27,50 +26,56 @@ const ProfileSettings = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProfile((prevProfile) => ({
-      ...prevProfile,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
     }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfile((prevProfile) => ({
-        ...prevProfile,
-        profileImage: URL.createObjectURL(file),
-      }));
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Basic client-side validation
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+      setNotification({
+        open: true,
+        message: 'All fields are required',
+        severity: 'error',
+      });
+      return;
     }
-  };
 
-  const handleEmailSubmit = (e) => {
-    e.preventDefault();
-    setNotification({
-      open: true,
-      message: 'Email updated successfully!',
-      severity: 'success',
-    });
-    console.log('Updated Email:', profile.email);
-  };
+    // Password validation
+    if (formData.password.length < 8) {
+      setNotification({
+        open: true,
+        message: 'Password must be at least 8 characters long',
+        severity: 'error',
+      });
+      return;
+    }
 
-  const handlePasswordSubmit = (e) => {
-    e.preventDefault();
-    setNotification({
-      open: true,
-      message: 'Password updated successfully!',
-      severity: 'success',
-    });
-    console.log('Updated Password:', profile.password);
-  };
-
-  const handleImageSubmit = (e) => {
-    e.preventDefault();
-    setNotification({
-      open: true,
-      message: 'Profile image updated successfully!',
-      severity: 'success',
-    });
-    console.log('Updated Profile Image:', profile.profileImage);
+    try {
+      const response = await axios.post('http://localhost:2000/api/system-admin/signup', formData);
+      setNotification({
+        open: true,
+        message: response.data.message,
+        severity: 'success',
+      });
+      // Reset form after successful submission
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+      });
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: error.response?.data?.message || 'Failed to create admin account',
+        severity: 'error',
+      });
+    }
   };
 
   const handleCloseNotification = () => {
@@ -86,6 +91,7 @@ const ProfileSettings = () => {
         color: '#EEEEEE',
         display: 'flex',
         justifyContent: 'center',
+        alignItems: 'center',
       }}
     >
       <Paper
@@ -102,19 +108,18 @@ const ProfileSettings = () => {
           variant="h4"
           sx={{ mb: 4, color: '#00ADB5', fontWeight: 'bold', textAlign: 'center' }}
         >
-          Profile Settings
+          Create System Admin
         </Typography>
 
-        {/* Email Update Form */}
-        <Box component="form" onSubmit={handleEmailSubmit} sx={{ mb: 4 }}>
+        <Box component="div" onSubmit={handleSubmit} sx={{ mb: 4 }}>
           <Typography sx={{ color: '#00ADB5', fontWeight: 'bold', mb: 1 }}>
-            Update Email
+            First Name
           </Typography>
           <TextField
             fullWidth
-            type="email"
-            name="email"
-            value={profile.email}
+            type="text"
+            name="firstName"
+            value={formData.firstName}
             onChange={handleChange}
             required
             sx={{
@@ -129,33 +134,63 @@ const ProfileSettings = () => {
               },
             }}
           />
-          <Button
-            type="submit"
-            variant="contained"
-            sx={{
-              bgcolor: '#00ADB5',
-              color: '#EEEEEE',
-              borderRadius: 1,
-              '&:hover': { bgcolor: '#0097A7' },
-              width: '100%',
-            }}
-          >
-            Update Email
-          </Button>
-        </Box>
 
-        {/* Password Update Form */}
-        <Box component="form" onSubmit={handlePasswordSubmit} sx={{ mb: 4 }}>
           <Typography sx={{ color: '#00ADB5', fontWeight: 'bold', mb: 1 }}>
-            Update Password
+            Last Name
+          </Typography>
+          <TextField
+            fullWidth
+            type="text"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleChange}
+            required
+            sx={{
+              mb: 2,
+              background: '#222831',
+              borderRadius: 1,
+              '& .MuiInputBase-input': { color: '#EEEEEE' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#00ADB5' },
+                '&:hover fieldset': { borderColor: '#00ADB5' },
+                '&.Mui-focused fieldset': { borderColor: '#00ADB5' },
+              },
+            }}
+          />
+
+          <Typography sx={{ color: '#00ADB5', fontWeight: 'bold', mb: 1 }}>
+            Email
+          </Typography>
+          <TextField
+            fullWidth
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            sx={{
+              mb: 2,
+              background: '#222831',
+              borderRadius: 1,
+              '& .MuiInputBase-input': { color: '#EEEEEE' },
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#00ADB5' },
+                '&:hover fieldset': { borderColor: '#00ADB5' },
+                '&.Mui-focused fieldset': { borderColor: '#00ADB5' },
+              },
+            }}
+          />
+
+          <Typography sx={{ color: '#00ADB5', fontWeight: 'bold', mb: 1 }}>
+            Password
           </Typography>
           <TextField
             fullWidth
             type="password"
             name="password"
-            value={profile.password}
+            value={formData.password}
             onChange={handleChange}
-            placeholder="Enter new password"
+            required
             sx={{
               mb: 2,
               background: '#222831',
@@ -168,8 +203,10 @@ const ProfileSettings = () => {
               },
             }}
           />
+
           <Button
-            type="submit"
+            type="button"
+            onClick={handleSubmit}
             variant="contained"
             sx={{
               bgcolor: '#00ADB5',
@@ -177,81 +214,13 @@ const ProfileSettings = () => {
               borderRadius: 1,
               '&:hover': { bgcolor: '#0097A7' },
               width: '100%',
+              mt: 2,
             }}
           >
-            Update Password
+            Create Admin Account
           </Button>
         </Box>
 
-        {/* Profile Image Update Form */}
-        <Box component="form" onSubmit={handleImageSubmit} sx={{ mb: 4 }}>
-          <Typography sx={{ color: '#00ADB5', fontWeight: 'bold', mb: 1 }}>
-            Update Profile Image
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              sx={{ color: '#EEEEEE', mr: 2 }}
-              startIcon={<PhotoCamera />}
-            />
-            {profile.profileImage && (
-              <img
-                src={profile.profileImage}
-                alt="Profile Preview"
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '2px solid #00ADB5',
-                }}
-              />
-            )}
-          </Box>
-          <Button
-            type="submit"
-            variant="contained"
-            sx={{
-              bgcolor: '#00ADB5',
-              color: '#EEEEEE',
-              borderRadius: 1,
-              '&:hover': { bgcolor: '#0097A7' },
-              width: '100%',
-            }}
-          >
-            Update Profile Image
-          </Button>
-        </Box>
-
-        {/* Disabled Name Field */}
-        <Box>
-          <Typography sx={{ color: '#00ADB5', fontWeight: 'bold', mb: 1 }}>
-            Name
-          </Typography>
-          <TextField
-            fullWidth
-            type="text"
-            name="name"
-            value={profile.name}
-            onChange={handleChange}
-            disabled
-            sx={{
-              mb: 2,
-              background: '#222831',
-              borderRadius: 1,
-              '& .MuiInputBase-input': { color: '#EEEEEE' },
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': { borderColor: '#00ADB5' },
-                '&:hover fieldset': { borderColor: '#00ADB5' },
-                '&.Mui-focused fieldset': { borderColor: '#00ADB5' },
-              },
-            }}
-          />
-        </Box>
-
-        {/* Notification */}
         <Snackbar
           open={notification.open}
           autoHideDuration={6000}

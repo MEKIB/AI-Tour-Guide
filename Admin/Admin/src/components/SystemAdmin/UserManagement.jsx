@@ -17,9 +17,11 @@ import {
   TextField,
   Avatar,
   IconButton,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import image from "../../assets/13.jpg"; // Ensure this path is correct
+import axios from 'axios';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -30,21 +32,40 @@ const UserManagement = () => {
   const [searchEmail, setSearchEmail] = useState('');
   const [openImageModal, setOpenImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState('');
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
-  // Fetch users from the backend (mock data for now)
+  // Fetch users from backend
   useEffect(() => {
-    const mockUsers = [
-      ...Array.from({ length: 15 }, (_, i) => ({
-        id: i + 1,
-        name: `User ${i + 1}`,
-        email: `user${i + 1}@example.com`,
-        phoneNumber: `+251 912 345 ${i.toString().padStart(3, '0')}`,
-        idPassport: `ID-${i + 1}`,
-        status: 'active', // Set all users to "active"
-        idPassportImage: image, // Use the imported image
-      })),
-    ];
-    setUsers(mockUsers);
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setNotification({
+            open: true,
+            message: 'Please log in to view users',
+            severity: 'error',
+          });
+          return;
+        }
+        const response = await axios.get('http://localhost:2000/users', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setUsers(response.data);
+      } catch (error) {
+        setNotification({
+          open: true,
+          message: error.response?.data?.message || 'Failed to fetch users',
+          severity: 'error',
+        });
+      }
+    };
+    fetchUsers();
   }, []);
 
   // Handle remove user button click
@@ -54,10 +75,31 @@ const UserManagement = () => {
   };
 
   // Confirm removal of user
-  const confirmRemoveUser = () => {
-    setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userToRemove));
-    setOpenConfirmModal(false);
-    setUserToRemove(null);
+  const confirmRemoveUser = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`http://localhost:2000/api/system-admin/users/${userToRemove}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userToRemove));
+      setNotification({
+        open: true,
+        message: 'User removed successfully',
+        severity: 'success',
+      });
+      setOpenConfirmModal(false);
+      setUserToRemove(null);
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: error.response?.data?.message || 'Failed to remove user',
+        severity: 'error',
+      });
+      setOpenConfirmModal(false);
+      setUserToRemove(null);
+    }
   };
 
   // Close the confirmation modal
@@ -80,6 +122,11 @@ const UserManagement = () => {
     setSelectedImage('');
   };
 
+  // Close notification
+  const handleCloseNotification = () => {
+    setNotification((prev) => ({ ...prev, open: false }));
+  };
+
   // Pagination logic
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
@@ -90,19 +137,6 @@ const UserManagement = () => {
   );
 
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
-
-  // Change page
-  const nextPage = () => {
-    if (currentPage < Math.ceil(filteredUsers.length / usersPerPage)) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
 
   return (
     <Box
@@ -184,42 +218,39 @@ const UserManagement = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {currentUsers.map((user) => {
-              console.log(user.idPassportImage); // Debug the image path
-              return (
-                <TableRow key={user.id}>
-                  <TableCell sx={{ color: '#EEEEEE' }}>{user.id}</TableCell>
-                  <TableCell sx={{ color: '#EEEEEE' }}>{user.name}</TableCell>
-                  <TableCell sx={{ color: '#EEEEEE' }}>{user.email}</TableCell>
-                  <TableCell sx={{ color: '#EEEEEE' }}>{user.phoneNumber}</TableCell>
-                  <TableCell>
-                    <IconButton onClick={() => handleImageClick(user.idPassportImage)}>
-                      <Avatar
-                        src={user.idPassportImage}
-                        alt="ID/Passport"
-                        sx={{ width: 50, height: 50, cursor: 'pointer' }}
-                      />
-                    </IconButton>
-                  </TableCell>
-                  <TableCell sx={{ color: '#EEEEEE' }}>{user.status}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="contained"
-                      onClick={() => handleRemoveUserClick(user.id)}
-                      sx={{
-                        backgroundColor: '#FF5252',
-                        color: '#EEEEEE',
-                        '&:hover': {
-                          backgroundColor: '#FF1744',
-                        },
-                      }}
-                    >
-                      Remove
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {currentUsers.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell sx={{ color: '#EEEEEE' }}>{user.id}</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>{user.name}</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>{user.email}</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>{user.phoneNumber}</TableCell>
+                <TableCell>
+                  <IconButton onClick={() => handleImageClick(user.idPassportImage)}>
+                    <Avatar
+                      src={user.idPassportImage}
+                      alt="ID/Passport"
+                      sx={{ width: 50, height: 50, cursor: 'pointer' }}
+                    />
+                  </IconButton>
+                </TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>{user.status}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleRemoveUserClick(user.id)}
+                    sx={{
+                      backgroundColor: '#FF5252',
+                      color: '#EEEEEE',
+                      '&:hover': {
+                        backgroundColor: '#FF1744',
+                      },
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
@@ -228,7 +259,7 @@ const UserManagement = () => {
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
         <Button
           variant="contained"
-          onClick={prevPage}
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
           sx={{
             backgroundColor: '#00ADB5',
@@ -243,7 +274,7 @@ const UserManagement = () => {
         </Button>
         <Button
           variant="contained"
-          onClick={nextPage}
+          onClick={() => setCurrentPage((prev) => prev + 1)}
           disabled={currentPage === Math.ceil(filteredUsers.length / usersPerPage)}
           sx={{
             backgroundColor: '#00ADB5',
@@ -278,7 +309,7 @@ const UserManagement = () => {
         open={openImageModal}
         onClose={handleCloseImageModal}
         maxWidth="md"
-        disableEnforceFocus // Add this prop
+        disableEnforceFocus
       >
         <DialogTitle>
           ID/Passport Image
@@ -299,6 +330,22 @@ const UserManagement = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Notification Snackbar */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.severity}
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -26,13 +26,13 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
 } from '@mui/material';
-import { 
-  Hotel, 
-  CalendarToday, 
-  KingBed, 
-  People, 
+import {
+  Hotel,
+  CalendarToday,
+  KingBed,
+  People,
   Cancel,
   CheckCircle,
   AccessTime,
@@ -43,10 +43,11 @@ import {
   Timeline,
   MonetizationOn,
   DateRange,
-  Analytics
+  Analytics,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { Link as RouterLink } from 'react-router-dom';
+import axios from 'axios';
 
 const ColorButton = styled(Button)({
   backgroundColor: '#00ADB5',
@@ -64,11 +65,10 @@ const StatusChip = styled(Chip)({
 const BookingAnalytics = ({ bookings }) => {
   const [timeRange, setTimeRange] = useState('month');
 
-  // Calculate total spending
   const calculateTotalSpending = (range) => {
     const now = new Date();
     let startDate;
-    
+
     switch (range) {
       case 'week':
         startDate = new Date(now.setDate(now.getDate() - 7));
@@ -84,7 +84,7 @@ const BookingAnalytics = ({ bookings }) => {
     }
 
     return bookings
-      .filter(booking => {
+      .filter((booking) => {
         const bookingDate = new Date(booking.checkIn);
         return bookingDate >= startDate && booking.status !== 'cancelled';
       })
@@ -95,29 +95,37 @@ const BookingAnalytics = ({ bookings }) => {
 
   const getTimeRangeLabel = () => {
     switch (timeRange) {
-      case 'week': return 'Last Week';
-      case 'month': return 'Last Month';
-      case 'year': return 'Last Year';
-      default: return 'All Time';
+      case 'week':
+        return 'Last Week';
+      case 'month':
+        return 'Last Month';
+      case 'year':
+        return 'Last Year';
+      default:
+        return 'All Time';
     }
   };
 
   return (
     <Grid container spacing={3}>
       <Grid item xs={12}>
-        <Card sx={{ 
-          backgroundColor: '#393E46',
-          mb: 3,
-          borderRadius: 2,
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
-        }}>
+        <Card
+          sx={{
+            backgroundColor: '#393E46',
+            mb: 3,
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+          }}
+        >
           <CardContent>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2
-            }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 2,
+              }}
+            >
               <Typography variant="h5" sx={{ color: '#00ADB5' }}>
                 <MonetizationOn sx={{ verticalAlign: 'middle', mr: 1 }} />
                 Booking Analytics
@@ -128,14 +136,14 @@ const BookingAnalytics = ({ bookings }) => {
                   value={timeRange}
                   onChange={(e) => setTimeRange(e.target.value)}
                   label="Time Range"
-                  sx={{ 
+                  sx={{
                     color: '#EEEEEE',
                     '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#00ADB5'
+                      borderColor: '#00ADB5',
                     },
                     '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#00ADB5'
-                    }
+                      borderColor: '#00ADB5',
+                    },
                   }}
                 >
                   <MenuItem value="week">Last Week</MenuItem>
@@ -149,12 +157,14 @@ const BookingAnalytics = ({ bookings }) => {
 
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
-                <Paper sx={{ 
-                  backgroundColor: '#222831',
-                  p: 2,
-                  borderRadius: 2,
-                  height: '100%'
-                }}>
+                <Paper
+                  sx={{
+                    backgroundColor: '#222831',
+                    p: 2,
+                    borderRadius: 2,
+                    height: '100%',
+                  }}
+                >
                   <Typography variant="h6" sx={{ color: '#EEEEEE', mb: 1 }}>
                     <DateRange sx={{ verticalAlign: 'middle', mr: 1 }} />
                     {getTimeRangeLabel()} Spending
@@ -168,22 +178,26 @@ const BookingAnalytics = ({ bookings }) => {
                 </Paper>
               </Grid>
               <Grid item xs={12} md={6}>
-                <Paper sx={{ 
-                  backgroundColor: '#222831',
-                  p: 2,
-                  borderRadius: 2,
-                  height: '100%'
-                }}>
+                <Paper
+                  sx={{
+                    backgroundColor: '#222831',
+                    p: 2,
+                    borderRadius: 2,
+                    height: '100%',
+                  }}
+                >
                   <Typography variant="h6" sx={{ color: '#EEEEEE', mb: 1 }}>
                     <Timeline sx={{ verticalAlign: 'middle', mr: 1 }} />
                     Booking Trends
                   </Typography>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center',
-                    height: '100px'
-                  }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      height: '100px',
+                    }}
+                  >
                     <Typography variant="body1" sx={{ color: '#EEEEEE' }}>
                       {timeRange === 'week' && 'Weekly spending analytics coming soon'}
                       {timeRange === 'month' && 'Monthly booking trends coming soon'}
@@ -205,80 +219,95 @@ const BookingHistory = () => {
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
-    severity: 'success'
+    severity: 'success',
   });
   const [cancelDialog, setCancelDialog] = useState({
     open: false,
     bookingId: null,
-    bookingName: ''
+    bookingName: '',
   });
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Sample booking data with future dates
-  const bookings = [
-    {
-      id: 1,
-      hotelName: "Grand Plaza Hotel",
-      roomType: "Deluxe Suite",
-      checkIn: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 days ago
-      checkOut: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 10 days ago
-      roomNumber: "305",
-      guests: 2,
-      totalPrice: 1200,
-      status: "completed",
-      rating: 4.5,
-      image: "https://source.unsplash.com/random/300x200/?hotel"
-    },
-    {
-      id: 2,
-      hotelName: "Mountain View Resort",
-      roomType: "Premium Room",
-      checkIn: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
-      checkOut: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 12 days from now
-      roomNumber: "412",
-      guests: 2,
-      totalPrice: 950,
-      status: "upcoming",
-      image: "https://source.unsplash.com/random/300x200/?resort"
-    },
-    {
-      id: 3,
-      hotelName: "Beachside Villa",
-      roomType: "Ocean View Suite",
-      checkIn: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 60 days ago
-      checkOut: new Date(Date.now() - 55 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 55 days ago
-      roomNumber: "208",
-      guests: 4,
-      totalPrice: 1800,
-      status: "completed",
-      rating: 5,
-      image: "https://source.unsplash.com/random/300x200/?beach,villa"
-    },
-    {
-      id: 4,
-      hotelName: "City Central Hotel",
-      roomType: "Executive Room",
-      checkIn: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 14 days from now
-      checkOut: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 18 days from now
-      roomNumber: "710",
-      guests: 1,
-      totalPrice: 750,
-      status: "upcoming",
-      image: "https://source.unsplash.com/random/300x200/?city,hotel"
-    },
-    {
-      id: 5,
-      hotelName: "Lakeside Retreat",
-      roomType: "Luxury Villa",
-      checkIn: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 5 days ago
-      checkOut: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 days ago
-      roomNumber: "102",
-      guests: 2,
-      totalPrice: 1500,
-      status: "completed",
-      rating: 4.8,
-      image: "https://source.unsplash.com/random/300x200/?lake,villa"
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userId = user?.id;
+  const isLoggedIn = !!token && !!userId;
+
+  const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:2000';
+
+  // Log environment variable for debugging
+  console.log('Backend API URL:', BACKEND_API_URL);
+
+  // Fetch booking history
+  useEffect(() => {
+    const fetchBookings = async () => {
+      if (!isLoggedIn) {
+        setError('Please log in to view your booking history');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await axios.get(`${BACKEND_API_URL}/api/bookingHistory/user`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const fetchedBookings = response.data.data;
+        setBookings(fetchedBookings);
+        setError('');
+      } catch (err) {
+        console.error('Error fetching booking history:', err);
+        setError(
+          err.response?.data?.message || 'Failed to fetch booking history. Please try again.'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, [isLoggedIn, token, BACKEND_API_URL]);
+
+  // Handle cancellation API call
+  const confirmCancelBooking = async () => {
+    try {
+      const response = await axios.patch(
+        `${BACKEND_API_URL}/api/bookingHistory/${cancelDialog.bookingId}/cancel`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setBookings((prev) =>
+        prev.map((booking) =>
+          booking.id === cancelDialog.bookingId ? { ...booking, status: 'cancelled' } : booking
+        )
+      );
+
+      setSnackbar({
+        open: true,
+        message: `Booking for ${cancelDialog.bookingName} has been cancelled`,
+        severity: 'success',
+      });
+    } catch (err) {
+      console.error('Error cancelling booking:', err);
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || 'Failed to cancel booking',
+        severity: 'error',
+      });
+    } finally {
+      handleCloseCancelDialog();
     }
-  ];
+  };
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -288,7 +317,7 @@ const BookingHistory = () => {
     setCancelDialog({
       open: true,
       bookingId,
-      bookingName
+      bookingName,
     });
   };
 
@@ -296,25 +325,15 @@ const BookingHistory = () => {
     setCancelDialog({
       open: false,
       bookingId: null,
-      bookingName: ''
+      bookingName: '',
     });
-  };
-
-  const confirmCancelBooking = () => {
-    // In a real app, you would call an API here
-    setSnackbar({
-      open: true,
-      message: `Booking for ${cancelDialog.bookingName} has been cancelled`,
-      severity: 'success'
-    });
-    handleCloseCancelDialog();
   };
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const filteredBookings = bookings.filter(booking => {
+  const filteredBookings = bookings.filter((booking) => {
     if (tabValue === 0) return true; // All
     if (tabValue === 1) return booking.status === 'upcoming';
     if (tabValue === 2) return booking.status === 'completed';
@@ -326,26 +345,26 @@ const BookingHistory = () => {
     switch (status) {
       case 'upcoming':
         return (
-          <StatusChip 
-            icon={<AccessTime style={{ color: '#EEEEEE' }} />} 
-            label="Upcoming" 
-            sx={{ backgroundColor: '#FFA500' }} 
+          <StatusChip
+            icon={<AccessTime style={{ color: '#EEEEEE' }} />}
+            label="Upcoming"
+            sx={{ backgroundColor: '#FFA500' }}
           />
         );
       case 'completed':
         return (
-          <StatusChip 
-            icon={<CheckCircle style={{ color: '#EEEEEE' }} />} 
-            label="Completed" 
-            sx={{ backgroundColor: '#4CAF50' }} 
+          <StatusChip
+            icon={<CheckCircle style={{ color: '#EEEEEE' }} />}
+            label="Completed"
+            sx={{ backgroundColor: '#4CAF50' }}
           />
         );
       case 'cancelled':
         return (
-          <StatusChip 
-            icon={<Cancel style={{ color: '#EEEEEE' }} />} 
-            label="Cancelled" 
-            sx={{ backgroundColor: '#F44336' }} 
+          <StatusChip
+            icon={<Cancel style={{ color: '#EEEEEE' }} />}
+            label="Cancelled"
+            sx={{ backgroundColor: '#F44336' }}
           />
         );
       default:
@@ -358,35 +377,36 @@ const BookingHistory = () => {
   };
 
   return (
-    <Box sx={{ 
-      backgroundColor: '#222831', 
-      minHeight: '100vh', 
-      p: 3,
-      color: '#EEEEEE'
-    }}>
-      {/* Breadcrumb Navigation */}
+    <Box
+      sx={{
+        backgroundColor: '#222831',
+        minHeight: '100vh',
+        p: 3,
+        color: '#EEEEEE',
+      }}
+    >
       <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 3, color: '#00ADB5' }}>
         <Link
           component={RouterLink}
           to="/"
-          sx={{ 
-            display: 'flex', 
+          sx={{
+            display: 'flex',
             alignItems: 'center',
             color: '#00ADB5',
             textDecoration: 'none',
             '&:hover': {
-              textDecoration: 'underline'
-            }
+              textDecoration: 'underline',
+            },
           }}
         >
           <Home sx={{ mr: 0.5 }} fontSize="inherit" />
           Home
         </Link>
-        <Typography 
-          sx={{ 
-            display: 'flex', 
+        <Typography
+          sx={{
+            display: 'flex',
             alignItems: 'center',
-            color: '#EEEEEE'
+            color: '#EEEEEE',
           }}
         >
           <History sx={{ mr: 0.5 }} fontSize="inherit" />
@@ -399,60 +419,105 @@ const BookingHistory = () => {
       </Typography>
 
       <Paper sx={{ mb: 3, backgroundColor: '#393E46' }}>
-        <Tabs 
-          value={tabValue} 
+        <Tabs
+          value={tabValue}
           onChange={handleTabChange}
           variant="scrollable"
           scrollButtons="auto"
           sx={{
             '& .MuiTab-root': { color: '#EEEEEE' },
-            '& .Mui-selected': { color: '#00ADB5' }
+            '& .Mui-selected': { color: '#00ADB5' },
           }}
         >
-          <Tab label={
-            <Badge badgeContent={bookings.length} color="primary">
-              All
-            </Badge>
-          } />
-          <Tab label={
-            <Badge badgeContent={bookings.filter(b => b.status === 'upcoming').length} color="primary">
-              Upcoming
-            </Badge>
-          } />
-          <Tab label={
-            <Badge badgeContent={bookings.filter(b => b.status === 'completed').length} color="primary">
-              Completed
-            </Badge>
-          } />
-          <Tab label={
-            <Badge badgeContent={bookings.filter(b => b.status === 'cancelled').length} color="primary">
-              Cancelled
-            </Badge>
-          } />
-          <Tab 
+          <Tab
+            label={
+              <Badge badgeContent={bookings.length} color="primary">
+                All
+              </Badge>
+            }
+          />
+          <Tab
+            label={
+              <Badge
+                badgeContent={bookings.filter((b) => b.status === 'upcoming').length}
+                color="primary"
+              >
+                Upcoming
+              </Badge>
+            }
+          />
+          <Tab
+            label={
+              <Badge
+                badgeContent={bookings.filter((b) => b.status === 'completed').length}
+                color="primary"
+              >
+                Completed
+              </Badge>
+            }
+          />
+          <Tab
+            label={
+              <Badge
+                badgeContent={bookings.filter((b) => b.status === 'cancelled').length}
+                color="primary"
+              >
+                Cancelled
+              </Badge>
+            }
+          />
+          <Tab
             icon={<Analytics />}
             iconPosition="start"
             label="Analytics"
             sx={{
               '&.Mui-selected': {
-                color: '#00ADB5'
-              }
+                color: '#00ADB5',
+              },
             }}
           />
         </Tabs>
       </Paper>
 
-      {tabValue === 4 ? (
+      {loading ? (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '300px',
+          }}
+        >
+          <CircularProgress sx={{ color: '#00ADB5' }} />
+        </Box>
+      ) : error ? (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '300px',
+            backgroundColor: '#393E46',
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="h6" color="#EEEEEE">
+            {error}
+          </Typography>
+        </Box>
+      ) : tabValue === 4 ? (
         <BookingAnalytics bookings={bookings} />
       ) : filteredBookings.length === 0 ? (
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '300px',
-          backgroundColor: '#393E46',
-          borderRadius: 2
-        }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '300px',
+            backgroundColor: '#393E46',
+            borderRadius: 2,
+          }}
+        >
           <Typography variant="h6" color="#EEEEEE">
             No bookings found
           </Typography>
@@ -461,31 +526,35 @@ const BookingHistory = () => {
         <Grid container spacing={3}>
           {filteredBookings.map((booking) => (
             <Grid item xs={12} key={booking.id}>
-              <Card sx={{ 
-                backgroundColor: '#393E46',
-                borderRadius: 2,
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
-                transition: 'transform 0.3s',
-                '&:hover': {
-                  transform: 'translateY(-5px)'
-                }
-              }}>
+              <Card
+                sx={{
+                  backgroundColor: '#393E46',
+                  borderRadius: 2,
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+                  transition: 'transform 0.3s',
+                  '&:hover': {
+                    transform: 'translateY(-5px)',
+                  },
+                }}
+              >
                 <CardContent>
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={3}>
-                      <Box sx={{ 
-                        height: '100%',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                      }}>
+                      <Box
+                        sx={{
+                          height: '100%',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}
+                      >
                         <Avatar
                           src={booking.image}
                           variant="rounded"
-                          sx={{ 
-                            width: '100%', 
+                          sx={{
+                            width: '100%',
                             height: 180,
-                            objectFit: 'cover'
+                            objectFit: 'cover',
                           }}
                         />
                       </Box>
@@ -502,11 +571,11 @@ const BookingHistory = () => {
                               <Chip
                                 icon={<Star style={{ color: '#FFD700' }} />}
                                 label={booking.rating}
-                                sx={{ 
+                                sx={{
                                   ml: 1,
                                   backgroundColor: 'transparent',
                                   color: '#FFD700',
-                                  border: '1px solid #FFD700'
+                                  border: '1px solid #FFD700',
                                 }}
                               />
                             )}
@@ -529,7 +598,9 @@ const BookingHistory = () => {
                           <Grid item xs={6} sm={4}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                               <People sx={{ mr: 1, color: '#00ADB5' }} />
-                              <Typography>{booking.guests} Guest{booking.guests > 1 ? 's' : ''}</Typography>
+                              <Typography>
+                                {booking.guests} Guest{booking.guests > 1 ? 's' : ''}
+                              </Typography>
                             </Box>
                           </Grid>
                           <Grid item xs={6} sm={6}>
@@ -548,7 +619,13 @@ const BookingHistory = () => {
 
                         <Divider sx={{ my: 2, backgroundColor: '#00ADB5' }} />
 
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <Receipt sx={{ mr: 1, color: '#00ADB5' }} />
                             <Typography variant="h6" sx={{ color: '#EEEEEE' }}>
@@ -559,33 +636,37 @@ const BookingHistory = () => {
                       </Box>
                     </Grid>
                     <Grid item xs={12} md={3}>
-                      <Box sx={{ 
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        p: 2
-                      }}>
+                      <Box
+                        sx={{
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          p: 2,
+                        }}
+                      >
                         {isUpcomingAndCancelable(booking.status) ? (
                           <>
                             <ColorButton
                               variant="contained"
                               startIcon={<Cancel />}
-                              onClick={() => handleOpenCancelDialog(booking.id, booking.hotelName)}
+                              onClick={() =>
+                                handleOpenCancelDialog(booking.id, booking.hotelName)
+                              }
                               sx={{ mb: 2, width: '100%' }}
                             >
                               Cancel Booking
                             </ColorButton>
                             <Button
                               variant="outlined"
-                              sx={{ 
+                              sx={{
                                 color: '#00ADB5',
                                 borderColor: '#00ADB5',
                                 width: '100%',
                                 '&:hover': {
-                                  borderColor: '#008B8B'
-                                }
+                                  borderColor: '#008B8B',
+                                },
                               }}
                             >
                               Modify Booking
@@ -595,27 +676,27 @@ const BookingHistory = () => {
                           <>
                             <Button
                               variant="contained"
-                              sx={{ 
+                              sx={{
                                 backgroundColor: '#4CAF50',
                                 color: '#EEEEEE',
                                 mb: 2,
                                 width: '100%',
                                 '&:hover': {
-                                  backgroundColor: '#3e8e41'
-                                }
+                                  backgroundColor: '#3e8e41',
+                                },
                               }}
                             >
                               Book Again
                             </Button>
                             <Button
                               variant="outlined"
-                              sx={{ 
+                              sx={{
                                 color: '#00ADB5',
                                 borderColor: '#00ADB5',
                                 width: '100%',
                                 '&:hover': {
-                                  borderColor: '#008B8B'
-                                }
+                                  borderColor: '#008B8B',
+                                },
                               }}
                             >
                               Leave Review
@@ -632,7 +713,6 @@ const BookingHistory = () => {
         </Grid>
       )}
 
-      {/* Cancel Booking Confirmation Dialog */}
       <Dialog
         open={cancelDialog.open}
         onClose={handleCloseCancelDialog}
@@ -640,8 +720,8 @@ const BookingHistory = () => {
         PaperProps={{
           sx: {
             backgroundColor: '#393E46',
-            color: '#EEEEEE'
-          }
+            color: '#EEEEEE',
+          },
         }}
       >
         <DialogTitle id="cancel-booking-dialog-title" sx={{ color: '#00ADB5' }}>
@@ -656,20 +736,17 @@ const BookingHistory = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button 
-            onClick={handleCloseCancelDialog}
-            sx={{ color: '#EEEEEE' }}
-          >
+          <Button onClick={handleCloseCancelDialog} sx={{ color: '#EEEEEE' }}>
             Go Back
           </Button>
-          <Button 
+          <Button
             onClick={confirmCancelBooking}
-            sx={{ 
+            sx={{
               backgroundColor: '#F44336',
               color: '#EEEEEE',
               '&:hover': {
-                backgroundColor: '#D32F2F'
-              }
+                backgroundColor: '#D32F2F',
+              },
             }}
             startIcon={<Cancel />}
           >
@@ -678,15 +755,14 @@ const BookingHistory = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Notification Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={handleCloseSnackbar} 
+        <Alert
+          onClose={handleCloseSnackbar}
           severity={snackbar.severity}
           sx={{ width: '100%' }}
         >

@@ -15,6 +15,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
+import axios from 'axios';
 
 const BookingManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,43 +26,8 @@ const BookingManagement = () => {
     severity: 'success',
   });
 
-  // Mock booking data (replace with API call in production)
-  const mockBookings = [
-    {
-      code: 'BK-ABC123456789012',
-      userName: 'John Doe',
-      passport: 'AB1234567',
-      hotel: 'Hotel A',
-      checkInStatus: 'Not Checked In',
-      checkInDate: '2025-06-01',
-      checkOutDate: '2025-06-05',
-      totalPrice: 500,
-    },
-    {
-      code: 'BK-XYZ987654321098',
-      userName: 'Jane Smith',
-      passport: 'CD9876543',
-      hotel: 'Hotel B',
-      checkInStatus: 'Checked In',
-      checkInDate: '2025-07-10',
-      checkOutDate: '2025-07-15',
-      totalPrice: 750,
-    },
-  ];
-
-  // Generate booking code (assumed to be called during booking, e.g., in PaymentModal.jsx)
-  const generateBookingCode = (options = {}) => {
-    const { prefix = 'BK', size = 15, removePrefix = false } = options;
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < size; i++) {
-      result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return removePrefix ? result : `${prefix}-${result}`;
-  };
-
-  // Handle search
-  const handleSearch = () => {
+  // Handle search by booking code
+  const handleSearch = async () => {
     if (!searchQuery.trim()) {
       setNotification({
         open: true,
@@ -72,23 +38,54 @@ const BookingManagement = () => {
       return;
     }
 
-    // Simulate API call (replace with actual fetch in production)
-    const foundBooking = mockBookings.find(
-      (b) => b.code.toLowerCase() === searchQuery.trim().toLowerCase()
-    );
+    try {
+      const response = await axios.get(`/api/bookingHistory/code/${searchQuery.trim()}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`, // Assuming token is stored in localStorage
+        },
+      });
 
-    if (foundBooking) {
-      setBooking(foundBooking);
+      setBooking(response.data.data);
       setNotification({
         open: true,
         message: 'Booking found.',
         severity: 'success',
       });
-    } else {
+    } catch (error) {
       setBooking(null);
       setNotification({
         open: true,
-        message: 'No booking found with this code.',
+        message: error.response?.data?.message || 'No booking found with this code.',
+        severity: 'error',
+      });
+    }
+  };
+
+  // Handle check-in/check-out
+  const handleStatusUpdate = async (newStatus) => {
+    if (!booking) return;
+
+    try {
+      const response = await axios.patch(
+        `/api/bookingHistory/${booking.bookingCode}/status`,
+        { status: newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+
+      setBooking(response.data.data);
+      setNotification({
+        open: true,
+        message: `Booking ${newStatus} successfully.`,
+        severity: 'success',
+      });
+    } catch (error) {
+      setNotification({
+        open: true,
+        message: error.response?.data?.message || `Failed to update booking to ${newStatus}.`,
         severity: 'error',
       });
     }
@@ -122,22 +119,12 @@ const BookingManagement = () => {
           sx={{
             background: '#393E46',
             borderRadius: 1,
-            '& .MuiInputBase-input': {
-              color: '#EEEEEE',
-            },
-            '& .MuiInputLabel-root': {
-              color: '#EEEEEE',
-            },
+            '& .MuiInputBase-input': { color: '#EEEEEE' },
+            '& .MuiInputLabel-root': { color: '#EEEEEE' },
             '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: '#00ADB5',
-              },
-              '&:hover fieldset': {
-                borderColor: '#00ADB5',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#00ADB5',
-              },
+              '& fieldset': { borderColor: '#00ADB5' },
+              '&:hover fieldset': { borderColor: '#00ADB5' },
+              '&.Mui-focused fieldset': { borderColor: '#00ADB5' },
             },
           }}
         />
@@ -166,24 +153,65 @@ const BookingManagement = () => {
                 <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>User Name</TableCell>
                 <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Passport</TableCell>
                 <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Hotel</TableCell>
-                <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Check-In Status</TableCell>
+                <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Status</TableCell>
                 <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Check-In Date</TableCell>
                 <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Check-Out Date</TableCell>
                 <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Total Price</TableCell>
+                <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               <TableRow>
-                <TableCell sx={{ color: '#EEEEEE' }}>{booking.code}</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>{booking.bookingCode}</TableCell>
                 <TableCell sx={{ color: '#EEEEEE' }}>{booking.userName}</TableCell>
                 <TableCell sx={{ color: '#EEEEEE' }}>{booking.passport}</TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>{booking.hotel}</TableCell>
-                <TableCell sx={{ color: booking.checkInStatus === 'Checked In' ? '#00ADB5' : '#ff6b6b' }}>
-                  {booking.checkInStatus}
+                <TableCell sx={{ color: '#EEEEEE' }}>{booking.hotelName}</TableCell>
+                <TableCell
+                  sx={{
+                    color:
+                      booking.status === 'checked-in'
+                        ? '#00ADB5'
+                        : booking.status === 'checked-out'
+                        ? '#4CAF50'
+                        : booking.status === 'cancelled'
+                        ? '#ff6b6b'
+                        : '#FFC107',
+                  }}
+                >
+                  {booking.status}
                 </TableCell>
                 <TableCell sx={{ color: '#EEEEEE' }}>{booking.checkInDate}</TableCell>
                 <TableCell sx={{ color: '#EEEEEE' }}>{booking.checkOutDate}</TableCell>
                 <TableCell sx={{ color: '#EEEEEE' }}>${booking.totalPrice}</TableCell>
+                <TableCell>
+                  {booking.status === 'pending' && (
+                    <Button
+                      variant="contained"
+                      onClick={() => handleStatusUpdate('checked-in')}
+                      sx={{
+                        bgcolor: '#00ADB5',
+                        color: '#EEEEEE',
+                        mr: 1,
+                        '&:hover': { bgcolor: '#0097A7' },
+                      }}
+                    >
+                      Check In
+                    </Button>
+                  )}
+                  {booking.status === 'checked-in' && (
+                    <Button
+                      variant="contained"
+                      onClick={() => handleStatusUpdate('checked-out')}
+                      sx={{
+                        bgcolor: '#4CAF50',
+                        color: '#EEEEEE',
+                        '&:hover': { bgcolor: '#45A049' },
+                      }}
+                    >
+                      Check Out
+                    </Button>
+                  )}
+                </TableCell>
               </TableRow>
             </TableBody>
           </Table>
@@ -201,11 +229,7 @@ const BookingManagement = () => {
         onClose={handleCloseNotification}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert
-          onClose={handleCloseNotification}
-          severity={notification.severity}
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: '100%' }}>
           {notification.message}
         </Alert>
       </Snackbar>

@@ -45,13 +45,13 @@ const SuccessDialog = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const PaymentModal = ({ open, onClose, bookingDetails }) => {
+const PaymentModal = ({ open, onClose, bookingDetails, onPaymentSuccess }) => {
   // State to hold user data from localStorage
   const [userDetails, setUserDetails] = useState(null);
 
   // Fetch user data from localStorage on mount
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
     if (storedUser) {
       setUserDetails({
         email: storedUser.email || '',
@@ -209,19 +209,69 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
     }
   };
 
+  const createBookingHistory = async (tx_ref) => {
+    try {
+      const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = user?.id;
+
+      if (!userId) {
+        throw new Error('User ID not found');
+      }
+
+      if (!bookingDetails.hotelAdminId) {
+        throw new Error('Hotel Admin ID not provided');
+      }
+
+      const bookingHistoryData = {
+        userId,
+        hotelAdminId: bookingDetails.hotelAdminId, // Use string ID, e.g., "102"
+        hotelName: bookingDetails.hotelName, // e.g., "Unison Hotel"
+        roomType: bookingDetails.roomType,
+        roomNumber: bookingDetails.roomNumbers[0], // Assuming single room
+        checkInDate: bookingDetails.checkInDate,
+        checkOutDate: bookingDetails.checkOutDate,
+        totalPrice: parseFloat(bookingDetails.totalPrice.replace(/,/g, '')),
+        image: bookingDetails.image || 'https://via.placeholder.com/500x180?text=No+Image',
+        guests: bookingDetails.numberOfRooms || 1,
+        tx_ref,
+      };
+
+      const response = await axios.post(
+        `${BACKEND_API_URL}/api/bookingHistory/create`,
+        bookingHistoryData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      console.log('Booking history created:', response.data);
+      // Call onPaymentSuccess after successful booking history creation
+      if (bookingDetails.reservationId && bookingDetails.title) {
+        onPaymentSuccess(bookingDetails.reservationId, bookingDetails.title);
+      }
+    } catch (error) {
+      console.error('Error creating booking history:', error);
+      showErrorNotification(error.response?.data?.message || 'Failed to save booking history');
+    }
+  };
+
   const handlePay = async () => {
     // Input validation
     if (paymentMethod === 'chapa') {
       if (!selectedChapaOption) {
-        showErrorNotification('Please select a payment option', 'error');
+        showErrorNotification('Please select a payment option');
         return;
       }
       if (!mobilePaymentDetails.phoneNumber || !mobilePaymentDetails.fullName) {
-        showErrorNotification('Please fill all required fields for mobile payment', 'error');
+        showErrorNotification('Please fill all required fields for mobile payment');
         return;
       }
       if (!validatePhoneNumber(mobilePaymentDetails.phoneNumber)) {
-        showErrorNotification('Please enter a valid Ethiopian phone number (09XXXXXXXX)', 'error');
+        showErrorNotification('Please enter a valid Ethiopian phone number (09XXXXXXXX)');
         return;
       }
     }
@@ -233,23 +283,23 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
         !cardDetails.expiry ||
         !cardDetails.cvv
       ) {
-        showErrorNotification('Please fill all card details', 'error');
+        showErrorNotification('Please fill all card details');
         return;
       }
       if (!validateEmail(cardDetails.email)) {
-        showErrorNotification('Please enter a valid email address', 'error');
+        showErrorNotification('Please enter a valid email address');
         return;
       }
       if (!validateCardNumber(cardDetails.cardNumber)) {
-        showErrorNotification('Please enter a valid 16-digit card number', 'error');
+        showErrorNotification('Please enter a valid 16-digit card number');
         return;
       }
       if (!validateExpiry(cardDetails.expiry)) {
-        showErrorNotification('Please enter a valid expiry date (MM/YY)', 'error');
+        showErrorNotification('Please enter a valid expiry date (MM/YY)');
         return;
       }
       if (!validateCVV(cardDetails.cvv)) {
-        showErrorNotification('Please enter a valid CVV (3 or 4 digits)', 'error');
+        showErrorNotification('Please enter a valid CVV (3 or 4 digits)');
         return;
       }
     }
@@ -257,13 +307,13 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
     setLoading(true);
 
     try {
+      let tx_ref;
       if (paymentMethod === 'chapa') {
-        const tx_ref = generateTxRef();
+        tx_ref = generateTxRef();
         const [first_name, ...last_name_parts] = mobilePaymentDetails.fullName.split(' ');
         const last_name = last_name_parts.join(' ') || 'User';
 
-        // Hardcode test amount
-        const etbAmount = '100.00';
+        const etbAmount = '100.00'; // Hardcode test amount
 
         const initData = {
           amount: etbAmount,
@@ -304,7 +354,7 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
 
         // Poll for transaction verification
         let attempts = 0;
-        const maxAttempts = 30; // Poll for up to 5 minutes (10s * 30)
+        const maxAttempts = 30;
         const pollInterval = setInterval(async () => {
           attempts++;
           try {
@@ -315,6 +365,10 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
               showSuccessNotification(
                 `Test Payment Successful: ${verifyResponse.data.currency} ${verifyResponse.data.amount} paid, Transaction: ${tx_ref}`
               );
+
+              // Create booking history with tx_ref and delete reservation
+              await createBookingHistory(tx_ref);
+
               setTimeout(() => {
                 setSuccessOpen(false);
                 onClose();
@@ -323,29 +377,33 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
               if (attempts >= maxAttempts) {
                 clearInterval(pollInterval);
                 setLoading(false);
-                showErrorNotification('Payment is still pending. Please check back later.', 'warning');
+                showErrorNotification('Payment is still pending. Please check back later.');
               }
             } else {
               clearInterval(pollInterval);
               setLoading(false);
-              showErrorNotification(`Payment failed: ${verifyResponse.data.status}`, 'error');
+              showErrorNotification(`Payment failed: ${verifyResponse.data.status}`);
             }
           } catch (error) {
             if (attempts >= maxAttempts) {
               clearInterval(pollInterval);
               setLoading(false);
-              showErrorNotification('Payment verification timed out.', 'error');
+              showErrorNotification('Payment verification timed out.');
             }
           }
-        }, 10000); // Poll every 10 seconds
+        }, 10000);
       } else {
-        const tx_ref = generateTxRef();
+        tx_ref = generateTxRef();
         console.log('Test Mastercard payment initiated');
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setLoading(false);
         showSuccessNotification(
           `Test Payment Successful: USD ${bookingDetails.totalPrice} paid, Transaction: ${tx_ref}`
         );
+
+        // Create booking history with tx_ref and delete reservation
+        await createBookingHistory(tx_ref);
+
         window.location.href = `${RETURN_URL}?tx_ref=${tx_ref}`;
         setTimeout(() => {
           setSuccessOpen(false);
@@ -373,7 +431,7 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
         errorMessage = 'No response received from server';
       }
       setLoading(false);
-      showErrorNotification(errorMessage, 'error');
+      showErrorNotification(errorMessage);
       if (paymentMethod === 'mastercard') {
         const tx_ref = generateTxRef();
         window.location.href = `${RETURN_URL}?tx_ref=${tx_ref}`;
@@ -439,7 +497,7 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
               <Grid item xs={6}>
                 <Typography variant="body2" sx={{ color: '#CCCCCC' }}>Hotel Name:</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#EEEEEE' }}>
-                  {bookingDetails.hotelName}
+                  {bookingDetails.hotelName} {/* e.g., "Unison Hotel" */}
                 </Typography>
               </Grid>
               <Grid item xs={6}>
@@ -827,7 +885,6 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
                     <TextField
                       fullWidth
                       label="Cardholder Name"
-                      InputProps={{ readOnly: true }}
                       variant="outlined"
                       value={cardDetails.name}
                       onChange={handleCardDetailChange('name')}
@@ -857,7 +914,6 @@ const PaymentModal = ({ open, onClose, bookingDetails }) => {
                       fullWidth
                       label="Email"
                       variant="outlined"
-                      InputProps={{ readOnly: true }}
                       value={cardDetails.email}
                       onChange={handleCardDetailChange('email')}
                       error={cardDetails.email && !validateEmail(cardDetails.email)}

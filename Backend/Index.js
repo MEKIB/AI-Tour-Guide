@@ -24,7 +24,7 @@ import ApprovedHotelAdmin from './modules/ApprovedHotelAdminLists.js';
 import SystemAdminModel from './modules/SystemAdminLists.js';
 import userModel from './modules/User.js';
 import { authMiddleware, adminMiddleware } from './Routes/middleware.js';
-
+import BookingHistory from './modules/BookingHistory.js';
 dotenv.config();
 
 const app = express();
@@ -874,6 +874,9 @@ app.post('/api/reservations', verifyToken, async (req, res) => {
   }
 });
 
+
+
+
 app.get('/api/reservations/user', verifyToken, async (req, res) => {
   console.log(`Fetching reservations for userId: ${req.query.userId}`);
   try {
@@ -892,6 +895,98 @@ app.get('/api/reservations/user', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+
+
+// DELETE endpoint to cancel a reservation
+app.delete('/api/reservations/:id', verifyToken, async (req, res) => {
+  console.log(`Attempting to delete reservation with ID: ${req.params.id}`);
+  try {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.status(400).json({ message: 'userId query parameter is required' });
+    }
+
+    const reservationId = req.params.id;
+     
+    // Validate reservation ID format
+    if (!reservationId.match(/^[0-9a-fA-F]{24}$/)) {
+      console.log('Invalid reservation ID format:', reservationId);
+      return res.status(400).json({ message: 'Invalid reservation ID format' });
+    }
+   
+    // Find the reservation
+    const reservation = await Reservation.findById(reservationId);
+    if (!reservation) {
+      console.log('Reservation not found:', reservationId);
+      return res.status(404).json({ message: 'Reservation not found' });
+    }
+
+    // Verify user authorization
+    if (reservation.userId.toString() !== req.user.id) {
+       console.log('Unauthorized: userId mismatch', { 
+        reservationUserId: reservation.userId, 
+        tokenUserId: req.user.id 
+      });
+      return res.status(403).json({ message: 'Unauthorized: You can only delete your own reservations' });
+    }
+
+    // Find the room type document
+    const roomTypeDoc = await RoomType.findOne({ 
+      hotelAdminId: reservation.hotelAdminId, 
+      type: reservation.roomType 
+    });
+    
+    if (!roomTypeDoc) {
+      console.log('Room type not found:', reservation.roomType);
+      return res.status(404).json({ message: `Room type ${reservation.roomType} not found` });
+    }
+
+    // Find the specific room
+    const room = roomTypeDoc.roomNumbers.find((r) => r.number === reservation.roomNumber);
+    if (!room) {
+      console.log('Room number not found:', reservation.roomNumber);
+      return res.status(404).json({ message: `Room number ${reservation.roomNumber} not found` });
+    }
+
+    // Remove the availability entry
+    room.availability = room.availability.filter((booking) => {
+      const bookingStart = new Date(booking.startDate);
+      const bookingEnd = new Date(booking.endDate);
+      return !(
+        bookingStart.getTime() === new Date(reservation.checkInDate).getTime() &&
+        bookingEnd.getTime() === new Date(reservation.checkOutDate).getTime()
+      );
+    });
+
+    // Save the updated room type document
+    await roomTypeDoc.save();
+
+    // Delete the reservation
+    await Reservation.deleteOne({ _id: reservationId });
+
+    console.log('Reservation deleted successfully:', reservationId);
+    res.status(200).json({ 
+      message: 'Reservation cancelled successfully',
+      data: { reservationId }
+    });
+  } catch (error) {
+    console.error('Error deleting reservation:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Review Routes
 app.get('/api/reviews/:hotelAdminId/average', async (req, res) => {
@@ -1360,6 +1455,37 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.post('/api/system-admin/signup', async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
@@ -1412,6 +1538,39 @@ app.post('/api/system-admin/login', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // User Routes
 app.post('/register', upload.single('passportOrId'), async (req, res) => {
@@ -1510,15 +1669,46 @@ app.get('/me', authMiddleware, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
+// Get all users (accessible only to system admins)
 app.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const users = await userModel.find().select('-password');
-    res.json(users);
+    res.json(users.map(user => ({
+      id: user._id,
+      name: `${user.firstName} ${user.middleName ? user.middleName + ' ' : ''}${user.lastName}`,
+      email: user.email,
+      phoneNumber: user.phone,
+      idPassport: user.passportOrId,
+      status: user.status,
+      idPassportImage: user.passportOrId // Adjust if full URL is needed
+    })));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching users:', error);
+    res.status(500).json({ 
+      message: 'Server error occurred while fetching users',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
+
+
+// Delete a user (accessible only to system admins)
+app.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const user = await userModel.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ message: 'User removed successfully' });
+  } catch (error) {
+    console.error('Error removing user:', error);
+    res.status(500).json({ 
+      message: 'Server error occurred while removing user',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 
 // MongoDB Connection
 mongoose
@@ -1581,6 +1771,288 @@ mongoose
       });
     }
   });
+
+// Utility function to generate booking code
+const generateBookingCode = (options = {}) => {
+  const { prefix = 'BOOK', size = 15, removePrefix = false } = options;
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < size; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return removePrefix ? result : `${prefix}-${result}`;
+};
+
+// Endpoint to create booking history after successful payment
+app.post('/api/bookingHistory/create', verifyToken, async (req, res) => {
+  try {
+    const {
+      userId,
+      hotelAdminId,
+      hotelName,
+      roomType,
+      roomNumber,
+      checkInDate,
+      checkOutDate,
+      totalPrice,
+      image,
+      guests,
+      tx_ref, // Transaction reference from frontend (optional)
+    } = req.body;
+
+    // Validate required fields
+    if (!userId || !hotelAdminId || !hotelName || !roomType || !roomNumber || !checkInDate || !checkOutDate || !totalPrice) {
+      return res.status(400).json({ message: 'All required fields must be provided' });
+    }
+
+    // Validate ObjectId format for userId only
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'Invalid userId format' });
+    }
+
+    // Validate hotelAdminId as a non-empty string
+    if (typeof hotelAdminId !== 'string' || !hotelAdminId.trim()) {
+      return res.status(400).json({ message: 'Invalid hotelAdminId format' });
+    }
+
+    // Validate that userId matches the token's user
+    if (req.user.id !== userId) {
+      return res.status(403).json({ message: 'Unauthorized: User ID does not match token' });
+    }
+
+    // Generate a unique booking code (use tx_ref if provided, else generate new)
+    const bookingCode = tx_ref || generateBookingCode();
+
+    // Create new booking history entry
+    const bookingHistory = new BookingHistory({
+      userId,
+      hotelAdminId, // Store as string, e.g., "102"
+      hotelName,
+      roomType,
+      roomNumber,
+      checkInDate: new Date(checkInDate),
+      checkOutDate: new Date(checkOutDate),
+      totalPrice: parseFloat(totalPrice),
+      image: image || 'https://via.placeholder.com/500x180?text=No+Image',
+      guests: guests || 1,
+      status: 'pending',
+      bookingCode, // Store the booking code
+    });
+
+    // Save to database
+    await bookingHistory.save();
+
+    res.status(201).json({
+      message: 'Booking history created successfully',
+      data: bookingHistory,
+    });
+  } catch (error) {
+    console.error('Error creating booking history:', error);
+    if (error.code === 11000) { // Handle duplicate bookingCode
+      return res.status(400).json({ message: 'Booking code already exists, please try again' });
+    }
+    res.status(500).json({
+      message: error.message || 'Failed to create booking history',
+    });
+  }
+});
+
+
+
+// Endpoint to fetch booking history for a user
+app.get('/api/bookingHistory/user', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id; // Extracted from the JWT token by verifyToken middleware
+
+    // Validate userId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'Invalid userId format' });
+    }
+
+    // Fetch booking history for the user
+    const bookingHistory = await BookingHistory.find({ userId })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .lean(); // Convert to plain JavaScript objects for faster processing
+
+    if (!bookingHistory || bookingHistory.length === 0) {
+      return res.status(200).json({
+        message: 'No booking history found for this user',
+        data: [],
+      });
+    }
+
+    // Transform data to match frontend expectations
+    const formattedBookings = bookingHistory.map((booking) => ({
+      id: booking._id.toString(),
+      hotelName: booking.hotelName,
+      roomType: booking.roomType,
+      checkIn: new Date(booking.checkInDate).toISOString().split('T')[0], // Format as YYYY-MM-DD
+      checkOut: new Date(booking.checkOutDate).toISOString().split('T')[0], // Format as YYYY-MM-DD
+      roomNumber: booking.roomNumber,
+      guests: booking.guests || 1,
+      totalPrice: booking.totalPrice,
+      status: booking.status,
+      rating: booking.rating || null,
+      image: booking.image || 'https://via.placeholder.com/300x200?text=No+Image',
+      hotelAdminId: booking.hotelAdminId, // String, e.g., "102"
+      bookingCode: booking.bookingCode,
+    }));
+
+    res.status(200).json({
+      message: 'Booking history retrieved successfully',
+      data: formattedBookings,
+    });
+  } catch (error) {
+    console.error('Error fetching booking history:', error);
+    res.status(500).json({
+      message: error.message || 'Failed to fetch booking history',
+    });
+  }
+});
+
+// Endpoint to fetch booking by booking code
+app.get('/api/bookingHistory/code/:bookingCode', verifyToken, async (req, res) => {
+  try {
+    const { bookingCode } = req.params;
+
+    // Validate booking code
+    if (!bookingCode || typeof bookingCode !== 'string' || !bookingCode.trim()) {
+      return res.status(400).json({ message: 'Invalid booking code' });
+    }
+
+    // Find booking by booking code
+    const booking = await BookingHistory.findOne({ bookingCode })
+      .lean();
+
+    if (!booking) {
+      return res.status(404).json({ message: 'No booking found with this code' });
+    }
+
+    // Format the response to match frontend expectations
+    const formattedBooking = {
+      id: booking._id.toString(),
+      hotelName: booking.hotelName,
+      roomType: booking.roomType,
+      roomNumber: booking.roomNumber,
+      checkInDate: new Date(booking.checkInDate).toISOString().split('T')[0],
+      checkOutDate: new Date(booking.checkOutDate).toISOString().split('T')[0],
+      guests: booking.guests || 1,
+      totalPrice: booking.totalPrice,
+      status: booking.status,
+      rating: booking.rating || null,
+      image: booking.image || 'https://via.placeholder.com/300x200?text=No+Image',
+      hotelAdminId: booking.hotelAdminId,
+      bookingCode: booking.bookingCode,
+      // Add user details if needed (e.g., fetch user name from User model)
+      userName: 'Unknown', // Replace with actual user lookup if needed
+      passport: 'N/A', // Add passport field to schema if required
+    };
+
+    res.status(200).json({
+      message: 'Booking retrieved successfully',
+      data: formattedBooking,
+    });
+  } catch (error) {
+    console.error('Error fetching booking by code:', error);
+    res.status(500).json({
+      message: error.message || 'Failed to fetch booking',
+    });
+  }
+});
+
+// Endpoint to update booking status
+app.patch('/api/bookingHistory/:bookingCode/status', verifyToken, async (req, res) => {
+  try {
+    const { bookingCode } = req.params;
+    const { status } = req.body;
+
+    // Validate status
+    if (!['pending', 'checked-in', 'checked-out', 'cancelled'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status value' });
+    }
+
+    // Find and update booking
+    const booking = await BookingHistory.findOneAndUpdate(
+      { bookingCode },
+      { status },
+      { new: true, runValidators: true }
+    ).lean();
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Format response
+    const formattedBooking = {
+      id: booking._id.toString(),
+      hotelName: booking.hotelName,
+      roomType: booking.roomType,
+      roomNumber: booking.roomNumber,
+      checkInDate: new Date(booking.checkInDate).toISOString().split('T')[0],
+      checkOutDate: new Date(booking.checkOutDate).toISOString().split('T')[0],
+      guests: booking.guests || 1,
+      totalPrice: booking.totalPrice,
+      status: booking.status,
+      rating: booking.rating || null,
+      image: booking.image || 'https://via.placeholder.com/300x200?text=No+Image',
+      hotelAdminId: booking.hotelAdminId,
+      bookingCode: booking.bookingCode,
+      userName: 'Unknown', // Replace with actual user lookup if needed
+      passport: 'N/A', // Add if required
+    };
+
+    res.status(200).json({
+      message: 'Booking status updated successfully',
+      data: formattedBooking,
+    });
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+    res.status(500).json({
+      message: error.message || 'Failed to update booking status',
+    });
+  }
+});
+
+app.patch('/api/bookingHistory/:id/cancel', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid booking ID format' });
+    }
+
+    const booking = await BookingHistory.findById(id);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    if (booking.userId.toString() !== userId) {
+      return res.status(403).json({ message: 'Unauthorized: You cannot cancel this booking' });
+    }
+
+    if (booking.status === 'cancelled') {
+      return res.status(400).json({ message: 'Booking is already cancelled' });
+    }
+
+    if (booking.status !== 'completed') {
+      return res.status(400).json({ message: 'Only upcoming bookings can be cancelled' });
+    }
+
+    booking.status = 'cancelled';
+    await booking.save();
+
+    res.status(200).json({
+      message: 'Booking cancelled successfully',
+      data: booking,
+    });
+  } catch (error) {
+    console.error('Error cancelling booking:', error);
+    res.status(500).json({
+      message: error.message || 'Failed to cancel booking',
+    });
+  }
+});
 
 // Start Server
 const port = process.env.PORT || 2001;

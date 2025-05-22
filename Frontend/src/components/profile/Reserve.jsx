@@ -46,6 +46,7 @@ const Reserve = () => {
   const [currentBooking, setCurrentBooking] = useState(null);
   const [reservations, setReservations] = useState([]);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   // Check login status
@@ -75,6 +76,37 @@ const Reserve = () => {
     isRegularUser,
   });
 
+  // Function to delete a reservation
+  const deleteReservation = async (reservationId, title) => {
+    try {
+      console.log('Attempting to delete reservation with ID:', reservationId);
+      await axios.delete(`http://localhost:2000/api/reservations/${reservationId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { userId: userId },
+      });
+      setReservations((prev) => prev.filter((r) => r.id !== reservationId));
+      setSuccess(`Reservation at ${title} cancelled successfully`);
+    } catch (err) {
+      console.error('Failed to delete reservation:', err);
+      if (err.response?.status === 400) {
+        setError('Invalid reservation ID format. Please try again.');
+      } else if (err.response?.status === 401) {
+        setError('Unauthorized. Please log in again.');
+      } else if (err.response?.status === 403) {
+        setError('You are not authorized to delete this reservation.');
+      } else if (err.response?.status === 404) {
+        setError('Reservation not found.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to delete reservation.');
+      }
+    }
+  };
+
+  // Callback for successful payment
+  const handlePaymentSuccess = (reservationId, title) => {
+    deleteReservation(reservationId, title);
+  };
+
   // Fetch reservations for regular users
   useEffect(() => {
     const fetchReservations = async () => {
@@ -97,6 +129,7 @@ const Reserve = () => {
           }
         );
 
+        console.log('API Response:', validateResponse.data);
         const resData = validateResponse.data.data;
 
         const enhancedReservations = await Promise.all(
@@ -116,19 +149,18 @@ const Reserve = () => {
               const checkOut = new Date(reservation.checkOutDate);
               const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
               const duration = `${nights} night${nights !== 1 ? 's' : ''}`;
-              // If images are stored with relative paths (e.g., "/uploads/image.jpg")
-const imageUrl = hotel.images[0]?.url 
-? `http://localhost:2000${hotel.images[0].url.startsWith('/') ? '' : '/'}${hotel.images[0].url}`
-: '/default-hotel.jpg';
-              console.log(`Reservation `,imageUrl);
+              const imageUrl = hotel.images[0]?.url
+                ? `http://localhost:2000${hotel.images[0].url.startsWith('/') ? '' : '/'}${hotel.images[0].url}`
+                : '/default-hotel.jpg';
+              console.log(`Reservation ${reservation._id}:`, { imageUrl });
               return {
                 id: reservation._id,
-                title: hotel.name,
+                title: hotel.name, // e.g., "Unison Hotel"
                 price: (reservation.totalPrice / nights).toLocaleString(),
                 duration,
                 image: imageUrl || 'https://via.placeholder.com/500x180?text=No+Image',
                 saved: true,
-                location: hotel.location,
+                location: hotel.location, // e.g., "bahir dar"
                 date: `${checkIn.toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
@@ -152,6 +184,8 @@ const imageUrl = hotel.images[0]?.url
                   year: 'numeric',
                 }),
                 totalPrice: reservation.totalPrice.toLocaleString(),
+                createdAt: new Date(reservation.createdAt),
+                hotelAdminId: reservation.hotelAdminId, // e.g., "102"
               };
             } catch (err) {
               console.error(`Error processing reservation ${reservation._id}:`, err);
@@ -185,6 +219,40 @@ const imageUrl = hotel.images[0]?.url
     fetchReservations();
   }, [token, memoizedUser, isLoggedIn, isRegularUser, userId]);
 
+  // Auto-delete reservations after 1 hour
+  useEffect(() => {
+    const timeouts = reservations.map((reservation) => {
+      if (!reservation.createdAt) {
+        console.warn(`Reservation ${reservation.id} missing createdAt timestamp`);
+        return null;
+      }
+
+      const createdTime = new Date(reservation.createdAt).getTime();
+      const currentTime = Date.now();
+      const timeElapsed = currentTime - createdTime;
+      const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+
+      if (timeElapsed >= oneHour) {
+        deleteReservation(reservation.id, reservation.title);
+        return null;
+      }
+
+      const timeRemaining = oneHour - timeElapsed;
+      console.log(`Setting timeout for reservation ${reservation.id} to delete in ${timeRemaining / 1000} seconds`);
+
+      return setTimeout(() => {
+        console.log(`Auto-deleting reservation ${reservation.id} after 1 hour`);
+        deleteReservation(reservation.id, reservation.title);
+      }, timeRemaining);
+    });
+
+    return () => {
+      timeouts.forEach((timeout) => {
+        if (timeout) clearTimeout(timeout);
+      });
+    };
+  }, [reservations]);
+
   const savedCount = reservations.filter((r) => r.saved).length;
 
   const handleRemoveClick = (reservation) => {
@@ -192,50 +260,62 @@ const imageUrl = hotel.images[0]?.url
     setOpenConfirm(true);
   };
 
-  const confirmRemove = () => {
-    setReservations(reservations.map((r) => (r.id === reservationToRemove.id ? { ...r, saved: false } : r)));
+  const confirmRemove = async () => {
+    if (!reservationToRemove) {
+      setOpenConfirm(false);
+      return;
+    }
+
+    await deleteReservation(reservationToRemove.id, reservationToRemove.title);
     setOpenConfirm(false);
+    setReservationToRemove(null);
   };
 
   const cancelRemove = () => {
     setOpenConfirm(false);
+    setReservationToRemove(null);
   };
 
   const handleBookNow = (reservation) => {
     setCurrentBooking({
-      hotelName: reservation.hotelName,
+      hotelName: reservation.hotelName, // e.g., "Unison Hotel"
       roomType: reservation.roomType,
       roomNumbers: reservation.roomNumbers,
       numberOfRooms: reservation.numberOfRooms,
       checkInDate: reservation.checkInDate,
       checkOutDate: reservation.checkOutDate,
       totalPrice: reservation.totalPrice,
+      reservationId: reservation.id,
+      title: reservation.title,
+      hotelAdminId: reservation.hotelAdminId, // e.g., "102"
+      image: reservation.image,
     });
     setOpenPaymentModal(true);
   };
 
   return (
     <Box
-  sx={{
-    backgroundColor: '#222831',
-    minHeight: '100vh',
-    padding: { xs: 3, md: 4 },
-    color: '#EEEEEE',
-    maxWidth: '2400px', // Increased width beyond 'xl' (~1920px) to ~2400px
-    width: '100%',
-    mx: 'auto',
-  }}
->
+      sx={{
+        backgroundColor: '#222831',
+        minHeight: '100vh',
+        padding: { xs: 3, md: 4 },
+        color: '#EEEEEE',
+        maxWidth: '2400px',
+        width: '100%',
+        mx: 'auto',
+      }}
+    >
       <PaymentModal
         open={openPaymentModal}
         onClose={() => setOpenPaymentModal(false)}
         bookingDetails={currentBooking}
+        onPaymentSuccess={handlePaymentSuccess}
       />
 
       <Dialog open={openConfirm} onClose={cancelRemove}>
         <DialogTitle sx={{ bgcolor: '#393E46', color: '#EEEEEE' }}>Confirm Removal</DialogTitle>
         <DialogContent sx={{ bgcolor: '#393E46', color: '#EEEEEE' }}>
-          Are you sure you want to remove "{reservationToRemove?.title}" from your saved reservations?
+          Are you sure you want to cancel your reservation at "{reservationToRemove?.title}"?
         </DialogContent>
         <DialogActions sx={{ bgcolor: '#393E46' }}>
           <Button onClick={cancelRemove} sx={{ color: '#EEEEEE' }}>
@@ -250,7 +330,7 @@ const imageUrl = hotel.images[0]?.url
             }}
             autoFocus
           >
-            Remove
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>
@@ -258,6 +338,12 @@ const imageUrl = hotel.images[0]?.url
       <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
         <Alert onClose={() => setError('')} severity="error" sx={{ width: '100%' }}>
           {error}
+        </Alert>
+      </Snackbar>
+
+      <Snackbar open={!!success} autoHideDuration={6000} onClose={() => setSuccess('')}>
+        <Alert onClose={() => setSuccess('')} severity="success" sx={{ width: '100%' }}>
+          {success}
         </Alert>
       </Snackbar>
 
