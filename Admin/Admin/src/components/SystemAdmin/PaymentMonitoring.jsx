@@ -46,10 +46,10 @@ const PaymentMonitoring = () => {
     console.log('Loading mock payment data with real txRef values');
     const mockPayments = [
       {
-        txRef: 'TX-ZC2R4K48IN33MIZ',
+        txRef: 'TX-YQKA94VT4Q6NR1J',
         userName: 'Test User',
         hotel: 'Test Hotel',
-        amount: 94, // Corrected to match verified amount
+        amount: 90, // Corrected to match verified amount
         checkInStatus: 'Check In',
         checkInDate: '2025-06-01',
         checkOutDate: '2025-06-05',

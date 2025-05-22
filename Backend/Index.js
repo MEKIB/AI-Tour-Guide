@@ -1872,7 +1872,7 @@ app.post('/api/bookingHistory/create', verifyToken, async (req, res) => {
       totalPrice: parseFloat(totalPrice),
       image: image || 'https://via.placeholder.com/500x180?text=No+Image',
       guests: guests || 1,
-      status: 'pending',
+      status: 'check-in',
       bookingCode, // Store the booking code
     });
 
