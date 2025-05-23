@@ -29,9 +29,8 @@ import { debounce } from "lodash";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
-
 // Import logo using ES module syntax
-import logo from '../../assets/logo/logo.png';
+import logo from "../../assets/logo/logo.png";
 
 // Define the color palette
 
@@ -115,10 +114,10 @@ const ProfileImage = styled("img")({
 });
 
 // Logo styles
-const LogoImage = styled('img')({
-  height: '40px',
-  marginRight: '10px',
-  verticalAlign: 'middle'
+const LogoImage = styled("img")({
+  height: "40px",
+  marginRight: "10px",
+  verticalAlign: "middle",
 });
 
 // List of supported languages
@@ -277,15 +276,20 @@ export default function Navbar({
       >
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            <Link to="/" style={{ textDecoration: "none", color: "inherit", display: 'flex', alignItems: 'center' }}>
-              <LogoImage 
-                src={logo} 
-                alt="Visit Amhara" 
-              />
+            <Link
+              to="/"
+              style={{
+                textDecoration: "none",
+                color: "inherit",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <LogoImage src={logo} alt="Visit Amhara" />
               Visit Amhara
             </Link>
           </Typography>
-          
+
           <Box sx={{ display: "flex", gap: 4, alignItems: "center" }}>
             {/* Search Icon and Search Box */}
             <Box className="search-box">
@@ -350,7 +354,7 @@ export default function Navbar({
               >
                 <MenuItem onClick={handleCloseDestination}>
                   <Link
-                    to="/things"
+                    to="/things-to-do"
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     Things to Do
@@ -382,7 +386,7 @@ export default function Navbar({
                 </MenuItem>
                 <MenuItem onClick={handleCloseDestination}>
                   <Link
-                    to="/religioussites"
+                    to="/religious-sites"
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     Religious Sites
@@ -390,7 +394,7 @@ export default function Navbar({
                 </MenuItem>
                 <MenuItem onClick={handleCloseDestination}>
                   <Link
-                    to="/historicalLandmarks"
+                    to="/historical"
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     Historical Landmarks
@@ -490,12 +494,12 @@ export default function Navbar({
                   "aria-labelledby": "account-button",
                 }}
                 anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
+                  vertical: "bottom",
+                  horizontal: "right",
                 }}
                 transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
+                  vertical: "top",
+                  horizontal: "right",
                 }}
               >
                 {isLoggedInState ? (
@@ -650,7 +654,7 @@ export default function Navbar({
                 </MenuItem>
                 <MenuItem onClick={handleCloseAbout}>
                   <Link
-                    to="/management"
+                    to="/managment"
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     Our Management
