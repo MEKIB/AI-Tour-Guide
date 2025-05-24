@@ -1,30 +1,30 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import axios  from 'axios';
-import multer from 'multer';
-import path from 'path';
-import nodemailer from 'nodemailer';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import Review from './modules/HotelReviews.js';
-import Hotel from './modules/Hotel.js';
-import RoomType from './modules/RoomTypes.js';
-import Amenity from './modules/Facilities.js';
-import RoomTypeProperites from './modules/RoomTypeProperites.js';
-import AmenityFacilities from './modules/Amenity.js';
-import HotelRules from './modules/HotelRules.js';
-import Reservation from './modules/Reservation.js';
-import HotelAdminList from './modules/HotelAdminList.js';
-import ApprovedHotelAdmin from './modules/ApprovedHotelAdminLists.js';
-import SystemAdminModel from './modules/SystemAdminLists.js';
-import userModel from './modules/User.js';
-import { authMiddleware, adminMiddleware } from './Routes/middleware.js';
-import BookingHistory from './modules/BookingHistory.js';
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cors from "cors";
+import axios from "axios";
+import multer from "multer";
+import path from "path";
+import nodemailer from "nodemailer";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import Review from "./modules/HotelReviews.js";
+import Hotel from "./modules/Hotel.js";
+import RoomType from "./modules/RoomTypes.js";
+import Amenity from "./modules/Facilities.js";
+import RoomTypeProperites from "./modules/RoomTypeProperites.js";
+import AmenityFacilities from "./modules/Amenity.js";
+import HotelRules from "./modules/HotelRules.js";
+import Reservation from "./modules/Reservation.js";
+import HotelAdminList from "./modules/HotelAdminList.js";
+import ApprovedHotelAdmin from "./modules/ApprovedHotelAdminLists.js";
+import SystemAdminModel from "./modules/SystemAdminLists.js";
+import userModel from "./modules/User.js";
+import { authMiddleware, adminMiddleware } from "./Routes/middleware.js";
+import BookingHistory from "./modules/BookingHistory.js";
 dotenv.config();
 
 const app = express();
@@ -36,18 +36,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, 'Uploads');
+const uploadsDir = path.join(__dirname, "Uploads");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(UploadsDir);
 }
-app.use('/Uploads', express.static(uploadsDir));
-console.log('Serving static files from:', uploadsDir);
+app.use("/Uploads", express.static(uploadsDir));
+console.log("Serving static files from:", uploadsDir);
 
 // Multer storage configuration
 const storage = multer.diskStorage({
-  destination: './Uploads/',
+  destination: "./Uploads/",
   filename: (req, file, cb) => {
-    cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
+    cb(
+      null,
+      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
+    );
   },
 });
 
@@ -56,22 +59,24 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const fileTypes = /jpeg|jpg|png|pdf/;
-    const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
+    const extname = fileTypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
     const mimetype = fileTypes.test(file.mimetype);
     if (extname && mimetype) {
       return cb(null, true);
     }
-    cb(new Error('Only images (jpeg, jpg, png) and PDFs are allowed'));
+    cb(new Error("Only images (jpeg, jpg, png) and PDFs are allowed"));
   },
 });
 
 // Middleware to verify token
 const verifyToken = (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'No token provided' });
+  const token = req.headers["authorization"]?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No token provided" });
 
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) return res.status(403).json({ message: 'Invalid token' });
+    if (err) return res.status(403).json({ message: "Invalid token" });
     req.user = decoded;
     next();
   });
@@ -84,175 +89,191 @@ app.use((req, res, next) => {
 });
 
 // Hotel Routes
-app.post('/api/hotels', verifyToken, upload.array('images', 10), async (req, res) => {
-  try {
-    const { name, location, facilityType, description, lat, long } = req.body;
-    let images = [];
+app.post(
+  "/api/hotels",
+  verifyToken,
+  upload.array("images", 10),
+  async (req, res) => {
+    try {
+      const { name, location, facilityType, description, lat, long } = req.body;
+      let images = [];
 
-    if (req.files && req.files.length > 0) {
-      images = req.files.map((file) => ({
-        name: file.filename,
-        url: `/Uploads/${file.filename}`,
-      }));
-    }
+      if (req.files && req.files.length > 0) {
+        images = req.files.map((file) => ({
+          name: file.filename,
+          url: `/Uploads/${file.filename}`,
+        }));
+      }
 
-    const email = req.user.email;
-    const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
-    if (!approvedAdmin) {
-      return res.status(404).json({ message: 'Hotel admin not found' });
-    }
+      const email = req.user.email;
+      const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
+      if (!approvedAdmin) {
+        return res.status(404).json({ message: "Hotel admin not found" });
+      }
 
-    const hotelAdminId = approvedAdmin.hotelAdminId;
+      const hotelAdminId = approvedAdmin.hotelAdminId;
 
-    const existingHotel = await Hotel.findOne({ HotelAdminId: hotelAdminId });
-    if (existingHotel) {
-      const updatedHotel = await Hotel.findOneAndUpdate(
-        { HotelAdminId: hotelAdminId },
-        {
+      const existingHotel = await Hotel.findOne({ HotelAdminId: hotelAdminId });
+      if (existingHotel) {
+        const updatedHotel = await Hotel.findOneAndUpdate(
+          { HotelAdminId: hotelAdminId },
+          {
+            name,
+            location,
+            facilityType,
+            description,
+            lat,
+            long,
+            images: images.length > 0 ? images : existingHotel.images,
+          },
+          { new: true }
+        );
+        res.json({ message: "Hotel updated successfully", data: updatedHotel });
+      } else {
+        const newHotel = new Hotel({
+          HotelAdminId: hotelAdminId,
           name,
           location,
           facilityType,
           description,
           lat,
           long,
-          images: images.length > 0 ? images : existingHotel.images,
-        },
-        { new: true }
-      );
-      res.json({ message: 'Hotel updated successfully', data: updatedHotel });
-    } else {
-      const newHotel = new Hotel({
-        HotelAdminId: hotelAdminId,
-        name,
-        location,
-        facilityType,
-        description,
-        lat,
-        long,
-        images,
-      });
-      await newHotel.save();
-      res.json({ message: 'Hotel created successfully', data: newHotel });
+          images,
+        });
+        await newHotel.save();
+        res.json({ message: "Hotel created successfully", data: newHotel });
+      }
+    } catch (error) {
+      console.error("Error in /api/hotels:", error);
+      res.status(500).json({ message: "Server error", error: error.message });
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
   }
-});
+);
 
-app.get('/api/hotel/admin', verifyToken, async (req, res) => {
-  console.log('Request received at /api/hotel/admin');
+app.get("/api/hotel/admin", verifyToken, async (req, res) => {
+  console.log("Request received at /api/hotel/admin");
   try {
     const email = req.user.email;
     const approvedAdmin = await ApprovedHotelAdmin.findOne({ email: email });
 
     if (!approvedAdmin) {
-      console.log('Hotel admin not found');
-      return res.status(404).json({ message: 'Hotel admin not found' });
+      console.log("Hotel admin not found");
+      return res.status(404).json({ message: "Hotel admin not found" });
     }
 
     const hotelAdminId = approvedAdmin.hotelAdminId;
-    console.log('HotelAdminId from ApprovedAdmin:', hotelAdminId);
+    console.log("HotelAdminId from ApprovedAdmin:", hotelAdminId);
 
     const hotel = await Hotel.findOne({ HotelAdminId: hotelAdminId });
 
     if (!hotel) {
-      console.log('Hotel not found for hotelAdminId:', hotelAdminId);
-      return res.status(404).json({ message: 'Hotel not found' });
+      console.log("Hotel not found for hotelAdminId:", hotelAdminId);
+      return res.status(404).json({ message: "Hotel not found" });
     }
 
     res.json(hotel);
   } catch (error) {
-    console.error('Error in /api/hotel/admin:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error in /api/hotel/admin:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-app.get('/api/hotels', async (req, res) => {
+app.get("/api/hotels", async (req, res) => {
   try {
     const { location, facilityType } = req.query;
     const query = {};
-    if (location && location !== 'All Locations') {
-      query.location = { $regex: location, $options: 'i' };
+    if (location && location !== "All Locations") {
+      query.location = { $regex: location, $options: "i" };
     }
-    if (facilityType && facilityType !== 'All Facility Types') {
+    if (facilityType && facilityType !== "All Facility Types") {
       query.facilityType = facilityType;
     }
 
     const hotels = await Hotel.find(query);
     if (!hotels.length) {
-      return res.status(200).json({ message: 'No hotels found', data: [] });
+      return res.status(200).json({ message: "No hotels found", data: [] });
     }
 
-    res.json({ message: 'Hotels fetched successfully', data: hotels });
+    res.json({ message: "Hotels fetched successfully", data: hotels });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-app.get('/api/hotels/admin/:hotelAdminId', async (req, res) => {
+app.get("/api/hotels/admin/:hotelAdminId", async (req, res) => {
   try {
     const { hotelAdminId } = req.params;
     const hotel = await Hotel.findOne({ HotelAdminId: hotelAdminId });
 
     if (!hotel) {
-      return res.status(404).json({ message: 'Hotel not found for this admin ID' });
+      return res
+        .status(404)
+        .json({ message: "Hotel not found for this admin ID" });
     }
 
     res.json({ data: hotel });
   } catch (error) {
-    console.error('Error fetching hotel by admin ID:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error fetching hotel by admin ID:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-app.get('/api/hotels/:hotelAdminId', async (req, res) => {
+app.get("/api/hotels/:hotelAdminId", async (req, res) => {
   try {
-    const hotel = await Hotel.findOne({ HotelAdminId: req.params.hotelAdminId });
+    const hotel = await Hotel.findOne({
+      HotelAdminId: req.params.hotelAdminId,
+    });
     if (!hotel) {
-      return res.status(404).json({ message: 'Hotel not found' });
+      return res.status(404).json({ message: "Hotel not found" });
     }
-    res.status(200).json({ message: 'Hotel fetched successfully', data: hotel });
+    res
+      .status(200)
+      .json({ message: "Hotel fetched successfully", data: hotel });
   } catch (error) {
-    console.error('Error fetching hotel:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error fetching hotel:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // Amenity Routes
-app.get('/api/amenities', verifyToken, async (req, res) => {
+app.get("/api/amenities", verifyToken, async (req, res) => {
   try {
     const email = req.user.email;
     const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
     if (!approvedAdmin) {
-      return res.status(404).json({ message: 'Hotel admin not found' });
+      return res.status(404).json({ message: "Hotel admin not found" });
     }
 
     const hotelAdminId = approvedAdmin.hotelAdminId;
     const amenityDoc = await Amenity.findOne({ hotelAdminId });
     if (!amenityDoc || !amenityDoc.amenities.length) {
-      return res.status(200).json({ message: 'No amenities found', data: [] });
+      return res.status(200).json({ message: "No amenities found", data: [] });
     }
 
-    res.json({ message: 'Amenities fetched successfully', data: amenityDoc.amenities });
+    res.json({
+      message: "Amenities fetched successfully",
+      data: amenityDoc.amenities,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-app.post('/api/amenities', verifyToken, async (req, res) => {
+app.post("/api/amenities", verifyToken, async (req, res) => {
   try {
     const { amenities } = req.body;
     if (!Array.isArray(amenities)) {
-      return res.status(400).json({ message: 'Request body must contain an "amenities" array' });
+      return res
+        .status(400)
+        .json({ message: 'Request body must contain an "amenities" array' });
     }
 
     for (const amenity of amenities) {
       if (!amenity.name || !amenity.description || !amenity.icon) {
         return res.status(400).json({
-          message: 'Each amenity must have name, description, and icon fields',
+          message: "Each amenity must have name, description, and icon fields",
         });
       }
     }
@@ -260,7 +281,7 @@ app.post('/api/amenities', verifyToken, async (req, res) => {
     const email = req.user.email;
     const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
     if (!approvedAdmin) {
-      return res.status(404).json({ message: 'Hotel admin not found' });
+      return res.status(404).json({ message: "Hotel admin not found" });
     }
 
     const hotelAdminId = approvedAdmin.hotelAdminId;
@@ -272,43 +293,51 @@ app.post('/api/amenities', verifyToken, async (req, res) => {
         { amenities },
         { new: true }
       );
-      res.json({ message: 'Amenities updated successfully', data: updatedAmenityDoc.amenities });
+      res.json({
+        message: "Amenities updated successfully",
+        data: updatedAmenityDoc.amenities,
+      });
     } else {
       const newAmenityDoc = new Amenity({
         hotelAdminId,
         amenities,
       });
       await newAmenityDoc.save();
-      res.json({ message: 'Amenities created successfully', data: newAmenityDoc.amenities });
+      res.json({
+        message: "Amenities created successfully",
+        data: newAmenityDoc.amenities,
+      });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-app.get('/api/amenities/by-hotel', async (req, res) => {
+app.get("/api/amenities/by-hotel", async (req, res) => {
   try {
     const { hotelAdminId } = req.query;
     if (!hotelAdminId) {
-      return res.status(400).json({ message: 'HotelAdminId is required' });
+      return res.status(400).json({ message: "HotelAdminId is required" });
     }
 
     const amenityDoc = await Amenity.findOne({ hotelAdminId });
     if (!amenityDoc || !amenityDoc.amenities.length) {
-      return res.status(200).json({ message: 'No amenities found', data: [] });
+      return res.status(200).json({ message: "No amenities found", data: [] });
     }
 
-    res.json({ message: 'Amenities fetched successfully', data: amenityDoc.amenities });
+    res.json({
+      message: "Amenities fetched successfully",
+      data: amenityDoc.amenities,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-
 // Hotel Rules Routes
-app.post('/api/hotel-rules', verifyToken, async (req, res) => {
+app.post("/api/hotel-rules", verifyToken, async (req, res) => {
   try {
     const {
       checkIn,
@@ -324,7 +353,7 @@ app.post('/api/hotel-rules', verifyToken, async (req, res) => {
     const email = req.user.email;
     const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
     if (!approvedAdmin) {
-      return res.status(404).json({ message: 'Hotel admin not found' });
+      return res.status(404).json({ message: "Hotel admin not found" });
     }
 
     const hotelAdminId = approvedAdmin.hotelAdminId;
@@ -347,7 +376,7 @@ app.post('/api/hotel-rules', verifyToken, async (req, res) => {
         },
         { new: true }
       );
-      res.json({ message: 'Hotel rules updated successfully' });
+      res.json({ message: "Hotel rules updated successfully" });
     } else {
       const newHotelRules = new HotelRules({
         hotelAdminId,
@@ -361,52 +390,52 @@ app.post('/api/hotel-rules', verifyToken, async (req, res) => {
         acceptedCards,
       });
       await newHotelRules.save();
-      res.json({ message: 'Hotel rules created successfully' });
-      console.log('Hotel rules created successfully');
+      res.json({ message: "Hotel rules created successfully" });
+      console.log("Hotel rules created successfully");
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-app.get('/api/hotel-rules', verifyToken, async (req, res) => {
+app.get("/api/hotel-rules", verifyToken, async (req, res) => {
   try {
     const email = req.user.email;
     const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
     if (!approvedAdmin) {
-      return res.status(404).json({ message: 'Hotel admin not found' });
+      return res.status(404).json({ message: "Hotel admin not found" });
     }
 
     const hotelAdminId = approvedAdmin.hotelAdminId;
     const rules = await HotelRules.findOne({ hotelAdminId });
     if (!rules) {
-      return res.status(200).json({ message: 'No rules found', data: null });
+      return res.status(200).json({ message: "No rules found", data: null });
     }
 
-    res.json({ message: 'Hotel rules fetched successfully', data: rules });
+    res.json({ message: "Hotel rules fetched successfully", data: rules });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-app.get('/api/hotel-rules/by-hotel', async (req, res) => {
+app.get("/api/hotel-rules/by-hotel", async (req, res) => {
   try {
     const { hotelAdminId } = req.query;
     if (!hotelAdminId) {
-      return res.status(400).json({ message: 'HotelAdminId is required' });
+      return res.status(400).json({ message: "HotelAdminId is required" });
     }
 
     const rules = await HotelRules.findOne({ hotelAdminId });
     if (!rules) {
-      return res.status(200).json({ message: 'No rules found', data: null });
+      return res.status(200).json({ message: "No rules found", data: null });
     }
 
-    res.json({ message: 'Hotel rules fetched successfully', data: rules });
+    res.json({ message: "Hotel rules fetched successfully", data: rules });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
@@ -415,43 +444,52 @@ const getHotelAdminId = async (req, res, next) => {
   try {
     const admin = await ApprovedHotelAdmin.findById(req.user.id);
     if (!admin) {
-      return res.status(404).json({ message: 'Hotel admin not found' });
+      return res.status(404).json({ message: "Hotel admin not found" });
     }
     req.hotelAdminId = admin.hotelAdminId;
     next();
   } catch (error) {
-    console.error('Error fetching hotel admin:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error fetching hotel admin:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-
 // POST /api/room-types
-app.post('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
+app.post("/api/room-types", verifyToken, getHotelAdminId, async (req, res) => {
   try {
     const { type, rate, roomNumbers } = req.body;
     if (!type || !rate || !roomNumbers) {
-      return res.status(400).json({ message: 'Type, rate, and room numbers are required' });
+      return res
+        .status(400)
+        .json({ message: "Type, rate, and room numbers are required" });
     }
 
     // Validate type
-    if (!['Single', 'Double'].includes(type)) {
-      return res.status(400).json({ message: 'Room type must be Single or Double' });
+    if (!["Single", "Double"].includes(type)) {
+      return res
+        .status(400)
+        .json({ message: "Room type must be Single or Double" });
     }
 
     const numbersArray = roomNumbers
-      .split(',')
+      .split(",")
       .map((num) => num.trim().toUpperCase())
-      .filter((num) => num !== '');
+      .filter((num) => num !== "");
 
     if (numbersArray.length === 0) {
-      return res.status(400).json({ message: 'At least one room number required' });
+      return res
+        .status(400)
+        .json({ message: "At least one room number required" });
     }
 
     // Check if both types already exist
-    const existingTypes = await RoomType.find({ hotelAdminId: req.hotelAdminId });
+    const existingTypes = await RoomType.find({
+      hotelAdminId: req.hotelAdminId,
+    });
     if (existingTypes.length >= 2) {
-      return res.status(400).json({ message: 'Both Single and Double room types already exist' });
+      return res
+        .status(400)
+        .json({ message: "Both Single and Double room types already exist" });
     }
 
     // Check for duplicate type
@@ -461,7 +499,7 @@ app.post('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
     });
 
     if (existingType) {
-      return res.status(400).json({ message: 'Room type already exists' });
+      return res.status(400).json({ message: "Room type already exists" });
     }
 
     const newRoomType = new RoomType({
@@ -477,98 +515,111 @@ app.post('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
     await newRoomType.save();
 
     res.status(201).json({
-      message: 'Room type added successfully',
+      message: "Room type added successfully",
       data: newRoomType,
     });
   } catch (error) {
-    console.error('Error creating room type:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error creating room type:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // GET /api/room-types
-app.get('/api/room-types', verifyToken, getHotelAdminId, async (req, res) => {
+app.get("/api/room-types", verifyToken, getHotelAdminId, async (req, res) => {
   try {
     const roomTypes = await RoomType.find({ hotelAdminId: req.hotelAdminId });
     res.json({ data: roomTypes });
   } catch (error) {
-    console.error('Error fetching room types:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error fetching room types:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // PUT /api/room-types/:id
-app.put('/api/room-types/:id', verifyToken, getHotelAdminId, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { type, rate, roomNumbers } = req.body;
+app.put(
+  "/api/room-types/:id",
+  verifyToken,
+  getHotelAdminId,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { type, rate, roomNumbers } = req.body;
 
-    if (!type || !rate || !roomNumbers) {
-      return res.status(400).json({ message: 'Type, rate, and room numbers are required' });
-    }
+      if (!type || !rate || !roomNumbers) {
+        return res
+          .status(400)
+          .json({ message: "Type, rate, and room numbers are required" });
+      }
 
-    // Validate type
-    if (!['Single', 'Double'].includes(type)) {
-      return res.status(400).json({ message: 'Room type must be Single or Double' });
-    }
+      // Validate type
+      if (!["Single", "Double"].includes(type)) {
+        return res
+          .status(400)
+          .json({ message: "Room type must be Single or Double" });
+      }
 
-    const numbersArray = roomNumbers
-      .split(',')
-      .map((num) => num.trim().toUpperCase())
-      .filter((num) => num !== '');
+      const numbersArray = roomNumbers
+        .split(",")
+        .map((num) => num.trim().toUpperCase())
+        .filter((num) => num !== "");
 
-    if (numbersArray.length === 0) {
-      return res.status(400).json({ message: 'At least one room number required' });
-    }
+      if (numbersArray.length === 0) {
+        return res
+          .status(400)
+          .json({ message: "At least one room number required" });
+      }
 
-    // Check if another room type with the same type exists (excluding this room)
-    const existingType = await RoomType.findOne({
-      hotelAdminId: req.hotelAdminId,
-      type,
-      _id: { $ne: id },
-    });
-
-    if (existingType) {
-      return res.status(400).json({ message: 'Room type already exists' });
-    }
-
-    const updatedRoomType = await RoomType.findOneAndUpdate(
-      { _id: id, hotelAdminId: req.hotelAdminId },
-      {
+      // Check if another room type with the same type exists (excluding this room)
+      const existingType = await RoomType.findOne({
+        hotelAdminId: req.hotelAdminId,
         type,
-        rate: parseFloat(rate),
-        roomNumbers: numbersArray.map((number) => ({
-          number,
-          availability: [], // Preserve existing availability or reset
-        })),
-      },
-      { new: true }
-    );
+        _id: { $ne: id },
+      });
 
-    if (!updatedRoomType) {
-      return res.status(404).json({ message: 'Room type not found' });
+      if (existingType) {
+        return res.status(400).json({ message: "Room type already exists" });
+      }
+
+      const updatedRoomType = await RoomType.findOneAndUpdate(
+        { _id: id, hotelAdminId: req.hotelAdminId },
+        {
+          type,
+          rate: parseFloat(rate),
+          roomNumbers: numbersArray.map((number) => ({
+            number,
+            availability: [], // Preserve existing availability or reset
+          })),
+        },
+        { new: true }
+      );
+
+      if (!updatedRoomType) {
+        return res.status(404).json({ message: "Room type not found" });
+      }
+
+      res.json({
+        message: "Room type updated successfully",
+        data: updatedRoomType,
+      });
+    } catch (error) {
+      console.error("Error updating room type:", error);
+      res.status(500).json({ message: "Server error", error: error.message });
     }
-
-    res.json({
-      message: 'Room type updated successfully',
-      data: updatedRoomType,
-    });
-  } catch (error) {
-    console.error('Error updating room type:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
   }
-});
+);
 
-app.get('/', verifyToken, getHotelAdminId, async (req, res) => {
+app.get("/", verifyToken, getHotelAdminId, async (req, res) => {
   try {
-    const rooms = await RoomTypeProperites.find({ hotelAdminId: req.hotelAdminId });
+    const rooms = await RoomTypeProperites.find({
+      hotelAdminId: req.hotelAdminId,
+    });
     res.json(rooms);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-app.post('/', verifyToken, getHotelAdminId, async (req, res) => {
+app.post("/", verifyToken, getHotelAdminId, async (req, res) => {
   try {
     const { type, rate, roomNumbers, details } = req.body;
     const newRoom = new RoomTypeProperites({
@@ -589,41 +640,59 @@ app.post('/', verifyToken, getHotelAdminId, async (req, res) => {
   }
 });
 
-
 // POST /api/rooms/upload
-app.post('/api/rooms/upload', verifyToken, async (req, res) => {
+app.post("/api/rooms/upload", verifyToken, async (req, res) => {
   try {
     const { type, bathrooms, size, amenities } = req.body;
     const email = req.user.email;
     const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
     if (!approvedAdmin) {
-      return res.status(404).json({ message: 'Hotel admin not found' });
+      return res.status(404).json({ message: "Hotel admin not found" });
     }
     const hotelAdminId = approvedAdmin.hotelAdminId;
 
-    if (!type || !bathrooms || !size || !amenities || !Array.isArray(amenities)) {
-      return res.status(400).json({ message: 'Type, bathrooms, size, and amenities array are required' });
+    if (
+      !type ||
+      !bathrooms ||
+      !size ||
+      !amenities ||
+      !Array.isArray(amenities)
+    ) {
+      return res.status(400).json({
+        message: "Type, bathrooms, size, and amenities array are required",
+      });
     }
 
     // Validate type
-    if (!['Single', 'Double'].includes(type)) {
-      return res.status(400).json({ message: 'Room type must be Single or Double' });
+    if (!["Single", "Double"].includes(type)) {
+      return res
+        .status(400)
+        .json({ message: "Room type must be Single or Double" });
     }
 
     // Check if both types already exist
     const existingProperties = await RoomTypeProperites.find({ hotelAdminId });
     if (existingProperties.length >= 2) {
-      return res.status(400).json({ message: 'Both Single and Double room properties already exist' });
+      return res.status(400).json({
+        message: "Both Single and Double room properties already exist",
+      });
     }
 
     const roomType = await RoomType.findOne({ hotelAdminId, type });
     if (!roomType) {
-      return res.status(400).json({ message: `Room type ${type} not found. Please add it via /api/room-types first.` });
+      return res.status(400).json({
+        message: `Room type ${type} not found. Please add it via /api/room-types first.`,
+      });
     }
 
-    const existingTypeProperties = await RoomTypeProperites.findOne({ hotelAdminId, type });
+    const existingTypeProperties = await RoomTypeProperites.findOne({
+      hotelAdminId,
+      type,
+    });
     if (existingTypeProperties) {
-      return res.status(400).json({ message: `Properties for room type ${type} already exist` });
+      return res
+        .status(400)
+        .json({ message: `Properties for room type ${type} already exist` });
     }
 
     const newRoomProperties = new RoomTypeProperites({
@@ -637,21 +706,22 @@ app.post('/api/rooms/upload', verifyToken, async (req, res) => {
     await newRoomProperties.save();
 
     res.status(201).json({
-      message: 'Room properties and amenities uploaded successfully',
+      message: "Room properties and amenities uploaded successfully",
       data: newRoomProperties,
     });
   } catch (error) {
-    console.error('Error uploading room properties:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error uploading room properties:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // GET /api/rooms
-app.get('/api/rooms', verifyToken, async (req, res) => {
+app.get("/api/rooms", verifyToken, async (req, res) => {
   try {
     const email = req.user.email;
     const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
-    if (!approvedAdmin) return res.status(404).json({ message: 'Hotel admin not found' });
+    if (!approvedAdmin)
+      return res.status(404).json({ message: "Hotel admin not found" });
 
     const rooms = await RoomTypeProperites.find({
       hotelAdminId: approvedAdmin.hotelAdminId,
@@ -659,13 +729,13 @@ app.get('/api/rooms', verifyToken, async (req, res) => {
 
     res.json({ data: rooms });
   } catch (error) {
-    console.error('Error fetching room properties:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error fetching room properties:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // GET /api/rooms/by-hotel/:hotelAdminId
-app.get('/by-hotel/:hotelAdminId', async (req, res) => {
+app.get("/by-hotel/:hotelAdminId", async (req, res) => {
   try {
     const rooms = await RoomTypeProperites.find({
       hotelAdminId: req.params.hotelAdminId,
@@ -673,36 +743,48 @@ app.get('/by-hotel/:hotelAdminId', async (req, res) => {
 
     res.json({ data: rooms });
   } catch (error) {
-    console.error('Error fetching room properties by hotel:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error fetching room properties by hotel:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // PUT /api/rooms/:id
-app.put('/api/rooms/:id', verifyToken, async (req, res) => {
+app.put("/api/rooms/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { type, bathrooms, size, amenities } = req.body;
     const email = req.user.email;
     const approvedAdmin = await ApprovedHotelAdmin.findOne({ email });
     if (!approvedAdmin) {
-      return res.status(404).json({ message: 'Hotel admin not found' });
+      return res.status(404).json({ message: "Hotel admin not found" });
     }
     const hotelAdminId = approvedAdmin.hotelAdminId;
 
-    if (!type || !bathrooms || !size || !amenities || !Array.isArray(amenities)) {
-      return res.status(400).json({ message: 'Type, bathrooms, size, and amenities array are required' });
+    if (
+      !type ||
+      !bathrooms ||
+      !size ||
+      !amenities ||
+      !Array.isArray(amenities)
+    ) {
+      return res.status(400).json({
+        message: "Type, bathrooms, size, and amenities array are required",
+      });
     }
 
     // Validate type
-    if (!['Single', 'Double'].includes(type)) {
-      return res.status(400).json({ message: 'Room type must be Single or Double' });
+    if (!["Single", "Double"].includes(type)) {
+      return res
+        .status(400)
+        .json({ message: "Room type must be Single or Double" });
     }
 
     // Check if room type exists in RoomType
     const roomType = await RoomType.findOne({ hotelAdminId, type });
     if (!roomType) {
-      return res.status(400).json({ message: `Room type ${type} not found. Please add it via /api/room-types first.` });
+      return res.status(400).json({
+        message: `Room type ${type} not found. Please add it via /api/room-types first.`,
+      });
     }
 
     // Check if another room type with the same type exists (excluding this room)
@@ -712,7 +794,9 @@ app.put('/api/rooms/:id', verifyToken, async (req, res) => {
       _id: { $ne: id },
     });
     if (existingTypeProperties) {
-      return res.status(400).json({ message: `Properties for room type ${type} already exist` });
+      return res
+        .status(400)
+        .json({ message: `Properties for room type ${type} already exist` });
     }
 
     const updatedRoomProperties = await RoomTypeProperites.findOneAndUpdate(
@@ -727,48 +811,20 @@ app.put('/api/rooms/:id', verifyToken, async (req, res) => {
     );
 
     if (!updatedRoomProperties) {
-      return res.status(404).json({ message: 'Room properties not found' });
+      return res.status(404).json({ message: "Room properties not found" });
     }
 
     res.json({
-      message: 'Room properties updated successfully',
+      message: "Room properties updated successfully",
       data: updatedRoomProperties,
     });
   } catch (error) {
-    console.error('Error updating room properties:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error updating room properties:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-app.post('/api/reservations', verifyToken, async (req, res) => {
+app.post("/api/reservations", verifyToken, async (req, res) => {
   try {
     const {
       hotelAdminId,
@@ -782,7 +838,14 @@ app.post('/api/reservations', verifyToken, async (req, res) => {
       childrenAges,
     } = req.body;
 
-    console.log('Reservation request received:', { hotelAdminId, userId, roomType, roomNumber, checkInDate, checkOutDate });
+    console.log("Reservation request received:", {
+      hotelAdminId,
+      userId,
+      roomType,
+      roomNumber,
+      checkInDate,
+      checkOutDate,
+    });
 
     if (
       !hotelAdminId ||
@@ -793,38 +856,54 @@ app.post('/api/reservations', verifyToken, async (req, res) => {
       !checkOutDate ||
       !adults
     ) {
-      console.log('Missing required fields');
-      return res.status(400).json({ message: 'All required fields must be provided' });
+      console.log("Missing required fields");
+      return res
+        .status(400)
+        .json({ message: "All required fields must be provided" });
     }
 
     if (userId !== req.user.id) {
-      console.log('Unauthorized: userId mismatch', { userId, tokenUserId: req.user.id });
-      return res.status(403).json({ message: 'Unauthorized: userId does not match authenticated user' });
+      console.log("Unauthorized: userId mismatch", {
+        userId,
+        tokenUserId: req.user.id,
+      });
+      return res.status(403).json({
+        message: "Unauthorized: userId does not match authenticated user",
+      });
     }
 
     const user = await userModel.findById(userId);
     if (!user) {
-      console.log('User not found:', userId);
-      return res.status(404).json({ message: 'User not found' });
+      console.log("User not found:", userId);
+      return res.status(404).json({ message: "User not found" });
     }
 
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
     if (checkIn >= checkOut) {
-      console.log('Invalid dates:', { checkIn, checkOut });
-      return res.status(400).json({ message: 'Check-out date must be after check-in date' });
+      console.log("Invalid dates:", { checkIn, checkOut });
+      return res
+        .status(400)
+        .json({ message: "Check-out date must be after check-in date" });
     }
 
-    const roomTypeDoc = await RoomType.findOne({ hotelAdminId, type: roomType });
+    const roomTypeDoc = await RoomType.findOne({
+      hotelAdminId,
+      type: roomType,
+    });
     if (!roomTypeDoc) {
-      console.log('Room type not found:', roomType);
-      return res.status(404).json({ message: `Room type ${roomType} not found` });
+      console.log("Room type not found:", roomType);
+      return res
+        .status(404)
+        .json({ message: `Room type ${roomType} not found` });
     }
 
     const room = roomTypeDoc.roomNumbers.find((r) => r.number === roomNumber);
     if (!room) {
-      console.log('Room number not found:', roomNumber);
-      return res.status(404).json({ message: `Room number ${roomNumber} not found` });
+      console.log("Room number not found:", roomNumber);
+      return res
+        .status(404)
+        .json({ message: `Room number ${roomNumber} not found` });
     }
 
     const isBooked = room.availability.some((booking) => {
@@ -838,13 +917,19 @@ app.post('/api/reservations', verifyToken, async (req, res) => {
     });
 
     if (isBooked) {
-      console.log('Room already booked:', roomNumber);
-      return res.status(400).json({ message: `Room ${roomNumber} is already booked for the selected dates` });
+      console.log("Room already booked:", roomNumber);
+      return res.status(400).json({
+        message: `Room ${roomNumber} is already booked for the selected dates`,
+      });
     }
 
     const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
     const totalPrice = roomTypeDoc.rate * nights;
-    console.log('Calculated price:', { nights, rate: roomTypeDoc.rate, totalPrice });
+    console.log("Calculated price:", {
+      nights,
+      rate: roomTypeDoc.rate,
+      totalPrice,
+    });
 
     const reservation = new Reservation({
       hotelAdminId,
@@ -863,90 +948,100 @@ app.post('/api/reservations', verifyToken, async (req, res) => {
     await roomTypeDoc.save();
     await reservation.save();
 
-    console.log('Reservation created:', reservation._id);
+    console.log("Reservation created:", reservation._id);
     res.status(201).json({
-      message: 'Reservation created successfully',
+      message: "Reservation created successfully",
       data: reservation,
     });
   } catch (error) {
-    console.error('Error creating reservation:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error creating reservation:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-
-
-
-app.get('/api/reservations/user', verifyToken, async (req, res) => {
+app.get("/api/reservations/user", verifyToken, async (req, res) => {
   console.log(`Fetching reservations for userId: ${req.query.userId}`);
   try {
     const userId = req.query.userId;
     if (!userId) {
-      return res.status(400).json({ message: 'userId query parameter is required' });
+      return res
+        .status(400)
+        .json({ message: "userId query parameter is required" });
     }
     if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ message: 'Invalid userId format' });
+      return res.status(400).json({ message: "Invalid userId format" });
     }
     const reservations = await Reservation.find({ userId });
-    console.log('Reservations found:', reservations);
-    res.status(200).json({ message: 'Reservations fetched successfully', data: reservations });
+    console.log("Reservations found:", reservations);
+    res.status(200).json({
+      message: "Reservations fetched successfully",
+      data: reservations,
+    });
   } catch (error) {
-    console.error('Error fetching reservations:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error fetching reservations:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-
-
 // DELETE endpoint to cancel a reservation
-app.delete('/api/reservations/:id', verifyToken, async (req, res) => {
+app.delete("/api/reservations/:id", verifyToken, async (req, res) => {
   console.log(`Attempting to delete reservation with ID: ${req.params.id}`);
   try {
     const userId = req.query.userId;
     if (!userId) {
-      return res.status(400).json({ message: 'userId query parameter is required' });
+      return res
+        .status(400)
+        .json({ message: "userId query parameter is required" });
     }
 
     const reservationId = req.params.id;
-     
+
     // Validate reservation ID format
     if (!reservationId.match(/^[0-9a-fA-F]{24}$/)) {
-      console.log('Invalid reservation ID format:', reservationId);
-      return res.status(400).json({ message: 'Invalid reservation ID format' });
+      console.log("Invalid reservation ID format:", reservationId);
+      return res.status(400).json({ message: "Invalid reservation ID format" });
     }
-   
+
     // Find the reservation
     const reservation = await Reservation.findById(reservationId);
     if (!reservation) {
-      console.log('Reservation not found:', reservationId);
-      return res.status(404).json({ message: 'Reservation not found' });
+      console.log("Reservation not found:", reservationId);
+      return res.status(404).json({ message: "Reservation not found" });
     }
 
     // Verify user authorization
     if (reservation.userId.toString() !== req.user.id) {
-       console.log('Unauthorized: userId mismatch', { 
-        reservationUserId: reservation.userId, 
-        tokenUserId: req.user.id 
+      console.log("Unauthorized: userId mismatch", {
+        reservationUserId: reservation.userId,
+        tokenUserId: req.user.id,
       });
-      return res.status(403).json({ message: 'Unauthorized: You can only delete your own reservations' });
+      return res.status(403).json({
+        message: "Unauthorized: You can only delete your own reservations",
+      });
     }
 
     // Find the room type document
-    const roomTypeDoc = await RoomType.findOne({ 
-      hotelAdminId: reservation.hotelAdminId, 
-      type: reservation.roomType 
+    const roomTypeDoc = await RoomType.findOne({
+      hotelAdminId: reservation.hotelAdminId,
+      type: reservation.roomType,
     });
-    
+
     if (!roomTypeDoc) {
-      console.log('Room type not found:', reservation.roomType);
-      return res.status(404).json({ message: `Room type ${reservation.roomType} not found` });
+      console.log("Room type not found:", reservation.roomType);
+      return res
+        .status(404)
+        .json({ message: `Room type ${reservation.roomType} not found` });
     }
 
     // Find the specific room
-    const room = roomTypeDoc.roomNumbers.find((r) => r.number === reservation.roomNumber);
+    const room = roomTypeDoc.roomNumbers.find(
+      (r) => r.number === reservation.roomNumber
+    );
     if (!room) {
-      console.log('Room number not found:', reservation.roomNumber);
-      return res.status(404).json({ message: `Room number ${reservation.roomNumber} not found` });
+      console.log("Room number not found:", reservation.roomNumber);
+      return res
+        .status(404)
+        .json({ message: `Room number ${reservation.roomNumber} not found` });
     }
 
     // Remove the availability entry
@@ -954,7 +1049,8 @@ app.delete('/api/reservations/:id', verifyToken, async (req, res) => {
       const bookingStart = new Date(booking.startDate);
       const bookingEnd = new Date(booking.endDate);
       return !(
-        bookingStart.getTime() === new Date(reservation.checkInDate).getTime() &&
+        bookingStart.getTime() ===
+          new Date(reservation.checkInDate).getTime() &&
         bookingEnd.getTime() === new Date(reservation.checkOutDate).getTime()
       );
     });
@@ -965,53 +1061,50 @@ app.delete('/api/reservations/:id', verifyToken, async (req, res) => {
     // Delete the reservation
     await Reservation.deleteOne({ _id: reservationId });
 
-    console.log('Reservation deleted successfully:', reservationId);
-    res.status(200).json({ 
-      message: 'Reservation cancelled successfully',
-      data: { reservationId }
+    console.log("Reservation deleted successfully:", reservationId);
+    res.status(200).json({
+      message: "Reservation cancelled successfully",
+      data: { reservationId },
     });
   } catch (error) {
-    console.error('Error deleting reservation:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error deleting reservation:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
 // Review Routes
-app.get('/api/reviews/:hotelAdminId/average', async (req, res) => {
+app.get("/api/reviews/:hotelAdminId/average", async (req, res) => {
   try {
-    const reviews = await Review.find({ hotelAdminId: req.params.hotelAdminId });
+    const reviews = await Review.find({
+      hotelAdminId: req.params.hotelAdminId,
+    });
     if (reviews.length === 0) {
-      return res.status(200).json({ message: 'No reviews found', data: { averageRating: 0 } });
+      return res
+        .status(200)
+        .json({ message: "No reviews found", data: { averageRating: 0 } });
     }
 
     const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
     const averageRating = (totalRating / reviews.length).toFixed(1);
 
-    res.status(200).json({ message: 'Average rating fetched successfully', data: { averageRating } });
+    res.status(200).json({
+      message: "Average rating fetched successfully",
+      data: { averageRating },
+    });
   } catch (error) {
-    console.error('Error fetching average rating:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error fetching average rating:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-app.post('/api/reviews', verifyToken, async (req, res) => {
+app.post("/api/reviews", verifyToken, async (req, res) => {
   const { hotelAdminId, user, rating, comment } = req.body;
 
   try {
     if (!hotelAdminId || !rating || !comment) {
-      return res.status(400).json({ message: 'hotelAdminId, rating, and comment are required' });
+      return res
+        .status(400)
+        .json({ message: "hotelAdminId, rating, and comment are required" });
     }
 
     const existingReview = await Review.findOne({
@@ -1021,7 +1114,8 @@ app.post('/api/reviews', verifyToken, async (req, res) => {
 
     if (existingReview) {
       return res.status(400).json({
-        message: 'You have already reviewed this hotel. Use PUT to update your review.',
+        message:
+          "You have already reviewed this hotel. Use PUT to update your review.",
         reviewId: existingReview._id,
       });
     }
@@ -1029,30 +1123,34 @@ app.post('/api/reviews', verifyToken, async (req, res) => {
     const newReview = new Review({
       hotelAdminId,
       userId: req.user.id,
-      user: user || 'Anonymous',
+      user: user || "Anonymous",
       rating,
       comment,
     });
 
     const savedReview = await newReview.save();
-    res.status(201).json({ message: 'Review added successfully', data: savedReview });
+    res
+      .status(201)
+      .json({ message: "Review added successfully", data: savedReview });
   } catch (error) {
-    console.error('Error adding review:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error adding review:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-app.put('/api/reviews/:reviewId', verifyToken, async (req, res) => {
+app.put("/api/reviews/:reviewId", verifyToken, async (req, res) => {
   const { user, rating, comment } = req.body;
 
   try {
     const review = await Review.findById(req.params.reviewId);
     if (!review) {
-      return res.status(404).json({ message: 'Review not found' });
+      return res.status(404).json({ message: "Review not found" });
     }
 
     if (review.userId.toString() !== req.user.id.toString()) {
-      return res.status(403).json({ message: 'Unauthorized to update this review' });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to update this review" });
     }
 
     review.user = user || review.user;
@@ -1060,14 +1158,16 @@ app.put('/api/reviews/:reviewId', verifyToken, async (req, res) => {
     review.comment = comment || review.comment;
 
     const updatedReview = await review.save();
-    res.status(200).json({ message: 'Review updated successfully', data: updatedReview });
+    res
+      .status(200)
+      .json({ message: "Review updated successfully", data: updatedReview });
   } catch (error) {
-    console.error('Error updating review:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error updating review:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-app.get('/api/reviews/user/:hotelAdminId', verifyToken, async (req, res) => {
+app.get("/api/reviews/user/:hotelAdminId", verifyToken, async (req, res) => {
   try {
     const review = await Review.findOne({
       hotelAdminId: req.params.hotelAdminId,
@@ -1075,66 +1175,87 @@ app.get('/api/reviews/user/:hotelAdminId', verifyToken, async (req, res) => {
     });
 
     if (!review) {
-      return res.status(404).json({ message: 'No review found for this user and hotel' });
+      return res
+        .status(404)
+        .json({ message: "No review found for this user and hotel" });
     }
 
     res.status(200).json({ data: review });
   } catch (error) {
-    console.error('Error fetching review:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error fetching review:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-app.get('/api/reviews/:hotelAdminId', async (req, res) => {
+app.get("/api/reviews/:hotelAdminId", async (req, res) => {
   try {
-    const reviews = await Review.find({ hotelAdminId: req.params.hotelAdminId });
+    const reviews = await Review.find({
+      hotelAdminId: req.params.hotelAdminId,
+    });
     res.status(200).json({ data: reviews });
   } catch (error) {
-    console.error('Error fetching reviews:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error fetching reviews:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // Room Availability Route
-app.get('/api/rooms/available/:hotelAdminId', async (req, res) => {
+app.get("/api/rooms/available/:hotelAdminId", async (req, res) => {
   try {
     const { checkInDate, checkOutDate } = req.query;
-    console.log('Request params:', { hotelAdminId: req.params.hotelAdminId, checkInDate, checkOutDate });
+    console.log("Request params:", {
+      hotelAdminId: req.params.hotelAdminId,
+      checkInDate,
+      checkOutDate,
+    });
 
     if (!checkInDate || !checkOutDate) {
-      return res.status(400).json({ message: 'Check-in and check-out dates are required' });
+      return res
+        .status(400)
+        .json({ message: "Check-in and check-out dates are required" });
     }
 
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
-    console.log('Parsed dates:', { checkIn, checkOut });
+    console.log("Parsed dates:", { checkIn, checkOut });
 
     if (checkIn >= checkOut) {
-      return res.status(400).json({ message: 'Check-out date must be after check-in date' });
+      return res
+        .status(400)
+        .json({ message: "Check-out date must be after check-in date" });
     }
 
-    const roomTypes = await RoomType.find({ hotelAdminId: req.params.hotelAdminId });
-    console.log('Room types found:', roomTypes);
+    const roomTypes = await RoomType.find({
+      hotelAdminId: req.params.hotelAdminId,
+    });
+    console.log("Room types found:", roomTypes);
 
     if (!roomTypes.length) {
-      return res.status(200).json({ message: 'No rooms found', data: [] });
+      return res.status(200).json({ message: "No rooms found", data: [] });
     }
 
     const roomProperties = await RoomTypeProperites.find({
       hotelAdminId: req.params.hotelAdminId,
     });
-    console.log('Room properties found:', roomProperties);
+    console.log("Room properties found:", roomProperties);
 
     const availableRooms = roomTypes.flatMap((roomType) => {
-      const properties = roomProperties.find((p) => p.type === roomType.type) || {};
-      console.log(`Processing room type: ${roomType.type}, Properties:`, properties);
+      const properties =
+        roomProperties.find((p) => p.type === roomType.type) || {};
+      console.log(
+        `Processing room type: ${roomType.type}, Properties:`,
+        properties
+      );
 
       return roomType.roomNumbers
         .filter((room) => {
           const isAvailable = !room.availability.some((booking) => {
             const bookingStart = new Date(booking.startDate);
             const bookingEnd = new Date(booking.endDate);
-            console.log(`Checking room ${room.number} booking:`, { bookingStart, bookingEnd });
+            console.log(`Checking room ${room.number} booking:`, {
+              bookingStart,
+              bookingEnd,
+            });
 
             return (
               (checkIn >= bookingStart && checkIn < bookingEnd) ||
@@ -1151,22 +1272,22 @@ app.get('/api/rooms/available/:hotelAdminId', async (req, res) => {
           roomNumber: room.number,
           price: roomType.rate,
           bathrooms: properties.bathrooms || 1,
-          size: properties.size || 'Unknown',
+          size: properties.size || "Unknown",
           amenities: properties.amenities || [],
         }));
     });
 
-    console.log('Available rooms:', availableRooms);
+    console.log("Available rooms:", availableRooms);
     res.json({ data: availableRooms });
   } catch (error) {
-    console.error('Error fetching available rooms:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Error fetching available rooms:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // Email Transporter Setup
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -1177,11 +1298,11 @@ const verificationCodes = new Map();
 
 // Signup Route
 app.post(
-  '/api/signup',
+  "/api/signup",
   upload.fields([
-    { name: 'passportId', maxCount: 1 },
-    { name: 'tradeLicense', maxCount: 1 },
-    { name: 'managerId', maxCount: 1 },
+    { name: "passportId", maxCount: 1 },
+    { name: "tradeLicense", maxCount: 1 },
+    { name: "managerId", maxCount: 1 },
   ]),
   async (req, res) => {
     try {
@@ -1205,23 +1326,36 @@ app.post(
         !phoneNumber ||
         agreedToTerms === undefined
       ) {
-        return res.status(400).json({ message: 'All required fields must be provided' });
+        return res
+          .status(400)
+          .json({ message: "All required fields must be provided" });
       }
 
-      if (!req.files || !req.files.passportId || !req.files.tradeLicense || !req.files.managerId) {
-        return res.status(400).json({ message: 'All required documents must be uploaded' });
+      if (
+        !req.files ||
+        !req.files.passportId ||
+        !req.files.tradeLicense ||
+        !req.files.managerId
+      ) {
+        return res
+          .status(400)
+          .json({ message: "All required documents must be uploaded" });
       }
 
-      if (agreedToTerms !== 'true') {
-        return res.status(400).json({ message: 'You must agree to the terms and conditions' });
+      if (agreedToTerms !== "true") {
+        return res
+          .status(400)
+          .json({ message: "You must agree to the terms and conditions" });
       }
 
       const existingUser = await HotelAdminList.findOne({ email });
       if (existingUser) {
-        return res.status(400).json({ message: 'Email already in use' });
+        return res.status(400).json({ message: "Email already in use" });
       }
 
-      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const verificationCode = Math.floor(
+        100000 + Math.random() * 900000
+      ).toString();
       verificationCodes.set(email, {
         code: verificationCode,
         data: {
@@ -1251,30 +1385,34 @@ app.post(
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
-        subject: 'Email Verification Code',
+        subject: "Email Verification Code",
         text: `Your verification code is: ${verificationCode}. Please enter this code to complete your signup.`,
       };
 
       await transporter.sendMail(mailOptions);
-      res.status(200).json({ message: 'Verification code sent to your email' });
+      res.status(200).json({ message: "Verification code sent to your email" });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Server error', error: error.message });
+      res.status(500).json({ message: "Server error", error: error.message });
     }
   }
 );
 
 // Verify Email Route
-app.post('/api/verify-email', async (req, res) => {
+app.post("/api/verify-email", async (req, res) => {
   try {
     const { email, code } = req.body;
     if (!email || !code) {
-      return res.status(400).json({ message: 'Email and verification code are required' });
+      return res
+        .status(400)
+        .json({ message: "Email and verification code are required" });
     }
 
     const storedData = verificationCodes.get(email);
     if (!storedData || storedData.code !== code) {
-      return res.status(400).json({ message: 'Invalid or expired verification code' });
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired verification code" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -1287,86 +1425,100 @@ app.post('/api/verify-email', async (req, res) => {
 
     await newHotelAdmin.save();
     verificationCodes.delete(email);
-    res.status(201).json({ message: 'Account created successfully' });
+    res.status(201).json({ message: "Account created successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // Hotel Admin Routes
-app.get('/api/hotel-admins', async (req, res) => {
+app.get("/api/hotel-admins", async (req, res) => {
   try {
-    const hotelAdmins = await HotelAdminList.find({ isApproved: false }).select('-password');
+    const hotelAdmins = await HotelAdminList.find({ isApproved: false }).select(
+      "-password"
+    );
     res.json(hotelAdmins);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-app.get('/api/hotel-admins/:id', async (req, res) => {
+app.get("/api/hotel-admins/:id", async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid hotel admin ID' });
+      return res.status(400).json({ message: "Invalid hotel admin ID" });
     }
-    const hotelAdmin = await HotelAdminList.findById(id).select('-password');
+    const hotelAdmin = await HotelAdminList.findById(id).select("-password");
     if (!hotelAdmin) {
-      return res.status(404).json({ message: 'Hotel admin not found' });
+      return res.status(404).json({ message: "Hotel admin not found" });
     }
     res.json(hotelAdmin);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-app.post('/api/hotel-admins/approve/:id', async (req, res) => {
+app.post("/api/hotel-admins/approve/:id", async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid hotel admin ID' });
+      return res.status(400).json({ message: "Invalid hotel admin ID" });
     }
     const hotelAdmin = await HotelAdminList.findById(id);
     if (!hotelAdmin) {
-      return res.status(404).json({ message: 'Hotel admin not found' });
+      return res.status(404).json({ message: "Hotel admin not found" });
     }
 
     let hotelAdminId;
     const locationLower = hotelAdmin.location.toLowerCase();
     let rangeStart, rangeEnd;
 
-    if (locationLower.includes('bahir dar')) {
+    if (locationLower.includes("bahir dar")) {
       rangeStart = 100;
       rangeEnd = 200;
-    } else if (locationLower.includes('gonder')) {
+    } else if (locationLower.includes("gonder")) {
       rangeStart = 300;
       rangeEnd = 400;
-    } else if (locationLower.includes('lalibela')) {
+    } else if (locationLower.includes("lalibela")) {
       rangeStart = 400;
       rangeEnd = 500;
     } else {
-      return res.status(400).json({ message: 'Location not supported for hotel admin ID assignment' });
+      return res.status(400).json({
+        message: "Location not supported for hotel admin ID assignment",
+      });
     }
 
     const existingApprovedAdmins = await ApprovedHotelAdmin.find({
       hotelAdminId: { $gte: rangeStart, $lte: rangeEnd },
-    }).sort({ hotelAdminId: -1 }).limit(1);
+    })
+      .sort({ hotelAdminId: -1 })
+      .limit(1);
 
     const existingPendingAdmins = await HotelAdminList.find({
       hotelAdminId: { $gte: rangeStart, $lte: rangeEnd },
-    }).sort({ hotelAdminId: -1 }).limit(1);
+    })
+      .sort({ hotelAdminId: -1 })
+      .limit(1);
 
     const highestId = Math.max(
-      existingApprovedAdmins.length > 0 ? existingApprovedAdmins[0].hotelAdminId : rangeStart - 1,
-      existingPendingAdmins.length > 0 ? existingPendingAdmins[0].hotelAdminId : rangeStart - 1
+      existingApprovedAdmins.length > 0
+        ? existingApprovedAdmins[0].hotelAdminId
+        : rangeStart - 1,
+      existingPendingAdmins.length > 0
+        ? existingPendingAdmins[0].hotelAdminId
+        : rangeStart - 1
     );
 
     hotelAdminId = highestId + 1;
 
     if (hotelAdminId > rangeEnd) {
-      return res.status(400).json({ message: `No available hotel admin IDs in range ${rangeStart}-${rangeEnd}` });
+      return res.status(400).json({
+        message: `No available hotel admin IDs in range ${rangeStart}-${rangeEnd}`,
+      });
     }
 
     const approvedHotelAdmin = new ApprovedHotelAdmin({
@@ -1387,115 +1539,88 @@ app.post('/api/hotel-admins/approve/:id', async (req, res) => {
 
     await HotelAdminList.findByIdAndDelete(id);
 
-    res.json({ message: `Hotel admin ${hotelAdmin.email} approved successfully with ID ${hotelAdminId}` });
+    res.json({
+      message: `Hotel admin ${hotelAdmin.email} approved successfully with ID ${hotelAdminId}`,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-app.get('/api/approved-hotel-admins', async (req, res) => {
+app.get("/api/approved-hotel-admins", async (req, res) => {
   try {
     const approvedAdmins = await ApprovedHotelAdmin.find();
     res.json(approvedAdmins);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-app.delete('/api/approved-hotel-admins/:id', async (req, res) => {
+app.delete("/api/approved-hotel-admins/:id", async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid hotel admin ID' });
+      return res.status(400).json({ message: "Invalid hotel admin ID" });
     }
     const result = await ApprovedHotelAdmin.findByIdAndDelete(id);
     if (!result) {
-      return res.status(404).json({ message: 'Hotel admin not found' });
+      return res.status(404).json({ message: "Hotel admin not found" });
     }
-    res.json({ message: 'Hotel admin removed successfully' });
+    res.json({ message: "Hotel admin removed successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
 // Login Routes
-app.post('/api/login', async (req, res) => {
+app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const userAdmin = await ApprovedHotelAdmin.findOne({ email });
 
     if (!userAdmin) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const isPasswordValid = await bcrypt.compare(password, userAdmin.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const token = jwt.sign(
-      { id: userAdmin._id, email: userAdmin.email, role: 'hotel-admin' },
+      { id: userAdmin._id, email: userAdmin.email, role: "hotel-admin" },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: "1h" }
     );
 
     const { password: hashedPassword, ...userData } = userAdmin.toObject();
 
     res.json({
-      message: 'Login successful',
+      message: "Login successful",
       user: userData,
       token: token,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-app.post('/api/system-admin/signup', async (req, res) => {
+app.post("/api/system-admin/signup", async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
     if (!firstName || !lastName || !email || !password) {
-      return res.status(400).json({ message: 'All required fields must be provided' });
+      return res
+        .status(400)
+        .json({ message: "All required fields must be provided" });
     }
 
     const existingUser = await SystemAdminModel.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'Email already in use' });
+      return res.status(400).json({ message: "Email already in use" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -1509,71 +1634,43 @@ app.post('/api/system-admin/signup', async (req, res) => {
     });
 
     await newSystemAdmin.save();
-    res.status(201).json({ message: 'System admin account created successfully' });
+    res
+      .status(201)
+      .json({ message: "System admin account created successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-app.post('/api/system-admin/login', async (req, res) => {
+app.post("/api/system-admin/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const systemAdmin = await SystemAdminModel.findOne({ email });
 
     if (!systemAdmin) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, systemAdmin.password);
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      systemAdmin.password
+    );
     if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const { password: hashedPassword, ...userData } = systemAdmin.toObject();
 
-    res.json({ message: 'Login successful', user: userData });
+    res.json({ message: "Login successful", user: userData });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // User Routes
-app.post('/register', upload.single('passportOrId'), async (req, res) => {
+app.post("/register", upload.single("passportOrId"), async (req, res) => {
   try {
     const {
       firstName,
@@ -1588,12 +1685,12 @@ app.post('/register', upload.single('passportOrId'), async (req, res) => {
     const passportOrId = req.file ? req.file.path : null;
 
     if (password !== confirmPassword) {
-      return res.status(400).json({ message: 'Passwords do not match' });
+      return res.status(400).json({ message: "Passwords do not match" });
     }
 
     const existingUser = await userModel.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: "User already exists" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -1613,7 +1710,7 @@ app.post('/register', upload.single('passportOrId'), async (req, res) => {
     await user.save();
 
     res.status(201).json({
-      message: 'Registration successful',
+      message: "Registration successful",
       user: {
         id: user._id,
         email: user.email,
@@ -1625,23 +1722,30 @@ app.post('/register', upload.single('passportOrId'), async (req, res) => {
   }
 });
 
-app.post('/login', async (req, res) => {
+app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role, firstName: user.firstName, middleName: user.middleName, passportOrId: user.passportOrId, phone: user.phone },  
+      {
+        id: user._id,
+        role: user.role,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        passportOrId: user.passportOrId,
+        phone: user.phone,
+      },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: "1h" }
     );
 
     res.json({
@@ -1661,125 +1765,116 @@ app.post('/login', async (req, res) => {
   }
 });
 
-app.get('/me', authMiddleware, async (req, res) => {
+app.get("/me", authMiddleware, async (req, res) => {
   try {
-    const user = await userModel.findById(req.user.id).select('-password');
+    const user = await userModel.findById(req.user.id).select("-password");
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 // Get all users (accessible only to system admins)
-app.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
+app.get("/users", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const users = await userModel.find().select('-password');
-    res.json(users.map(user => ({
-      id: user._id,
-      name: `${user.firstName} ${user.middleName ? user.middleName + ' ' : ''}${user.lastName}`,
-      email: user.email,
-      phoneNumber: user.phone,
-      idPassport: user.passportOrId,
-      status: user.status,
-      idPassportImage: user.passportOrId // Adjust if full URL is needed
-    })));
+    const users = await userModel.find().select("-password");
+    res.json(
+      users.map((user) => ({
+        id: user._id,
+        name: `${user.firstName} ${
+          user.middleName ? user.middleName + " " : ""
+        }${user.lastName}`,
+        email: user.email,
+        phoneNumber: user.phone,
+        idPassport: user.passportOrId,
+        status: user.status,
+        idPassportImage: user.passportOrId, // Adjust if full URL is needed
+      }))
+    );
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ 
-      message: 'Server error occurred while fetching users',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    console.error("Error fetching users:", error);
+    res.status(500).json({
+      message: "Server error occurred while fetching users",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 });
 
-
 // Delete a user (accessible only to system admins)
-app.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+app.delete("/users/:id", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const user = await userModel.findByIdAndDelete(req.params.id);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json({ message: 'User removed successfully' });
+    res.status(200).json({ message: "User removed successfully" });
   } catch (error) {
-    console.error('Error removing user:', error);
-    res.status(500).json({ 
-      message: 'Server error occurred while removing user',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    console.error("Error removing user:", error);
+    res.status(500).json({
+      message: "Server error occurred while removing user",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 });
 
-
 // MongoDB Connection
 mongoose
-  .connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/AI_Tour_Guide')
-  .then(() => console.log('The database connected successfully (local)'))
-  .catch((error) => console.log('Error connecting to local database:', error));
+  .connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/AI_Tour_Guide")
+  .then(() => console.log("The database connected successfully (local)"))
+  .catch((error) => console.log("Error connecting to local database:", error));
 
+// Chapa API configuration
+const CHAPA_API_KEY = "CHASECK_TEST-3vf0YrtySMXfPDsAYB2nEIe4Z8OOB7uD";
+const CHAPA_API_URL = "https://api.chapa.co/v1/transaction/initialize";
 
+// Endpoint to initialize Chapa transaction
+app.post("/api/chapa/initialize", async (req, res) => {
+  try {
+    const response = await axios.post(CHAPA_API_URL, req.body, {
+      headers: {
+        Authorization: `Bearer ${CHAPA_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+    });
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error("Chapa API error:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message:
+        error.response?.data?.message || "Failed to initialize transaction",
+    });
+  }
+});
 
-
-
-
-
-
-
-
-
-
-
-
-
-  // Chapa API configuration
-  const CHAPA_API_KEY = 'CHASECK_TEST-3vf0YrtySMXfPDsAYB2nEIe4Z8OOB7uD';
-  const CHAPA_API_URL = 'https://api.chapa.co/v1/transaction/initialize';
-  
-  // Endpoint to initialize Chapa transaction
-  app.post('/api/chapa/initialize', async (req, res) => {
-    try {
-      const response = await axios.post(CHAPA_API_URL, req.body, {
+// Endpoint to verify Chapa transaction
+app.get("/api/chapa/verify/:tx_ref", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `https://api.chapa.co/v1/transaction/verify/${req.params.tx_ref}`,
+      {
         headers: {
           Authorization: `Bearer ${CHAPA_API_KEY}`,
-          'Content-Type': 'application/json',
         },
-      });
-      res.status(200).json(response.data);
-    } catch (error) {
-      console.error('Chapa API error:', error.response?.data || error.message);
-      res.status(error.response?.status || 500).json({
-        message: error.response?.data?.message || 'Failed to initialize transaction',
-      });
-    }
-  });
-  
-  // Endpoint to verify Chapa transaction
-  app.get('/api/chapa/verify/:tx_ref', async (req, res) => {
-    try {
-      const response = await axios.get(
-        `https://api.chapa.co/v1/transaction/verify/${req.params.tx_ref}`,
-        {
-          headers: {
-            Authorization: `Bearer ${CHAPA_API_KEY}`,
-          },
-        }
-      );
-      res.status(200).json(response.data);
-    } catch (error) {
-      console.error('Chapa verification error:', error.response?.data || error.message);
-      res.status(error.response?.status || 500).json({
-        message: error.response?.data?.message || 'Failed to verify transaction',
-      });
-    }
-  });
+      }
+    );
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error(
+      "Chapa verification error:",
+      error.response?.data || error.message
+    );
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || "Failed to verify transaction",
+    });
+  }
+});
 
-
- // Endpoint to process Chapa refund
-app.post('/api/chapa/refund/:tx_ref', async (req, res) => {
-  console.log('Refund endpoint called with tx_ref:', req.params.tx_ref);
-  console.log('Request body:', req.body);
+// Endpoint to process Chapa refund
+app.post("/api/chapa/refund/:tx_ref", async (req, res) => {
+  console.log("Refund endpoint called with tx_ref:", req.params.tx_ref);
+  console.log("Request body:", req.body);
   try {
     const { reason, amount, meta } = req.body;
-    console.log('Sending refund request to Chapa API:', {
+    console.log("Sending refund request to Chapa API:", {
       tx_ref: req.params.tx_ref,
       reason,
       amount,
@@ -1795,25 +1890,25 @@ app.post('/api/chapa/refund/:tx_ref', async (req, res) => {
       {
         headers: {
           Authorization: `Bearer ${CHAPA_API_KEY}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       }
     );
-    console.log('Chapa refund response:', response.data);
+    console.log("Chapa refund response:", response.data);
     res.status(200).json(response.data);
   } catch (error) {
-    console.error('Chapa refund error:', error.response?.data || error.message);
+    console.error("Chapa refund error:", error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
-      message: error.response?.data?.message || 'Failed to process refund',
+      message: error.response?.data?.message || "Failed to process refund",
     });
   }
-});;
+});
 
 // Utility function to generate booking code
 const generateBookingCode = (options = {}) => {
-  const { prefix = 'BOOK', size = 15, removePrefix = false } = options;
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
+  const { prefix = "BOOK", size = 15, removePrefix = false } = options;
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
   for (let i = 0; i < size; i++) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
@@ -1821,7 +1916,7 @@ const generateBookingCode = (options = {}) => {
 };
 
 // Endpoint to create booking history after successful payment
-app.post('/api/bookingHistory/create', verifyToken, async (req, res) => {
+app.post("/api/bookingHistory/create", verifyToken, async (req, res) => {
   try {
     const {
       userId,
@@ -1838,23 +1933,36 @@ app.post('/api/bookingHistory/create', verifyToken, async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!userId || !hotelAdminId || !hotelName || !roomType || !roomNumber || !checkInDate || !checkOutDate || !totalPrice) {
-      return res.status(400).json({ message: 'All required fields must be provided' });
+    if (
+      !userId ||
+      !hotelAdminId ||
+      !hotelName ||
+      !roomType ||
+      !roomNumber ||
+      !checkInDate ||
+      !checkOutDate ||
+      !totalPrice
+    ) {
+      return res
+        .status(400)
+        .json({ message: "All required fields must be provided" });
     }
 
     // Validate ObjectId format for userId only
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: 'Invalid userId format' });
+      return res.status(400).json({ message: "Invalid userId format" });
     }
 
     // Validate hotelAdminId as a non-empty string
-    if (typeof hotelAdminId !== 'string' || !hotelAdminId.trim()) {
-      return res.status(400).json({ message: 'Invalid hotelAdminId format' });
+    if (typeof hotelAdminId !== "string" || !hotelAdminId.trim()) {
+      return res.status(400).json({ message: "Invalid hotelAdminId format" });
     }
 
     // Validate that userId matches the token's user
     if (req.user.id !== userId) {
-      return res.status(403).json({ message: 'Unauthorized: User ID does not match token' });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized: User ID does not match token" });
     }
 
     // Generate a unique booking code (use tx_ref if provided, else generate new)
@@ -1870,9 +1978,9 @@ app.post('/api/bookingHistory/create', verifyToken, async (req, res) => {
       checkInDate: new Date(checkInDate),
       checkOutDate: new Date(checkOutDate),
       totalPrice: parseFloat(totalPrice),
-      image: image || 'https://via.placeholder.com/500x180?text=No+Image',
+      image: image || "https://via.placeholder.com/500x180?text=No+Image",
       guests: guests || 1,
-      status: 'check-in',
+      status: "check-in",
       bookingCode, // Store the booking code
     });
 
@@ -1880,30 +1988,31 @@ app.post('/api/bookingHistory/create', verifyToken, async (req, res) => {
     await bookingHistory.save();
 
     res.status(201).json({
-      message: 'Booking history created successfully',
+      message: "Booking history created successfully",
       data: bookingHistory,
     });
   } catch (error) {
-    console.error('Error creating booking history:', error);
-    if (error.code === 11000) { // Handle duplicate bookingCode
-      return res.status(400).json({ message: 'Booking code already exists, please try again' });
+    console.error("Error creating booking history:", error);
+    if (error.code === 11000) {
+      // Handle duplicate bookingCode
+      return res
+        .status(400)
+        .json({ message: "Booking code already exists, please try again" });
     }
     res.status(500).json({
-      message: error.message || 'Failed to create booking history',
+      message: error.message || "Failed to create booking history",
     });
   }
 });
 
-
-
 // Endpoint to fetch booking history for a user
-app.get('/api/bookingHistory/user', verifyToken, async (req, res) => {
+app.get("/api/bookingHistory/user", verifyToken, async (req, res) => {
   try {
     const userId = req.user.id; // Extracted from the JWT token by verifyToken middleware
 
     // Validate userId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: 'Invalid userId format' });
+      return res.status(400).json({ message: "Invalid userId format" });
     }
 
     // Fetch booking history for the user
@@ -1913,7 +2022,7 @@ app.get('/api/bookingHistory/user', verifyToken, async (req, res) => {
 
     if (!bookingHistory || bookingHistory.length === 0) {
       return res.status(200).json({
-        message: 'No booking history found for this user',
+        message: "No booking history found for this user",
         data: [],
       });
     }
@@ -1923,171 +2032,350 @@ app.get('/api/bookingHistory/user', verifyToken, async (req, res) => {
       id: booking._id.toString(),
       hotelName: booking.hotelName,
       roomType: booking.roomType,
-      checkIn: new Date(booking.checkInDate).toISOString().split('T')[0], // Format as YYYY-MM-DD
-      checkOut: new Date(booking.checkOutDate).toISOString().split('T')[0], // Format as YYYY-MM-DD
+      checkIn: new Date(booking.checkInDate).toISOString().split("T")[0], // Format as YYYY-MM-DD
+      checkOut: new Date(booking.checkOutDate).toISOString().split("T")[0], // Format as YYYY-MM-DD
       roomNumber: booking.roomNumber,
       guests: booking.guests || 1,
       totalPrice: booking.totalPrice,
       status: booking.status,
       rating: booking.rating || null,
-      image: booking.image || 'https://via.placeholder.com/300x200?text=No+Image',
+      image:
+        booking.image || "https://via.placeholder.com/300x200?text=No+Image",
       hotelAdminId: booking.hotelAdminId, // String, e.g., "102"
       bookingCode: booking.bookingCode,
     }));
 
     res.status(200).json({
-      message: 'Booking history retrieved successfully',
+      message: "Booking history retrieved successfully",
       data: formattedBookings,
     });
   } catch (error) {
-    console.error('Error fetching booking history:', error);
+    console.error("Error fetching booking history:", error);
     res.status(500).json({
-      message: error.message || 'Failed to fetch booking history',
+      message: error.message || "Failed to fetch booking history",
     });
   }
 });
 
 // Endpoint to fetch booking by booking code
-app.get('/api/bookingHistory/code/:bookingCode', verifyToken, async (req, res) => {
-  try {
-    const { bookingCode } = req.params;
+app.get(
+  "/api/bookingHistory/code/:bookingCode",
+  verifyToken,
+  async (req, res) => {
+    try {
+      const { bookingCode } = req.params;
 
-    // Validate booking code
-    if (!bookingCode || typeof bookingCode !== 'string' || !bookingCode.trim()) {
-      return res.status(400).json({ message: 'Invalid booking code' });
+      // Validate booking code
+      if (
+        !bookingCode ||
+        typeof bookingCode !== "string" ||
+        !bookingCode.trim()
+      ) {
+        return res.status(400).json({ message: "Invalid booking code" });
+      }
+
+      // Find booking by booking code
+      const booking = await BookingHistory.findOne({ bookingCode }).lean();
+
+      if (!booking) {
+        return res
+          .status(404)
+          .json({ message: "No booking found with this code" });
+      }
+
+      // Format the response to match frontend expectations
+      const formattedBooking = {
+        id: booking._id.toString(),
+        hotelName: booking.hotelName,
+        roomType: booking.roomType,
+        roomNumber: booking.roomNumber,
+        checkInDate: new Date(booking.checkInDate).toISOString().split("T")[0],
+        checkOutDate: new Date(booking.checkOutDate)
+          .toISOString()
+          .split("T")[0],
+        guests: booking.guests || 1,
+        totalPrice: booking.totalPrice,
+        status: booking.status,
+        rating: booking.rating || null,
+        image:
+          booking.image || "https://via.placeholder.com/300x200?text=No+Image",
+        hotelAdminId: booking.hotelAdminId,
+        bookingCode: booking.bookingCode,
+        // Add user details if needed (e.g., fetch user name from User model)
+        userName: "Unknown", // Replace with actual user lookup if needed
+        passport: "N/A", // Add passport field to schema if required
+      };
+
+      res.status(200).json({
+        message: "Booking retrieved successfully",
+        data: formattedBooking,
+      });
+    } catch (error) {
+      console.error("Error fetching booking by code:", error);
+      res.status(500).json({
+        message: error.message || "Failed to fetch booking",
+      });
     }
-
-    // Find booking by booking code
-    const booking = await BookingHistory.findOne({ bookingCode })
-      .lean();
-
-    if (!booking) {
-      return res.status(404).json({ message: 'No booking found with this code' });
-    }
-
-    // Format the response to match frontend expectations
-    const formattedBooking = {
-      id: booking._id.toString(),
-      hotelName: booking.hotelName,
-      roomType: booking.roomType,
-      roomNumber: booking.roomNumber,
-      checkInDate: new Date(booking.checkInDate).toISOString().split('T')[0],
-      checkOutDate: new Date(booking.checkOutDate).toISOString().split('T')[0],
-      guests: booking.guests || 1,
-      totalPrice: booking.totalPrice,
-      status: booking.status,
-      rating: booking.rating || null,
-      image: booking.image || 'https://via.placeholder.com/300x200?text=No+Image',
-      hotelAdminId: booking.hotelAdminId,
-      bookingCode: booking.bookingCode,
-      // Add user details if needed (e.g., fetch user name from User model)
-      userName: 'Unknown', // Replace with actual user lookup if needed
-      passport: 'N/A', // Add passport field to schema if required
-    };
-
-    res.status(200).json({
-      message: 'Booking retrieved successfully',
-      data: formattedBooking,
-    });
-  } catch (error) {
-    console.error('Error fetching booking by code:', error);
-    res.status(500).json({
-      message: error.message || 'Failed to fetch booking',
-    });
   }
-});
+);
 
 // Endpoint to update booking status
-app.patch('/api/bookingHistory/:bookingCode/status', verifyToken, async (req, res) => {
-  try {
-    const { bookingCode } = req.params;
-    const { status } = req.body;
+app.patch(
+  "/api/bookingHistory/:bookingCode/status",
+  verifyToken,
+  async (req, res) => {
+    try {
+      const { bookingCode } = req.params;
+      const { status } = req.body;
 
-    // Validate status
-    if (!['pending', 'checked-in', 'checked-out', 'cancelled'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status value' });
+      // Validate status
+      if (
+        !["pending", "checked-in", "checked-out", "cancelled"].includes(status)
+      ) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+
+      // Find and update booking
+      const booking = await BookingHistory.findOneAndUpdate(
+        { bookingCode },
+        { status },
+        { new: true, runValidators: true }
+      ).lean();
+
+      if (!booking) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+
+      // Format response
+      const formattedBooking = {
+        id: booking._id.toString(),
+        hotelName: booking.hotelName,
+        roomType: booking.roomType,
+        roomNumber: booking.roomNumber,
+        checkInDate: new Date(booking.checkInDate).toISOString().split("T")[0],
+        checkOutDate: new Date(booking.checkOutDate)
+          .toISOString()
+          .split("T")[0],
+        guests: booking.guests || 1,
+        totalPrice: booking.totalPrice,
+        status: booking.status,
+        rating: booking.rating || null,
+        image:
+          booking.image || "https://via.placeholder.com/300x200?text=No+Image",
+        hotelAdminId: booking.hotelAdminId,
+        bookingCode: booking.bookingCode,
+        userName: "Unknown", // Replace with actual user lookup if needed
+        passport: "N/A", // Add if required
+      };
+
+      res.status(200).json({
+        message: "Booking status updated successfully",
+        data: formattedBooking,
+      });
+    } catch (error) {
+      console.error("Error updating booking status:", error);
+      res.status(500).json({
+        message: error.message || "Failed to update booking status",
+      });
     }
-
-    // Find and update booking
-    const booking = await BookingHistory.findOneAndUpdate(
-      { bookingCode },
-      { status },
-      { new: true, runValidators: true }
-    ).lean();
-
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-
-    // Format response
-    const formattedBooking = {
-      id: booking._id.toString(),
-      hotelName: booking.hotelName,
-      roomType: booking.roomType,
-      roomNumber: booking.roomNumber,
-      checkInDate: new Date(booking.checkInDate).toISOString().split('T')[0],
-      checkOutDate: new Date(booking.checkOutDate).toISOString().split('T')[0],
-      guests: booking.guests || 1,
-      totalPrice: booking.totalPrice,
-      status: booking.status,
-      rating: booking.rating || null,
-      image: booking.image || 'https://via.placeholder.com/300x200?text=No+Image',
-      hotelAdminId: booking.hotelAdminId,
-      bookingCode: booking.bookingCode,
-      userName: 'Unknown', // Replace with actual user lookup if needed
-      passport: 'N/A', // Add if required
-    };
-
-    res.status(200).json({
-      message: 'Booking status updated successfully',
-      data: formattedBooking,
-    });
-  } catch (error) {
-    console.error('Error updating booking status:', error);
-    res.status(500).json({
-      message: error.message || 'Failed to update booking status',
-    });
   }
-});
+);
 
-app.patch('/api/bookingHistory/:id/cancel', verifyToken, async (req, res) => {
+app.patch("/api/bookingHistory/:id/cancel", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid booking ID format' });
+      return res.status(400).json({ message: "Invalid booking ID format" });
     }
 
     const booking = await BookingHistory.findById(id);
     if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ message: "Booking not found" });
     }
 
     if (booking.userId.toString() !== userId) {
-      return res.status(403).json({ message: 'Unauthorized: You cannot cancel this booking' });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized: You cannot cancel this booking" });
     }
 
-    if (booking.status === 'cancelled') {
-      return res.status(400).json({ message: 'Booking is already cancelled' });
+    if (booking.status === "cancelled") {
+      return res.status(400).json({ message: "Booking is already cancelled" });
     }
 
-    if (booking.status !== 'completed') {
-      return res.status(400).json({ message: 'Only upcoming bookings can be cancelled' });
+    if (booking.status !== "completed") {
+      return res
+        .status(400)
+        .json({ message: "Only upcoming bookings can be cancelled" });
     }
 
-    booking.status = 'cancelled';
+    booking.status = "cancelled";
     await booking.save();
 
     res.status(200).json({
-      message: 'Booking cancelled successfully',
+      message: "Booking cancelled successfully",
       data: booking,
     });
   } catch (error) {
-    console.error('Error cancelling booking:', error);
+    console.error("Error cancelling booking:", error);
     res.status(500).json({
-      message: error.message || 'Failed to cancel booking',
+      message: error.message || "Failed to cancel booking",
     });
+  }
+});
+
+// CHATBOT COMPONENTS
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import natural from "natural";
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_STUDIO_API_KEY);
+
+const tokenizer = new natural.WordTokenizer();
+const stemmer = natural.PorterStemmer;
+
+const allowedKeywords = [
+  "amhara",
+  "tourism",
+  "destination",
+  "hotel",
+  "book hotel",
+  "travel",
+  "plan travel",
+  "itinerary",
+  "lalibela",
+  "gondar",
+  "bahir dar",
+  "rock-hewn churches",
+  "castles",
+  "lake tana",
+  "monastery",
+  "tedbabe mariam",
+  "Debre Birhan Selassie Church",
+  "attractions",
+  "sightseeing",
+  "culture",
+  "history",
+  "food",
+  "traditional food",
+  "transportation",
+  "weather",
+  "best time to visit",
+  "guide",
+  "tour guide",
+  "language",
+  "amharic",
+  "festival",
+  "timkat",
+  "meskel",
+  "accommodation",
+  "stay",
+  "room",
+  "price",
+  "cost",
+  "budget",
+  "luxury",
+  "amenities",
+  "rules",
+  "check-in",
+  "check-out",
+  "cancellation",
+  "review",
+  "rating",
+].map(stemmer.stem);
+
+const greetings = [
+  "hi",
+  "hello",
+  "hey",
+  "good morning",
+  "good afternoon",
+  "good evening",
+  "how are you",
+  "hey there",
+  "hi there",
+  "what's up",
+  "greetings",
+  "salutations",
+  "okay",
+  "k",
+  "bye",
+  "thank you",
+  "thanks",
+  "thanks a lot",
+  "appreciate it",
+  "much appreciated",
+  "thank you so much",
+  "cheers",
+  "great job",
+  "well done",
+  "good work",
+  "awesome",
+  "you are helpful",
+  "that helps",
+];
+
+const SYSTEM_PROMPT = `
+You are Lal, a helpful assistant for Amhara tourism in Ethiopia.
+Only answer questions related to tourist destinations, hotels, travel planning, cultural insights, historical sites, local food, transportation, weather, festivals, accommodations, and related topics in the Amhara region.
+Greet users politely if they say "Hi", "Hello", "Good morning", etc., with a response like "Hello! How can I assist you with Amhara tourism today?"
+If asked anything outside these topics, respond with:
+"Lal: I'm here to assist only with Amhara tourism-related queries. Please ask about destinations, hotels, travel planning, or cultural insights in the Amhara region."
+Always prefix your responses with "Lal:" to identify yourself.
+`;
+
+const isRelevant = (message) => {
+  const lower = message.toLowerCase();
+
+  if (greetings.some((g) => lower.includes(g))) return true;
+
+  const tokens = tokenizer.tokenize(lower).map(stemmer.stem);
+  return tokens.some((token) => allowedKeywords.includes(token));
+};
+
+app.post("/chat", async (req, res) => {
+  const { message } = req.body;
+
+  if (!message || typeof message !== "string") {
+    console.error("Chatbot Error: Invalid message input");
+    return res.status(400).json({ error: "Invalid message input" });
+  }
+
+  if (!isRelevant(message)) {
+    console.log("Chatbot: Irrelevant message received:", message);
+    return res.json({
+      reply:
+        "Lal: I'm here to assist only with Amhara tourism-related queries. Please ask about destinations, hotels, travel planning, or cultural insights in the Amhara region.",
+    });
+  }
+
+  try {
+    console.log("Chatbot Request Received:", message);
+
+    const model = genAI.getGenerativeModel({
+      model: "tunedModels/chatbot-2xxfmjqzyzhm",
+    });
+
+    console.log("Sending request to Google Generative AI...");
+    const response = await model.generateContent(
+      `${SYSTEM_PROMPT}\n\nUser: ${message}`
+    );
+
+    let reply = response.response.text();
+    console.log("Chatbot Reply:", reply);
+
+    if (!reply.startsWith("Lal:")) {
+      reply = `Lal: ${reply}`;
+    }
+
+    res.status(200).json({ reply });
+  } catch (error) {
+    console.error(
+      "Google Generative AI Error:",
+      error.response?.data || error.message || error
+    );
+    res.status(500).json({ error: "Failed to get response from the model" });
   }
 });
 

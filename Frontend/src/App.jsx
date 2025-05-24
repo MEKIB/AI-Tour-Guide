@@ -6,9 +6,7 @@ import ButtonAppBar from "./components/Navbar/Navbar";
 import Home from "./components/Home page/Home";
 import News from "./components/News/News";
 import Events from "./components/Events/Events";
-import ThingsToDo from "./components/Things To Do/DoThings";
 import World from "./components/Destinations/World Heritage Sites/World";
-import ReligiousHome from "./components/Destinations/Religious Sites/ReligiousHome";
 import Flight from "./components/Tourist Facilities/Flights/Flight";
 import HotelsandLocations from "./components/Tourist Facilities/Hotels and Lodges/HotelsandLocations";
 import FilteredHotels from "./components/Tourist Facilities/Hotels and Lodges/FilteredHotels";
@@ -22,8 +20,14 @@ import ChatbotLogic from "./components/Chatbot/ChatbotLogic";
 import Bureau from "./components/About/Bureau";
 import AmharaBoth from "./components/About/Amhara/AmharaBoth";
 import Merge from "./components/About/Mandate/Merge";
-import Managment from "./components/About/OurManagment/Managment";
+import Managment from "./components/About/Managment";
 import HistoricalHome from "./components/Destinations/Historical Landmarks/HistoricalHome";
+import GuzaraCastlePage from "./components/Destinations/Historical Landmarks/GuzaraCastlePage";
+import YismaNigusPage from "./components/Destinations/Historical Landmarks/YismaNigusPage";
+import AyiteyefAdarashPage from "./components/Destinations/Historical Landmarks/AyiteyefAdarashPage";
+import MaqedelaRidgePage from "./components/Destinations/Historical Landmarks/MaqedelaRidgePage";
+import ShonkeVillagePage from "./components/Destinations/Historical Landmarks/ShonkeVillagePage";
+import AnkoberLodgePage from "./components/Destinations/Historical Landmarks/AnkoberLodgePage";
 import LakesAndWaterfallHome from "./components/Destinations/Lakes,waterfall/LakesAndWaterfallHome";
 import NationalParksHome from "./components/Destinations/National Parks and Community Protected Area/NationalParksHome";
 import HotelsLodges from "./components/Tourist Facilities/Hotels and Lodges/HotelsLodges";
@@ -57,7 +61,27 @@ import LakeHayqPage from "./components/Destinations/Lakes,waterfall/LakeHayqPage
 import WanzayeHotspringPage from "./components/Destinations/Lakes,waterfall/WanzayeHotspringPage";
 import BlueNileFallsPage from "./components/Destinations/Lakes,waterfall/BlueNileFallsPage";
 import LakeTanaLakesPage from "./components/Destinations/Lakes,waterfall/LakeTanaLakesPage";
-
+import ThingsToDo from "./components/things-to-do/ThingsToDo";
+import HorsebackRidingPage from "./components/things-to-do/HorsebackRidingPage";
+import CommunityTourismPage from "./components/things-to-do/CommunityTourismPage";
+import BikingPage from "./components/things-to-do/BikingPage";
+import FishingPage from "./components/things-to-do/FishingPage";
+import BirdWatchingPage from "./components/things-to-do/BirdWatchingPage";
+import HikingAndTrekkingPage from "./components/things-to-do/HikingAndTrekkingPage";
+import Religious from "./components/Destinations/religious-sites/Religious";
+import DebreBirhaneSellassiePage from "./components/Destinations/religious-sites/DebreBirhaneSellassiePage";
+import ZozAmbaGyorgisPage from "./components/Destinations/religious-sites/ZozAmbaGyorgisPage";
+import DimaGiorgisMonasteryPage from "./components/Destinations/religious-sites/DimaGiorgisMonasteryPage";
+import GeneteMaryamPage from "./components/Destinations/religious-sites/GeneteMaryamPage";
+import AshetonMaryamPage from "./components/Destinations/religious-sites/AshetonMaryamPage";
+import HayikEstifanosMonasteryPage from "./components/Destinations/religious-sites/HayikEstifanosMonasteryPage";
+import JemaNigusMosquePage from "./components/Destinations/religious-sites/JemaNigusMosquePage";
+import LakeTanaMonasteriesPage from "./components/Destinations/religious-sites/LakeTanaMonasteriesPage";
+import YemrehanaKrestosMonasteryPage from "./components/Destinations/religious-sites/YemrehanaKrestosMonasteryPage";
+import GishenPage from "./components/Destinations/religious-sites/GishenPage";
+import TedbabeMariamMonasteryPage from "./components/Destinations/religious-sites/TedbabeMariamMonasteryPage";
+import MertuleMariamMonasteryPage from "./components/Destinations/religious-sites/MertuleMariamMonasteryPage";
+import AbuneMelkezedekMonasteryPage from "./components/Destinations/religious-sites/AbuneMelkezedekMonasteryPage";
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
@@ -83,12 +107,19 @@ function App() {
           const userData = response.data;
           const userWithImage = {
             ...userData,
-            passportOrId: userData.passportOrId.includes("http://localhost:2000/uploads/")
+            passportOrId: userData.passportOrId.includes(
+              "http://localhost:2000/uploads/"
+            )
               ? userData.passportOrId
-              : `http://localhost:2000/uploads/${userData.passportOrId.split('\\').pop()}` || "https://via.placeholder.com/32",
+              : `http://localhost:2000/uploads/${userData.passportOrId
+                  .split("\\")
+                  .pop()}` || "https://via.placeholder.com/32",
           };
           console.log("App.js: checkAuth - Fetched user data:", userWithImage);
-          console.log("App.js: checkAuth - passportOrId:", userWithImage.passportOrId);
+          console.log(
+            "App.js: checkAuth - passportOrId:",
+            userWithImage.passportOrId
+          );
           setUser(userWithImage);
           setIsAuthenticated(true);
           localStorage.setItem("user", JSON.stringify(userWithImage));
@@ -136,12 +167,19 @@ function App() {
   const handleLogin = (userData) => {
     const userWithImage = {
       ...userData,
-      passportOrId: userData.passportOrId.includes("http://localhost:2000/uploads/")
+      passportOrId: userData.passportOrId.includes(
+        "http://localhost:2000/uploads/"
+      )
         ? userData.passportOrId
-        : `http://localhost:2000/uploads/${userData.passportOrId.split('\\').pop()}` || "https://via.placeholder.com/32",
+        : `http://localhost:2000/uploads/${userData.passportOrId
+            .split("\\")
+            .pop()}` || "https://via.placeholder.com/32",
     };
     console.log("App.js: handleLogin - Logged in user:", userWithImage);
-    console.log("App.js: handleLogin - passportOrId:", userWithImage.passportOrId);
+    console.log(
+      "App.js: handleLogin - passportOrId:",
+      userWithImage.passportOrId
+    );
     setIsAuthenticated(true);
     setUser(userWithImage);
     localStorage.setItem("user", JSON.stringify(userWithImage));
@@ -196,7 +234,56 @@ function App() {
           path="/worldheritagesites/lakeTana"
           element={<LakeTanaHeritagePage />}
         />
-        <Route path="/religioussites" element={<ReligiousHome />} />
+        <Route path="/religious-sites" element={<Religious />} />
+        <Route
+          path="/religious-sites/debre-birhane-sellassie"
+          element={<DebreBirhaneSellassiePage />}
+        />
+        <Route
+          path="/religious-sites/zoz-amba-gyorgis"
+          element={<ZozAmbaGyorgisPage />}
+        />
+        <Route
+          path="/religious-sites/dima-giorgis-monastery"
+          element={<DimaGiorgisMonasteryPage />}
+        />
+        <Route
+          path="/religious-sites/genete-maryam"
+          element={<GeneteMaryamPage />}
+        />
+        <Route
+          path="/religious-sites/asheton-maryam"
+          element={<AshetonMaryamPage />}
+        />
+        <Route
+          path="/religious-sites/hayik-estifanos-monastery"
+          element={<HayikEstifanosMonasteryPage />}
+        />
+        <Route
+          path="/religious-sites/jema-nigus-mosque"
+          element={<JemaNigusMosquePage />}
+        />
+        <Route
+          path="/religious-sites/lake-tana-monasteries"
+          element={<LakeTanaMonasteriesPage />}
+        />
+        <Route
+          path="/religious-sites/yemrehana-krestos-monastery"
+          element={<YemrehanaKrestosMonasteryPage />}
+        />
+        <Route path="/religious-sites/gishen" element={<GishenPage />} />
+        <Route
+          path="/religious-sites/tedbabe-mariam-monastery"
+          element={<TedbabeMariamMonasteryPage />}
+        />
+        <Route
+          path="/religious-sites/mertule-mariam-monastery"
+          element={<MertuleMariamMonasteryPage />}
+        />
+        <Route
+          path="/religious-sites/abune-melkezedek-monastery"
+          element={<AbuneMelkezedekMonasteryPage />}
+        />{" "}
         <Route path="/national-parks" element={<NationalParksHome />} />
         <Route
           path="/national-parks/abune-yoseph"
@@ -248,7 +335,28 @@ function App() {
           path="/lakes-hot-springs-waterfalls/lake-tana"
           element={<LakeTanaLakesPage />}
         />
-        <Route path="/historicalLandmarks" element={<HistoricalHome />} />
+        <Route path="/historical" element={<HistoricalHome />} />
+        <Route
+          path="/historical/guzara-castle"
+          element={<GuzaraCastlePage />}
+        />
+        <Route path="/historical/yisma-nigus" element={<YismaNigusPage />} />
+        <Route
+          path="/historical/ayiteyef-adarash"
+          element={<AyiteyefAdarashPage />}
+        />
+        <Route
+          path="/historical/maqedela-ridge"
+          element={<MaqedelaRidgePage />}
+        />
+        <Route
+          path="/historical/shonke-village"
+          element={<ShonkeVillagePage />}
+        />
+        <Route
+          path="/historical/ankober-lodge"
+          element={<AnkoberLodgePage />}
+        />
         <Route
           path="/tourist-information-center"
           element={<TouristInformationCenter />}
@@ -264,7 +372,25 @@ function App() {
         <Route path="/events/gen recognized" element={<GennaPage />} />
         <Route path="/events/timket" element={<TimketPage />} />
         <Route path="/events/fasika" element={<FasikaPage />} />
-        <Route path="/things" element={<ThingsToDo />} />
+        <Route path="/things-to-do" element={<ThingsToDo />} />
+        <Route
+          path="/things-to-do/horseback-riding"
+          element={<HorsebackRidingPage />}
+        />
+        <Route
+          path="/things-to-do/community-tourism"
+          element={<CommunityTourismPage />}
+        />
+        <Route path="/things-to-do/biking" element={<BikingPage />} />
+        <Route path="/things-to-do/fishing" element={<FishingPage />} />
+        <Route
+          path="/things-to-do/bird-watching"
+          element={<BirdWatchingPage />}
+        />
+        <Route
+          path="/things-to-do/hiking-and-trekking"
+          element={<HikingAndTrekkingPage />}
+        />
         <Route path="/flights" element={<Flight />} />
         <Route path="/hotelslocation" element={<HotelsandLocations />} />
         <Route path="/filtered-hotels" element={<FilteredHotels />} />

@@ -1,8 +1,15 @@
-import React from 'react';
-import './Chatbot.css';
-import chatbotIcon from '../../assets/chatbot.webp'; // Import the chatbot icon image
+import React from "react";
+import "./Chatbot.css";
+import chatbotIcon from "../../assets/chatbot.webp"; // Ensure you have a chatbot icon image in this path
 
-const Chatbot = ({ toggleChatbot, sendMessage, abortResponse, messages, isTyping, isVisible }) => {
+const Chatbot = ({
+  toggleChatbot,
+  sendMessage,
+  abortResponse,
+  messages,
+  isTyping,
+  isVisible,
+}) => {
   return (
     <div>
       {/* Chatbot Icon */}
@@ -11,9 +18,9 @@ const Chatbot = ({ toggleChatbot, sendMessage, abortResponse, messages, isTyping
       </div>
 
       {/* Chatbot Component */}
-      <div id="chatbot" style={{ display: isVisible ? 'flex' : 'none' }}>
+      <div id="chatbot" style={{ display: isVisible ? "flex" : "none" }}>
         <div id="chatbot-header">
-          Chat with Luma!{' '}
+          Chat with Lal!{" "}
           <span
             onClick={(e) => {
               e.stopPropagation(); // Prevent event propagation
@@ -26,15 +33,21 @@ const Chatbot = ({ toggleChatbot, sendMessage, abortResponse, messages, isTyping
         <div id="chatbot-body">
           <div id="chatbot-messages">
             {messages.map((msg, index) => (
-              <div key={index} className={msg.role === 'user' ? 'user-message' : 'bot-message'}>
-                {/* Apply the color #FFAB5B to the "Luma:" text */}
-                {msg.role === 'bot' && <span style={{ color: '#FFAB5B' }}>Luma:</span>} {msg.text.replace('Luma:', '')}
+              <div
+                key={index}
+                className={msg.role === "user" ? "user-message" : "bot-message"}
+              >
+                {/* Apply the color #FFAB5B to the "Lal:" text */}
+                {msg.role === "bot" && (
+                  <span style={{ color: "#FFAB5B" }}>Lal:</span>
+                )}{" "}
+                {msg.text.replace("Lal:", "")}
               </div>
             ))}
-            {/* Update the typing indicator to style the "Luma:" text */}
+            {/* Update the typing indicator to style the "Lal:" text */}
             {isTyping && (
               <div className="typing-indicator">
-                <span style={{ color: '#FFAB5B' }}>Luma:</span> is typing...
+                <span style={{ color: "#FFAB5B" }}>Lal:</span> is typing...
               </div>
             )}
           </div>
@@ -47,7 +60,7 @@ const Chatbot = ({ toggleChatbot, sendMessage, abortResponse, messages, isTyping
             />
             {/* Add the abort button */}
             <button id="abort-button" onClick={abortResponse}>
-              &#x25AC; {/* Unicode for the abort symbol */}
+              ▬ {/* Unicode for the abort symbol */}
             </button>
           </div>
         </div>
