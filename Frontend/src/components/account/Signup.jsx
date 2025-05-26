@@ -17,9 +17,9 @@ import {
   Snackbar,
   CssBaseline,
 } from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Visibility, VisibilityOff, Email, Lock, Person, Phone, Description } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { Email, Lock, Person, Phone, Description } from "@mui/icons-material";
+import axios from "axios";
 
 // Define the color palette for dark theme
 const colors = {
@@ -73,6 +73,9 @@ const SignupPage = () => {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
+  const [filePreview, setFilePreview] = useState(null);
+
+  const agreementFile = "/path/to/agreement.pdf"; // Replace with actual path or URL
 
   const validatePassword = (password, confirmPassword) => {
     const newValidation = {
@@ -93,6 +96,13 @@ const SignupPage = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : files ? files[0] : value,
     }));
+
+    if (name === "passportOrId" && files) {
+      const file = files[0];
+      if (file) {
+        setFilePreview(file.type.startsWith("image/") ? URL.createObjectURL(file) : null);
+      }
+    }
 
     if (name === "password" || name === "confirmPassword") {
       validatePassword(
@@ -118,58 +128,61 @@ const SignupPage = () => {
     return "success";
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const newErrors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-    const phoneRegex = /^\+?[0-9]{7,15}$/;
-
-    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!emailRegex.test(formData.email)) newErrors.email = "Invalid email format";
-    if (!phoneRegex.test(formData.phone)) newErrors.phone = "Invalid phone number";
-    if (!formData.passportOrId) newErrors.passportOrId = "Passport or ID is required";
-    if (!formData.acceptedTerms) newErrors.acceptedTerms = "You must accept the terms";
-
-    const passwordValid = Object.values(validation).every(Boolean);
-    if (!passwordValid) newErrors.password = "Password does not meet requirements";
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      try {
-        const formDataToSend = new FormData();
-        formDataToSend.append("firstName", formData.firstName);
-        formDataToSend.append("middleName", formData.middleName);
-        formDataToSend.append("lastName", formData.lastName);
-        formDataToSend.append("email", formData.email);
-        formDataToSend.append("phone", formData.phone);
-        formDataToSend.append("password", formData.password);
-        formDataToSend.append("confirmPassword", formData.confirmPassword);
-        formDataToSend.append("passportOrId", formData.passportOrId);
-        formDataToSend.append("acceptedTerms", formData.acceptedTerms);
-
-        const response = await fetch("http://localhost:2000/register", {
-          method: "POST",
-          body: formDataToSend,
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          setAlert({ type: "success", message: "Registration successful! Redirecting to login..." });
-          setTimeout(() => navigate("/login"), 2000); // Redirect to login page after 2 seconds
-        } else {
-          setAlert({ type: "error", message: data.message || "Registration failed" });
-        }
-      } catch (error) {
-        setAlert({ type: "error", message: "Server error. Please try again later." });
-      }
-    }
-    setLoading(false);
+  const handleViewAgreement = () => {
+    window.open(agreementFile, "_blank");
   };
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setAlert(null);
+
+  const newErrors = {};
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+  const phoneRegex = /^\+?[0-9]{7,15}$/;
+
+  if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
+  if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+  if (!emailRegex.test(formData.email)) newErrors.email = "Invalid email format";
+  if (!phoneRegex.test(formData.phone)) newErrors.phone = "Invalid phone number";
+  if (!formData.passportOrId) newErrors.passportOrId = "Passport or ID is required";
+  if (!formData.acceptedTerms) newErrors.acceptedTerms = "You must accept the terms";
+
+  const passwordValid = Object.values(validation).every(Boolean);
+  if (!passwordValid) newErrors.password = "Password does not meet requirements";
+
+  setErrors(newErrors);
+
+  if (Object.keys(newErrors).length === 0) {
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("firstName", formData.firstName);
+      formDataToSend.append("middleName", formData.middleName);
+      formDataToSend.append("lastName", formData.lastName);
+      formDataToSend.append("email", formData.email);
+      formDataToSend.append("phone", formData.phone);
+      formDataToSend.append("password", formData.password);
+      formDataToSend.append("confirmPassword", formData.confirmPassword);
+      formDataToSend.append("passportOrId", formData.passportOrId);
+      formDataToSend.append("agreedToTerms", formData.acceptedTerms);
+
+      // Log FormData entries for debugging
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      const response = await axios.post("http://localhost:2000/api/signupuser", formDataToSend, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setAlert({ type: "success", message: response.data.message });
+      setTimeout(() => navigate("/verifyEmailUser", { state: { email: formData.email } }), 2000);
+    } catch (error) {
+      setAlert({ type: "error", message: error.response?.data?.message || "Failed to send verification code" });
+    }
+  }
+  setLoading(false);
+};
 
   return (
     <ThemeProvider theme={theme}>
@@ -398,42 +411,72 @@ const SignupPage = () => {
                       onBlur={handleBlur}
                       error={!!errors.passportOrId && touched.passportOrId}
                       helperText={touched.passportOrId && errors.passportOrId}
-                      inputProps={{ accept: "image/*, application/pdf" }}
+                      inputProps={{ accept: "image/*,application/pdf" }}
                       sx={{ mb: 2 }}
                       InputProps={{
                         startAdornment: <Description sx={{ color: colors.text, mr: 1 }} />,
                       }}
                     />
+                    {filePreview && (
+                      <Box sx={{ mt: 2, textAlign: "center" }}>
+                        {formData.passportOrId?.type.startsWith("image/") ? (
+                          <img
+                            src={filePreview}
+                            alt="Passport/ID Preview"
+                            style={{ maxWidth: "100%", maxHeight: "200px", borderRadius: "4px" }}
+                          />
+                        ) : (
+                          formData.passportOrId && (
+                            <Typography variant="body2" sx={{ color: colors.primary }}>
+                              File uploaded: {formData.passportOrId.name}
+                            </Typography>
+                          )
+                        )}
+                      </Box>
+                    )}
                   </Box>
                 </Grid>
 
                 <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        name="acceptedTerms"
-                        checked={formData.acceptedTerms}
-                        onChange={handleChange}
-                        sx={{ color: colors.primary }}
-                      />
-                    }
-                    label={
-                      <Typography variant="body2">
-                        I accept the{" "}
-                        <a
-                          href="https://example.com/terms"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: colors.primary, textDecoration: "none" }}
-                        >
-                          Terms and Conditions
-                        </a>
-                      </Typography>
-                    }
-                  />
-                  {errors.acceptedTerms && (
-                    <FormHelperText error>{errors.acceptedTerms}</FormHelperText>
-                  )}
+                  <Box sx={{ mb: 3, textAlign: "left" }}>
+                    <Typography variant="body1" sx={{ color: colors.text, mb: 2 }}>
+                      Before proceeding, please read and agree to the terms and conditions.
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      sx={{ color: colors.primary, borderColor: colors.primary }}
+                      onClick={handleViewAgreement}
+                    >
+                      View Agreement
+                    </Button>
+                    <FormControlLabel
+                      sx={{ mt: 2 }}
+                      control={
+                        <Checkbox
+                          name="acceptedTerms"
+                          checked={formData.acceptedTerms}
+                          onChange={handleChange}
+                          sx={{ color: colors.primary }}
+                        />
+                      }
+                      label={
+                        <Typography variant="body2">
+                          I agree to the{" "}
+                          <a
+                            href={agreementFile}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: colors.primary, textDecoration: "none" }}
+                          >
+                            Terms and Conditions
+                          </a>
+                        </Typography>
+                      }
+                    />
+                    {errors.acceptedTerms && (
+                      <FormHelperText error>{errors.acceptedTerms}</FormHelperText>
+                    )}
+                  </Box>
                 </Grid>
 
                 <Grid item xs={12}>
@@ -456,7 +499,7 @@ const SignupPage = () => {
                       },
                     }}
                   >
-                    {loading ? "Signing Up..." : "Sign Up"}
+                    {loading ? "Sending Verification..." : "Sign Up"}
                   </Button>
                 </Grid>
 

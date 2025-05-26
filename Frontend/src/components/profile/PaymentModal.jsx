@@ -210,54 +210,61 @@ const PaymentModal = ({ open, onClose, bookingDetails, onPaymentSuccess }) => {
   };
 
   const createBookingHistory = async (tx_ref) => {
-    try {
-      const token = localStorage.getItem('token');
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const userId = user?.id;
+  try {
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const userId = user?.id;
 
-      if (!userId) {
-        throw new Error('User ID not found');
-      }
-
-      if (!bookingDetails.hotelAdminId) {
-        throw new Error('Hotel Admin ID not provided');
-      }
-
-      const bookingHistoryData = {
-        userId,
-        hotelAdminId: bookingDetails.hotelAdminId, // Use string ID, e.g., "102"
-        hotelName: bookingDetails.hotelName, // e.g., "Unison Hotel"
-        roomType: bookingDetails.roomType,
-        roomNumber: bookingDetails.roomNumbers[0], // Assuming single room
-        checkInDate: bookingDetails.checkInDate,
-        checkOutDate: bookingDetails.checkOutDate,
-        totalPrice: parseFloat(bookingDetails.totalPrice.replace(/,/g, '')),
-        image: bookingDetails.image || 'https://via.placeholder.com/500x180?text=No+Image',
-        guests: bookingDetails.numberOfRooms || 1,
-        tx_ref,
-      };
-
-      const response = await axios.post(
-        `${BACKEND_API_URL}/api/bookingHistory/create`,
-        bookingHistoryData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      console.log('Booking history created:', response.data);
-      // Call onPaymentSuccess after successful booking history creation
-      if (bookingDetails.reservationId && bookingDetails.title) {
-        onPaymentSuccess(bookingDetails.reservationId, bookingDetails.title);
-      }
-    } catch (error) {
-      console.error('Error creating booking history:', error);
-      showErrorNotification(error.response?.data?.message || 'Failed to save booking history');
+    if (!userId) {
+      throw new Error("User ID not found");
     }
-  };
+
+    if (!bookingDetails.hotelAdminId) {
+      throw new Error("Hotel Admin ID not provided");
+    }
+
+    const bookingHistoryData = {
+      userId,
+      hotelAdminId: bookingDetails.hotelAdminId, // e.g., "102"
+      hotelName: bookingDetails.hotelName, // e.g., "Unison Hotel"
+      roomType: bookingDetails.roomType,
+      roomNumber: bookingDetails.roomNumbers[0], // Assuming single room
+      checkInDate: bookingDetails.checkInDate,
+      checkOutDate: bookingDetails.checkOutDate,
+      totalPrice: parseFloat(bookingDetails.totalPrice.replace(/,/g, "")),
+      image: bookingDetails.image || "https://via.placeholder.com/500x180?text=No+Image",
+      guests: bookingDetails.numberOfRooms || 1,
+      tx_ref,
+    };
+
+    const response = await axios.post(
+      `${BACKEND_API_URL}/api/bookingHistory/create`,
+      bookingHistoryData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Booking history created:", response.data);
+    // Update success message to inform user about email
+    showSuccessNotification(
+      `Payment Successful! A confirmation email has been sent to ${user.email}.`
+    );
+    // Call onPaymentSuccess after successful booking history creation
+    if (bookingDetails.reservationId && bookingDetails.title) {
+      onPaymentSuccess(bookingDetails.reservationId, bookingDetails.title);
+    }
+  } catch (error) {
+    console.error("Error creating booking history:", error);
+    showErrorNotification(
+      error.response?.data?.message || "Failed to save booking history"
+    );
+  }
+};
+
 
   const handlePay = async () => {
     // Input validation

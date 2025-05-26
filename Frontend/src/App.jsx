@@ -428,11 +428,14 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/verifyEmailUser" element={<VerifyEmailUser />} />
+
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/amhara" element={<AmharaBoth />} />
         <Route path="/bureau" element={<Bureau />} />
         <Route path="/mandate" element={<Merge />} />
         <Route path="/management" element={<Managment />} />
+
         {isAuthenticated && (
           <React.Fragment>
             <Route path="/profile" element={<Profile />} />
