@@ -25,6 +25,7 @@ import SystemAdminModel from "./modules/SystemAdminLists.js";
 import userModel from "./modules/User.js";
 import { authMiddleware, adminMiddleware } from "./Routes/middleware.js";
 import BookingHistory from "./modules/BookingHistory.js";
+import serviceProviderRoutes from "./Routes/ServiceProviderRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -2354,7 +2355,7 @@ app.post("/chat", async (req, res) => {
     console.log("Chatbot Request Received:", message);
 
     const model = genAI.getGenerativeModel({
-      model: "tunedModels/chatbot-2xxfmjqzyzhm",
+      model: "tunedModels/chatbot-winxtow04ge9ecmcje31wqu55ua2zgkz",
     });
 
     console.log("Sending request to Google Generative AI...");
@@ -2378,7 +2379,9 @@ app.post("/chat", async (req, res) => {
     res.status(500).json({ error: "Failed to get response from the model" });
   }
 });
-
+// Service Provider Routes
+// Service Provider Routes
+app.use("/api/service-providers", serviceProviderRoutes);
 // Start Server
 const port = process.env.PORT || 2001;
 app.listen(port, () => {
