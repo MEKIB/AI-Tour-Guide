@@ -1,8 +1,8 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 
-// New high-quality image from Unsplash
-const heroImage = 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80';
+// Import the image directly
+import heroImage from '../../../assets/homepage/bahirdar.jpg';
 
 const HeroImage = () => {
   return (
@@ -17,7 +17,7 @@ const HeroImage = () => {
       {/* Background Image */}
       <img
         src={heroImage}
-        alt="Hotels and Lodges"
+        alt="Hotels and Lodges in Bahir Dar"
         style={{
           position: 'absolute',
           top: 0,
@@ -25,6 +25,10 @@ const HeroImage = () => {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
+        }}
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = '../../../assets/homepage/gonder1.jpg'; // Fallback image
         }}
       />
 
