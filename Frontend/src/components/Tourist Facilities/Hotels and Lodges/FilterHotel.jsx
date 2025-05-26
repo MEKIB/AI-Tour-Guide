@@ -94,7 +94,7 @@ const HotelFilter = () => {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
-    >
+    >      
       <StyledPaper>
         <Box sx={{ minWidth: 300, maxWidth: 400 }}>
           <Typography

@@ -82,6 +82,7 @@ const Availability = ({ hotelAdminId }) => {
       setError('Hotel ID is missing. Please try again.');
       return;
     }
+    
     try {
       setLoading(true);
       console.log('Fetching rooms for hotelAdminId:', hotelAdminId);

@@ -1095,6 +1095,7 @@ app.get('/api/reviews/:hotelAdminId', async (req, res) => {
   }
 });
 
+
 // Room Availability Route
 app.get('/api/rooms/available/:hotelAdminId', async (req, res) => {
   try {
