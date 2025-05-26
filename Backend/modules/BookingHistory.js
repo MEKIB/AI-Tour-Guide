@@ -11,8 +11,8 @@ const bookingHistorySchema = new mongoose.Schema({
   totalPrice: { type: Number, required: true },
   status: {
     type: String,
-    enum: ['pending', 'check-in', 'checked-out', 'cancelled'], // Updated statuses
-    default: 'pending',
+    enum: ['check-in', 'checked-in', 'cancelled'], // Updated statuses
+    default: 'check-in',
   },
   rating: { type: Number, min: 0, max: 5 },
   image: { type: String },

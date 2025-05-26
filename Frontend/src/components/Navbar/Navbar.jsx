@@ -30,7 +30,7 @@ import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
 // Import logo - make sure this path is correct
-import logo from '../../assets/logo/logo.png';
+import logo from "../../assets/logo/logo.png";
 
 const colors = {
   primary: "#222831",
@@ -123,7 +123,11 @@ const languages = [
   { name: "Spanish", code: "ES" },
 ];
 
-export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user = null }) {
+export default function Navbar({
+  isLoggedIn = false,
+  onLogout = () => {},
+  user = null,
+}) {
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
@@ -140,10 +144,18 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
   // Initialize localUser and localIsLoggedIn from localStorage
   const [localUser, setLocalUser] = useState(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
-    console.log("Navbar.js: Initializing localUser from localStorage:", storedUser);
+    console.log(
+      "Navbar.js: Initializing localUser from localStorage:",
+      storedUser
+    );
     if (storedUser) {
-      const correctedPassportOrId = storedUser.passportOrId.includes("http://localhost:2000/uploads/http://localhost:2000/uploads/")
-        ? storedUser.passportOrId.replace("http://localhost:2000/uploads/http://localhost:2000/uploads/", "http://localhost:2000/uploads/")
+      const correctedPassportOrId = storedUser.passportOrId.includes(
+        "http://localhost:2000/uploads/http://localhost:2000/uploads/"
+      )
+        ? storedUser.passportOrId.replace(
+            "http://localhost:2000/uploads/http://localhost:2000/uploads/",
+            "http://localhost:2000/uploads/"
+          )
         : storedUser.passportOrId || "https://via.placeholder.com/32";
       return {
         ...storedUser,
@@ -160,11 +172,19 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
   useEffect(() => {
     console.log("Navbar.js: user prop:", user);
     console.log("Navbar.js: isLoggedIn prop:", isLoggedIn);
-    console.log("Navbar.js: localStorage user:", JSON.parse(localStorage.getItem("user")));
+    console.log(
+      "Navbar.js: localStorage user:",
+      JSON.parse(localStorage.getItem("user"))
+    );
 
     if (user) {
-      const correctedPassportOrId = user.passportOrId.includes("http://localhost:2000/uploads/http://localhost:2000/uploads/")
-        ? user.passportOrId.replace("http://localhost:2000/uploads/http://localhost:2000/uploads/", "http://localhost:2000/uploads/")
+      const correctedPassportOrId = user.passportOrId.includes(
+        "http://localhost:2000/uploads/http://localhost:2000/uploads/"
+      )
+        ? user.passportOrId.replace(
+            "http://localhost:2000/uploads/http://localhost:2000/uploads/",
+            "http://localhost:2000/uploads/"
+          )
         : user.passportOrId || "https://via.placeholder.com/32";
       const updatedUser = {
         ...user,
@@ -178,14 +198,22 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
       const storedUser = JSON.parse(localStorage.getItem("user"));
       const token = localStorage.getItem("token");
       if (storedUser && token) {
-        const correctedPassportOrId = storedUser.passportOrId.includes("http://localhost:2000/uploads/http://localhost:2000/uploads/")
-          ? storedUser.passportOrId.replace("http://localhost:2000/uploads/http://localhost:2000/uploads/", "http://localhost:2000/uploads/")
+        const correctedPassportOrId = storedUser.passportOrId.includes(
+          "http://localhost:2000/uploads/http://localhost:2000/uploads/"
+        )
+          ? storedUser.passportOrId.replace(
+              "http://localhost:2000/uploads/http://localhost:2000/uploads/",
+              "http://localhost:2000/uploads/"
+            )
           : storedUser.passportOrId || "https://via.placeholder.com/32";
         const updatedUser = {
           ...storedUser,
           passportOrId: correctedPassportOrId,
         };
-        console.log("Navbar.js: Setting localUser from localStorage:", updatedUser);
+        console.log(
+          "Navbar.js: Setting localUser from localStorage:",
+          updatedUser
+        );
         setLocalUser(updatedUser);
         setLocalIsLoggedIn(true);
       } else {
@@ -296,9 +324,10 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
     handleCloseUserMenu();
   };
 
-  const fullName = localUser?.firstName && localUser?.middleName
-    ? `${localUser.firstName} ${localUser.middleName}`
-    : "My Profile";
+  const fullName =
+    localUser?.firstName && localUser?.middleName
+      ? `${localUser.firstName} ${localUser.middleName}`
+      : "My Profile";
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -311,15 +340,20 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
       >
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            <Link to="/" style={{ textDecoration: "none", color: "inherit", display: 'flex', alignItems: 'center' }}>
-              <LogoImage 
-                src={logo} 
-                alt="Visit Amhara" 
-              />
+            <Link
+              to="/"
+              style={{
+                textDecoration: "none",
+                color: "inherit",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <LogoImage src={logo} alt="Visit Amhara" />
               Visit Amhara
             </Link>
           </Typography>
-          
+
           <Box sx={{ display: "flex", gap: 4, alignItems: "center" }}>
             <Box className="search-box">
               {searchBoxOpen ? (
@@ -382,7 +416,7 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
               >
                 <MenuItem onClick={handleCloseDestination}>
                   <Link
-                    to="/things"
+                    to="/things-to-do"
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     Things to Do
@@ -414,7 +448,7 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                 </MenuItem>
                 <MenuItem onClick={handleCloseDestination}>
                   <Link
-                    to="/religioussites"
+                    to="/religious-sites"
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     Religious Sites
@@ -422,7 +456,7 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                 </MenuItem>
                 <MenuItem onClick={handleCloseDestination}>
                   <Link
-                    to="/historicalLandmarks"
+                    to="/historical"
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     Historical Landmarks
@@ -500,8 +534,14 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
               >
                 {localIsLoggedIn && localUser?.passportOrId ? (
                   <>
-                    {console.log("Navbar.js: Rendering ProfileImage in account button - passportOrId:", localUser.passportOrId)}
-                    {console.log("Navbar.js: Rendering ProfileImage in account button - localUser:", localUser)}
+                    {console.log(
+                      "Navbar.js: Rendering ProfileImage in account button - passportOrId:",
+                      localUser.passportOrId
+                    )}
+                    {console.log(
+                      "Navbar.js: Rendering ProfileImage in account button - localUser:",
+                      localUser
+                    )}
                     <ProfileImage
                       src={localUser.passportOrId}
                       alt="Profile"
@@ -522,12 +562,12 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                   "aria-labelledby": "account-button",
                 }}
                 anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
+                  vertical: "bottom",
+                  horizontal: "right",
                 }}
                 transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
+                  vertical: "top",
+                  horizontal: "right",
                 }}
               >
                 {localIsLoggedIn ? (
@@ -547,8 +587,14 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                       >
                         {localIsLoggedIn && localUser?.passportOrId ? (
                           <>
-                            {console.log("Navbar.js: Rendering ProfileImage in user menu - passportOrId:", localUser.passportOrId)}
-                            {console.log("Navbar.js: Rendering ProfileImage in user menu - localUser:", localUser)}
+                            {console.log(
+                              "Navbar.js: Rendering ProfileImage in user menu - passportOrId:",
+                              localUser.passportOrId
+                            )}
+                            {console.log(
+                              "Navbar.js: Rendering ProfileImage in user menu - localUser:",
+                              localUser
+                            )}
                             <ProfileImage
                               src={localUser.passportOrId}
                               alt="Profile"
@@ -687,7 +733,7 @@ export default function Navbar({ isLoggedIn = false, onLogout = () => {}, user =
                 </MenuItem>
                 <MenuItem onClick={handleCloseAbout}>
                   <Link
-                    to="/management"
+                    to="/managment"
                     style={{ textDecoration: "none", color: "inherit" }}
                   >
                     Our Management

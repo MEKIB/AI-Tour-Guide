@@ -147,31 +147,35 @@ const HotelAdmin = () => {
                 <TableCell sx={{ color: '#EEEEEE' }}>{admin.middleName}</TableCell>
                 <TableCell sx={{ color: '#EEEEEE' }}>{admin.lastName}</TableCell>
                 <TableCell>
-                  <Avatar
-                    src={admin.passportId.url}
-                    alt="Passport/ID"
-                    sx={{ width: 60, height: 60, cursor: 'pointer' }}
-                    onClick={() => handleImageClick(admin.passportId.url)}
-                  />
+                 <TableCell>
+  <Avatar
+    src={`http://localhost:2000${admin.passportId.url}`}
+    alt="Passport/ID"
+    sx={{ width: 60, height: 60, cursor: 'pointer' }}
+    onClick={() => handleImageClick(`http://localhost:2000${admin.passportId.url}`)}
+  />
+</TableCell>
                 </TableCell>
                 <TableCell sx={{ color: '#EEEEEE' }}>{admin.location}</TableCell>
                 <TableCell sx={{ color: '#EEEEEE' }}>{admin.phoneNumber}</TableCell>
                 <TableCell sx={{ color: '#EEEEEE' }}>{admin.email}</TableCell>
                 <TableCell>
-                  <Avatar
-                    src={admin.tradeLicense.url}
-                    alt="Trade License"
-                    sx={{ width: 60, height: 60, cursor: 'pointer' }}
-                    onClick={() => handleImageClick(admin.tradeLicense.url)}
-                  />
+                 <TableCell>
+  <Avatar
+    src={`http://localhost:2000${admin.tradeLicense.url}`}
+    alt="Trade licence"
+    sx={{ width: 60, height: 60, cursor: 'pointer' }}
+    onClick={() => handleImageClick(`http://localhost:2000${admin.tradeLicense.url}`)}
+  />
+</TableCell>
                 </TableCell>
                 <TableCell>
                   <Avatar
-                    src={admin.managerId.url}
-                    alt="Manager ID"
-                    sx={{ width: 60, height: 60, cursor: 'pointer' }}
-                    onClick={() => handleImageClick(admin.managerId.url)}
-                  />
+    src={`http://localhost:2000${admin.managerId.url}`}
+    alt="Manager  id"
+    sx={{ width: 60, height: 60, cursor: 'pointer' }}
+    onClick={() => handleImageClick(`http://localhost:2000${admin.managerId.url}`)}
+  />
                 </TableCell>
                 <TableCell>
                   <Button

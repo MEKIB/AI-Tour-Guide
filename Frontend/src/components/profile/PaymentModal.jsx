@@ -316,7 +316,7 @@ const PaymentModal = ({ open, onClose, bookingDetails, onPaymentSuccess }) => {
         const etbAmount = '100.00'; // Hardcode test amount
 
         const initData = {
-          amount: etbAmount,
+          amount: userDetails ? bookingDetails.totalPrice : etbAmount,
           currency: 'ETB',
           email: userDetails ? userDetails.email : `test+${tx_ref}@gmail.com`,
           first_name,
@@ -326,7 +326,7 @@ const PaymentModal = ({ open, onClose, bookingDetails, onPaymentSuccess }) => {
           callback_url: CALLBACK_URL,
           return_url: `${RETURN_URL}?tx_ref=${tx_ref}`,
           customization: {
-            title: 'Hotel Booking',
+            title: 'VISIT AMHARA',
             description: `Booking for ${bookingDetails.roomType}`,
           },
         };

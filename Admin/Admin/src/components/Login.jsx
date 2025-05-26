@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -6,10 +6,6 @@ import {
   Button,
   Container,
   Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Card,
   CardContent,
   CardActionArea,
@@ -19,7 +15,7 @@ import axios from 'axios';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import HotelIcon from '@mui/icons-material/Hotel';
 
-const Login = ({ setUserRole, setUserEmail, setUserName }) => {
+const Login = ({ setUserRole, setUserEmail, setUserName, handleLogout }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,11 +23,46 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
   const [role, setRole] = useState('');
   const [showRoleSelection, setShowRoleSelection] = useState(true);
   const [showLoginForm, setShowLoginForm] = useState(false);
+  const [logoutTimer, setLogoutTimer] = useState(null);
+
+  useEffect(() => {
+    // Clear user data and token when component mounts
+    handleLogout();
+    return () => {
+      if (logoutTimer) {
+        clearTimeout(logoutTimer);
+      }
+    };
+  }, []);
 
   const handleRoleSelect = (selectedRole) => {
     setRole(selectedRole);
     setShowRoleSelection(false);
     setShowLoginForm(true);
+  };
+
+  const startLogoutTimer = () => {
+    // Clear any existing timer
+    if (logoutTimer) {
+      clearTimeout(logoutTimer);
+    }
+    
+    // Set new timer for 1 hour
+    const timer = setTimeout(() => {
+      handleAutoLogout();
+    }, 60*60*10000); // 1 hour in milliseconds
+    
+    setLogoutTimer(timer);
+  };
+
+  const handleAutoLogout = () => {
+    handleLogout();
+    navigate('/login');
+    setError('Your session has expired after 10 seconds. Please login again.');
+    setShowRoleSelection(true);
+    setShowLoginForm(false);
+    setEmail('');
+    setPassword('');
   };
 
   const handleLogin = async (e) => {
@@ -46,20 +77,19 @@ const Login = ({ setUserRole, setUserEmail, setUserName }) => {
 
     try {
       const response = await axios.post(apiUrl, { email, password });
-
       const { user, token } = response.data;
 
-      console.log('Logged in as:', user.role || role);
       setUserRole(user.role || role);
       setUserEmail(user.email);
       setUserName(`${user.firstName || ''} ${user.lastName || ''}`.trim());
-
       localStorage.setItem('token', token);
-      console.log(token);
+
+      // Start the logout timer
+      startLogoutTimer();
 
       navigate(`/${user.role || role}-dashboard`);
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.message) {
+      if (err.response?.data?.message) {
         setError(err.response.data.message);
       } else {
         setError('Login failed. Please try again.');

@@ -40,12 +40,18 @@ import HomePage from './components/HomePage';
 import './App.css';
 
 const App = () => {
-  const [userRole, setUserRole] = useState(null); // null means user is not logged in
-  const [userEmail, setUserEmail] = useState(''); // Store the logged-in user's email
-  const [userName, setUserName] = useState(''); // Store the logged-in user's name
-  const [collapsed, setCollapsed] = useState(false); // State for sidebar collapse
+  const [userRole, setUserRole] = useState(null);
+  const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState('');
+  const [collapsed, setCollapsed] = useState(false);
 
-  // Function to toggle sidebar state
+  const handleLogout = () => {
+    setUserRole(null);
+    setUserEmail('');
+    setUserName('');
+    localStorage.removeItem('token');
+  };
+
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
   };
@@ -54,7 +60,6 @@ const App = () => {
     <Router>
       <Box sx={{ display: 'flex', backgroundColor: '#393E46' }}>
         <CssBaseline />
-        {/* Pass userName, collapsed, and toggleSidebar to Navbar */}
         <Navbar
           userRole={userRole}
           userEmail={userEmail}
@@ -62,10 +67,10 @@ const App = () => {
           setUserRole={setUserRole}
           collapsed={collapsed}
           onToggleSidebar={toggleSidebar}
+          handleLogout={handleLogout}
         />
         <Routes>
           <Route path="/" element={<HomePage />} />
-          {/* Pass setUserName to Login */}
           <Route
             path="/login"
             element={
@@ -73,18 +78,19 @@ const App = () => {
                 setUserRole={setUserRole}
                 setUserEmail={setUserEmail}
                 setUserName={setUserName}
+                handleLogout={handleLogout}
               />
             }
           />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/verify-email" element={<VerifyEmail />} /> {/* Moved to top-level */}
+          <Route path="/verify-email" element={<VerifyEmail />} />
 
           {/* System Admin Routes */}
           <Route
             path="/system-admin-dashboard"
             element={userRole === 'system-admin' ? <SystemAdminDashboard collapsed={collapsed} /> : <Navigate to="/login" />}
           >
-            <Route index element={<Dashboards />} /> {/* Default route */}
+            <Route index element={<Dashboards />} />
             <Route path="user-management" element={<UserManagement />} />
             <Route path="hotel-management" element={<HotelManagement />} />
             <Route path="approve-hotel-admin" element={<ApproveHotelAdmin />} />
@@ -101,9 +107,8 @@ const App = () => {
             path="/hotel-admin-dashboard"
             element={userRole === 'hotel-admin' ? <HotelAdminDashboard collapsed={collapsed} /> : <Navigate to="/login" />}
           >
-            <Route index element={<Dashboard />} /> {/* Default route */}
+            <Route index element={<Dashboard />} />
             <Route path="hotel-profile" element={<ProfileManagement />} />
-            {/* <Route path="rooms" element={<RoomManagement />} /> */}
             <Route path="rooms" element={<AddRoomForm />} />
             <Route path="room-amenties" element={<AddDetailedRoomAndAmenities />} />
             <Route path="amenties" element={<AddAmenitiesForm />} />
@@ -117,7 +122,6 @@ const App = () => {
             <Route path="bookings" element={<BookingManagement />} />
             <Route path="check-booking" element={<CheckBooking />} />
             <Route path="profile" element={<Profile />} />
-            {/* Removed /verify-email from here */}
           </Route>
         </Routes>
       </Box>
