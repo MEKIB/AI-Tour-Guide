@@ -82,6 +82,8 @@ import GishenPage from "./components/Destinations/religious-sites/GishenPage";
 import TedbabeMariamMonasteryPage from "./components/Destinations/religious-sites/TedbabeMariamMonasteryPage";
 import MertuleMariamMonasteryPage from "./components/Destinations/religious-sites/MertuleMariamMonasteryPage";
 import AbuneMelkezedekMonasteryPage from "./components/Destinations/religious-sites/AbuneMelkezedekMonasteryPage";
+import VerifyEmailUser from "./components/account/verifyEmailUser";
+
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
@@ -399,11 +401,14 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/verifyEmailUser" element={<VerifyEmailUser />} />
+
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/amhara" element={<AmharaBoth />} />
         <Route path="/bureau" element={<Bureau />} />
         <Route path="/mandate" element={<Merge />} />
         <Route path="/management" element={<Managment />} />
+
         {isAuthenticated && (
           <>
             <Route path="/profile" element={<Profile />} />

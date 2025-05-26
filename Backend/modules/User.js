@@ -16,13 +16,13 @@ const userSchema = new mongoose.Schema({
     match: [/^\+?[0-9]{7,15}$/, 'Please enter a valid phone number']
   },
   password: { type: String, required: true },
-  passportOrId: { type: String }, // Store file path or URL
+  passportOrId: { type: String, required: true }, // Expect a string (file path or name)
   role: { 
     type: String, 
     enum: ['user', 'admin'], 
     default: 'user' 
   },
-  acceptedTerms: { type: Boolean, required: true },
+  acceptedTerms: { type: Boolean, required: true }, // Expect a boolean
 }, { timestamps: true });
 
 
