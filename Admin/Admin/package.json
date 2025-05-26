@@ -29,7 +29,9 @@
     "react-qr-scanner": "^1.0.0-alpha.11",
     "react-qrcode": "^0.3.6",
     "react-router-dom": "^6.30.0",
-    "react-window": "^1.8.11"
+    "react-slick": "^0.30.3",
+    "react-window": "^1.8.11",
+    "slick-carousel": "^1.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

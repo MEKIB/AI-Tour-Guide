@@ -48,6 +48,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
+import AskRefund from './AskRefund';
 
 const ColorButton = styled(Button)({
   backgroundColor: '#00ADB5',
@@ -80,7 +81,7 @@ const BookingAnalytics = ({ bookings }) => {
         startDate = new Date(now.setFullYear(now.getFullYear() - 1));
         break;
       default:
-        startDate = new Date(0); // All time
+        startDate = new Date(0);
     }
 
     return bookings
@@ -88,7 +89,10 @@ const BookingAnalytics = ({ bookings }) => {
         const bookingDate = new Date(booking.checkIn);
         return bookingDate >= startDate && booking.status !== 'cancelled';
       })
-      .reduce((total, booking) => total + booking.totalPrice, 0);
+      .reduce((total, booking) => {
+        const price = booking.totalPrice || 0;
+        return total + price;
+      }, 0);
   };
 
   const totalSpent = calculateTotalSpending(timeRange);
@@ -167,13 +171,13 @@ const BookingAnalytics = ({ bookings }) => {
                 >
                   <Typography variant="h6" sx={{ color: '#EEEEEE', mb: 1 }}>
                     <DateRange sx={{ verticalAlign: 'middle', mr: 1 }} />
-                    {getTimeRangeLabel()} Spending
+                    {getTimeRangeLabel()} Total Spending
                   </Typography>
                   <Typography variant="h4" sx={{ color: '#00ADB5' }}>
                     ${totalSpent.toFixed(2)}
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#EEEEEE', mt: 1 }}>
-                    Total across all completed bookings
+                    Total for all non-cancelled bookings
                   </Typography>
                 </Paper>
               </Grid>
@@ -223,26 +227,49 @@ const BookingHistory = () => {
   });
   const [cancelDialog, setCancelDialog] = useState({
     open: false,
-    bookingId: null,
+    bookingCode: null,
     bookingName: '',
   });
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const token = localStorage.getItem('token');
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const userId = user?.id;
-  const isLoggedIn = !!token && !!userId;
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const [token, setToken] = useState(null);
 
   const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:2000';
 
-  // Log environment variable for debugging
-  console.log('Backend API URL:', BACKEND_API_URL);
+  // Check authentication status on component mount
+  useEffect(() => {
+    const checkAuth = () => {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      
+      if (storedToken && storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          setToken(storedToken);
+          setUserId(user?.id);
+          setIsLoggedIn(true);
+        } catch (e) {
+          console.error('Error parsing user data:', e);
+          setIsLoggedIn(false);
+        }
+      } else {
+        setIsLoggedIn(false);
+      }
+      setAuthChecked(true);
+    };
 
-  // Fetch booking history
+    checkAuth();
+  }, []);
+
+  // Fetch booking history when auth is checked and user is logged in
   useEffect(() => {
     const fetchBookings = async () => {
+      if (!authChecked) return; // Wait until auth check is complete
+      
       if (!isLoggedIn) {
         setError('Please log in to view your booking history');
         setLoading(false);
@@ -257,8 +284,14 @@ const BookingHistory = () => {
           },
         });
 
-        const fetchedBookings = response.data.data;
-        setBookings(fetchedBookings);
+        const fetchedBookings = response.data.data || [];
+        const validBookings = fetchedBookings.filter(
+          (booking) => booking.bookingCode && typeof booking.bookingCode === 'string'
+        );
+        setBookings(validBookings);
+        if (fetchedBookings.length !== validBookings.length) {
+          console.warn('Some bookings were filtered out due to invalid bookingCode');
+        }
         setError('');
       } catch (err) {
         console.error('Error fetching booking history:', err);
@@ -271,13 +304,24 @@ const BookingHistory = () => {
     };
 
     fetchBookings();
-  }, [isLoggedIn, token, BACKEND_API_URL]);
+  }, [isLoggedIn, token, BACKEND_API_URL, authChecked]);
 
-  // Handle cancellation API call
   const confirmCancelBooking = async () => {
+    if (!cancelDialog.bookingCode || typeof cancelDialog.bookingCode !== 'string') {
+      console.error('Invalid bookingCode in confirmCancelBooking:', cancelDialog.bookingCode);
+      setSnackbar({
+        open: true,
+        message: 'Invalid booking code. Please try again.',
+        severity: 'error',
+      });
+      handleCloseCancelDialog();
+      return;
+    }
+
     try {
+      const url = `${BACKEND_API_URL}/api/bookingHistory/${encodeURIComponent(cancelDialog.bookingCode)}/cancel`;
       const response = await axios.patch(
-        `${BACKEND_API_URL}/api/bookingHistory/${cancelDialog.bookingId}/cancel`,
+        url,
         {},
         {
           headers: {
@@ -288,7 +332,9 @@ const BookingHistory = () => {
 
       setBookings((prev) =>
         prev.map((booking) =>
-          booking.id === cancelDialog.bookingId ? { ...booking, status: 'cancelled' } : booking
+          booking.bookingCode === cancelDialog.bookingCode
+            ? { ...booking, status: 'cancelled' }
+            : booking
         )
       );
 
@@ -313,10 +359,19 @@ const BookingHistory = () => {
     setTabValue(newValue);
   };
 
-  const handleOpenCancelDialog = (bookingId, bookingName) => {
+  const handleOpenCancelDialog = (bookingCode, bookingName) => {
+    if (!bookingCode || typeof bookingCode !== 'string') {
+      console.error('Invalid bookingCode in handleOpenCancelDialog:', bookingCode);
+      setSnackbar({
+        open: true,
+        message: 'Invalid booking code. Cannot open cancellation dialog.',
+        severity: 'error',
+      });
+      return;
+    }
     setCancelDialog({
       open: true,
-      bookingId,
+      bookingCode,
       bookingName,
     });
   };
@@ -324,7 +379,7 @@ const BookingHistory = () => {
   const handleCloseCancelDialog = () => {
     setCancelDialog({
       open: false,
-      bookingId: null,
+      bookingCode: null,
       bookingName: '',
     });
   };
@@ -333,48 +388,82 @@ const BookingHistory = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const isUpcomingBooking = (booking) => {
+    return new Date(booking.checkOut) > new Date() && booking.status !== 'cancelled';
+  };
+
+  const isCompletedBooking = (booking) => {
+    return new Date(booking.checkOut) <= new Date() && booking.status !== 'cancelled';
+  };
+
   const filteredBookings = bookings.filter((booking) => {
-    if (tabValue === 0) return true; // All
-    if (tabValue === 1) return booking.status === 'upcoming';
-    if (tabValue === 2) return booking.status === 'completed';
+    if (tabValue === 0) return true;
+    if (tabValue === 1) return isUpcomingBooking(booking);
+    if (tabValue === 2) return isCompletedBooking(booking);
     if (tabValue === 3) return booking.status === 'cancelled';
     return true;
   });
 
-  const getStatusChip = (status) => {
-    switch (status) {
-      case 'upcoming':
-        return (
-          <StatusChip
-            icon={<AccessTime style={{ color: '#EEEEEE' }} />}
-            label="Upcoming"
-            sx={{ backgroundColor: '#FFA500' }}
-          />
-        );
-      case 'completed':
-        return (
-          <StatusChip
-            icon={<CheckCircle style={{ color: '#EEEEEE' }} />}
-            label="Completed"
-            sx={{ backgroundColor: '#4CAF50' }}
-          />
-        );
-      case 'cancelled':
-        return (
-          <StatusChip
-            icon={<Cancel style={{ color: '#EEEEEE' }} />}
-            label="Cancelled"
-            sx={{ backgroundColor: '#F44336' }}
-          />
-        );
-      default:
-        return null;
+  const sortedFilteredBookings = tabValue === 0
+    ? filteredBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    : filteredBookings;
+
+  const getStatusChip = (booking) => {
+    if (booking.status === 'cancelled') {
+      return (
+        <StatusChip
+          icon={<Cancel style={{ color: '#EEEEEE' }} />}
+          label="Cancelled"
+          sx={{ backgroundColor: '#F44336' }}
+        />
+      );
     }
+    if (isUpcomingBooking(booking)) {
+      return (
+        <StatusChip
+          icon={<AccessTime style={{ color: '#EEEEEE' }} />}
+          label="Upcoming"
+          sx={{ backgroundColor: '#FFA500' }}
+        />
+      );
+    }
+    if (isCompletedBooking(booking)) {
+      return (
+        <StatusChip
+          icon={<CheckCircle style={{ color: '#EEEEEE' }} />}
+          label="Completed"
+          sx={{ backgroundColor: '#4CAF50' }}
+        />
+      );
+    }
+    return (
+      <StatusChip
+        icon={<AccessTime style={{ color: '#EEEEEE' }} />}
+        label={booking.status}
+        sx={{ backgroundColor: '#666' }}
+      />
+    );
   };
 
-  const isUpcomingAndCancelable = (status) => {
-    return status === 'upcoming';
+  const isUpcomingAndCancelable = (booking) => {
+    return isUpcomingBooking(booking);
   };
+
+  if (!authChecked) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          backgroundColor: '#222831',
+        }}
+      >
+        <CircularProgress sx={{ color: '#00ADB5' }} />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -439,7 +528,7 @@ const BookingHistory = () => {
           <Tab
             label={
               <Badge
-                badgeContent={bookings.filter((b) => b.status === 'upcoming').length}
+                badgeContent={bookings.filter(isUpcomingBooking).length}
                 color="primary"
               >
                 Upcoming
@@ -449,7 +538,7 @@ const BookingHistory = () => {
           <Tab
             label={
               <Badge
-                badgeContent={bookings.filter((b) => b.status === 'completed').length}
+                badgeContent={bookings.filter(isCompletedBooking).length}
                 color="primary"
               >
                 Completed
@@ -465,6 +554,16 @@ const BookingHistory = () => {
                 Cancelled
               </Badge>
             }
+          />
+          <Tab
+            icon={<Receipt />}
+            iconPosition="start"
+            label="Request Refund"
+            sx={{
+              '&.Mui-selected': {
+                color: '#00ADB5',
+              },
+            }}
           />
           <Tab
             icon={<Analytics />}
@@ -506,6 +605,8 @@ const BookingHistory = () => {
           </Typography>
         </Box>
       ) : tabValue === 4 ? (
+        <AskRefund />
+      ) : tabValue === 5 ? (
         <BookingAnalytics bookings={bookings} />
       ) : filteredBookings.length === 0 ? (
         <Box
@@ -524,8 +625,8 @@ const BookingHistory = () => {
         </Box>
       ) : (
         <Grid container spacing={3}>
-          {filteredBookings.map((booking) => (
-            <Grid item xs={12} key={booking.id}>
+          {sortedFilteredBookings.map((booking) => (
+            <Grid item xs={12} key={booking.bookingCode}>
               <Card
                 sx={{
                   backgroundColor: '#393E46',
@@ -566,7 +667,7 @@ const BookingHistory = () => {
                             {booking.hotelName}
                           </Typography>
                           <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                            {getStatusChip(booking.status)}
+                            {getStatusChip(booking)}
                             {booking.rating && (
                               <Chip
                                 icon={<Star style={{ color: '#FFD700' }} />}
@@ -606,13 +707,13 @@ const BookingHistory = () => {
                           <Grid item xs={6} sm={6}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                               <CalendarToday sx={{ mr: 1, color: '#00ADB5' }} />
-                              <Typography>Check-in: {booking.checkIn}</Typography>
+                              <Typography>Check-in: {new Date(booking.checkIn).toLocaleDateString()}</Typography>
                             </Box>
                           </Grid>
                           <Grid item xs={6} sm={6}>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                               <CalendarToday sx={{ mr: 1, color: '#00ADB5' }} />
-                              <Typography>Check-out: {booking.checkOut}</Typography>
+                              <Typography>Check-out: {new Date(booking.checkOut).toLocaleDateString()}</Typography>
                             </Box>
                           </Grid>
                         </Grid>
@@ -629,7 +730,7 @@ const BookingHistory = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <Receipt sx={{ mr: 1, color: '#00ADB5' }} />
                             <Typography variant="h6" sx={{ color: '#EEEEEE' }}>
-                              ${booking.totalPrice}
+                              ${booking.totalPrice?.toFixed(2) || '0.00'}
                             </Typography>
                           </Box>
                         </Box>
@@ -646,33 +747,20 @@ const BookingHistory = () => {
                           p: 2,
                         }}
                       >
-                        {isUpcomingAndCancelable(booking.status) ? (
-                          <>
-                            <ColorButton
-                              variant="contained"
-                              startIcon={<Cancel />}
-                              onClick={() =>
-                                handleOpenCancelDialog(booking.id, booking.hotelName)
-                              }
-                              sx={{ mb: 2, width: '100%' }}
-                            >
-                              Cancel Booking
-                            </ColorButton>
-                            <Button
-                              variant="outlined"
-                              sx={{
-                                color: '#00ADB5',
-                                borderColor: '#00ADB5',
-                                width: '100%',
-                                '&:hover': {
-                                  borderColor: '#008B8B',
-                                },
-                              }}
-                            >
-                              Modify Booking
-                            </Button>
-                          </>
-                        ) : booking.status === 'completed' ? (
+                        {isUpcomingAndCancelable(booking) && (
+                          <ColorButton
+                            variant="contained"
+                            startIcon={<Cancel />}
+                            onClick={() =>
+                              handleOpenCancelDialog(booking.bookingCode, booking.hotelName)
+                            }
+                            sx={{ mb: 2, width: '100%' }}
+                            disabled={!booking.bookingCode}
+                          >
+                            Cancel Booking
+                          </ColorButton>
+                        )}
+                        {isCompletedBooking(booking) && (
                           <>
                             <Button
                               variant="contained"
@@ -702,7 +790,7 @@ const BookingHistory = () => {
                               Leave Review
                             </Button>
                           </>
-                        ) : null}
+                        )}
                       </Box>
                     </Grid>
                   </Grid>

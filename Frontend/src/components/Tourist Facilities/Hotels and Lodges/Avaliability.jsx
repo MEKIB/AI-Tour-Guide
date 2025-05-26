@@ -72,8 +72,27 @@ const Availability = ({ hotelAdminId }) => {
   const user = JSON.parse(localStorage.getItem('user'));
   const isLoggedIn = !!token && !!user && !!user._id;
 
+  // Reset selections when dates change
+  useEffect(() => {
+    if (checkInDate || checkOutDate) {
+      setSelectedRoomType('');
+      setSelectedRooms([]);
+      setShowBookingForm(false);
+    }
+  }, [checkInDate, checkOutDate]);
+
+  // Validate room selections
+  useEffect(() => {
+    if (selectedRooms.length > rooms) {
+      setSelectedRooms(prev => prev.slice(0, rooms));
+    }
+  }, [rooms, selectedRooms.length]);
+
   // Fetch available rooms from backend
   const fetchAvailableRooms = async () => {
+    setSelectedRoomType('');
+    setSelectedRooms([]);
+    
     if (!checkInDate || !checkOutDate) {
       setError('Please select check-in and check-out dates');
       return;
@@ -84,7 +103,6 @@ const Availability = ({ hotelAdminId }) => {
     }
     try {
       setLoading(true);
-      console.log('Fetching rooms for hotelAdminId:', hotelAdminId);
       const response = await axios.get(
         `http://localhost:2000/api/rooms/available/${hotelAdminId}`,
         {
@@ -95,14 +113,9 @@ const Availability = ({ hotelAdminId }) => {
         }
       );
       const rooms = response.data.data;
-      console.log('Available rooms:', rooms);
-      // Filter out invalid rooms
       const validRooms = rooms.filter(
         (room) => room.type && room.roomNumber
       );
-      if (validRooms.length < rooms.length) {
-        console.warn('Some rooms were filtered out due to missing type or roomNumber');
-      }
       setAvailableRooms(validRooms);
       setShowBookingForm(true);
       if (validRooms.length === 0) {
@@ -187,14 +200,12 @@ const Availability = ({ hotelAdminId }) => {
     const newRoomType = event.target.value;
     setSelectedRoomType(newRoomType);
     setSelectedRooms([]);
-    console.log('Selected room type:', newRoomType);
   };
 
   const handleRoomSelection = (event) => {
     const selectedRoomNumbers = event.target.value;
     if (selectedRoomNumbers.length <= rooms) {
       setSelectedRooms(selectedRoomNumbers);
-      console.log('Selected rooms:', selectedRoomNumbers);
     }
   };
 
@@ -210,20 +221,8 @@ const Availability = ({ hotelAdminId }) => {
       return;
     }
 
-    // Validate selected rooms exist in availableRooms
-    const invalidRooms = selectedRooms.filter(
-      (roomNumber) => !availableRooms.some((room) => room.roomNumber === roomNumber && room.type === selectedRoomType)
-    );
-    if (invalidRooms.length > 0) {
-      setError(`Invalid room numbers selected: ${invalidRooms.join(', ')}`);
-      return;
-    }
-
     try {
       setLoading(true);
-      console.log('Creating reservations:', { selectedRoomType, selectedRooms });
-
-      // Create a reservation for each selected room
       const promises = selectedRooms.map((roomNumber) =>
         axios.post(
           'http://localhost:2000/api/reservations',
@@ -245,16 +244,12 @@ const Availability = ({ hotelAdminId }) => {
       );
 
       const responses = await Promise.all(promises);
-      console.log('Reservation responses:', responses);
-
       setSuccess('Reservation(s) created successfully!');
-      // Reset form only on success
       setSelectedRooms([]);
       setSelectedRoomType('');
       setShowBookingForm(false);
       fetchAvailableRooms();
     } catch (err) {
-      console.error('Reservation error:', err);
       setError(
         err.response?.data?.message ||
           `Failed to create reservation: ${err.message}`
@@ -270,11 +265,21 @@ const Availability = ({ hotelAdminId }) => {
     navigate('/login');
   };
 
-  // Get unique room types
+  // Get unique room types and filtered rooms
   const roomTypes = [...new Set(availableRooms.map((room) => room.type))];
   const filteredRooms = selectedRoomType
     ? availableRooms.filter((room) => room.type === selectedRoomType)
-    : availableRooms;
+    : [];
+
+  // Calculate if reserve button should be disabled
+  const isReserveDisabled = 
+    !selectedRoomType || 
+    selectedRooms.length === 0 || 
+    loading || 
+    !isLoggedIn ||
+    !checkInDate ||
+    !checkOutDate ||
+    selectedRooms.length > rooms;
 
   return (
     <Box sx={{ p: 3, maxWidth: '1200px', margin: '0 auto', backgroundColor: colors.dark, color: colors.light }}>
@@ -513,7 +518,7 @@ const Availability = ({ hotelAdminId }) => {
               variant="contained"
               fullWidth
               onClick={handleSearch}
-              disabled={loading}
+              disabled={loading || !checkInDate || !checkOutDate}
               sx={{ backgroundColor: colors.primary, color: colors.light }}
             >
               {loading ? 'Loading...' : 'Search'}
@@ -604,12 +609,29 @@ const Availability = ({ hotelAdminId }) => {
                           disabled={!selectedRoomType}
                           renderValue={(selected) => (
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                              {selected.map((roomNumber) => (
-                                <Chip key={roomNumber} label={roomNumber} sx={{ backgroundColor: colors.primary, color: colors.light }} />
-                              ))}
+                              {selected.length === 0 ? (
+                                <Typography variant="body2" sx={{ color: colors.light }}>
+                                  Select Room(s)
+                                </Typography>
+                              ) : (
+                                selected.map((roomNumber) => (
+                                  <Chip 
+                                    key={roomNumber} 
+                                    label={roomNumber} 
+                                    sx={{ 
+                                      backgroundColor: selectedRooms.length > rooms ? 'error.main' : colors.primary, 
+                                      color: colors.light 
+                                    }} 
+                                  />
+                                ))
+                              )}
                             </Box>
                           )}
-                          sx={{ backgroundColor: colors.dark, color: colors.light }}
+                          sx={{ 
+                            backgroundColor: colors.dark, 
+                            color: colors.light,
+                            border: selectedRooms.length > rooms ? '1px solid red' : 'none'
+                          }}
                         >
                           <MenuItem value="" disabled>
                             Select Room(s)
@@ -642,7 +664,7 @@ const Availability = ({ hotelAdminId }) => {
                       <Button
                         variant="contained"
                         onClick={handleReserve}
-                        disabled={!selectedRoomType || selectedRooms.length === 0 || loading || !isLoggedIn}
+                        disabled={isReserveDisabled}
                         sx={{ backgroundColor: colors.primary, color: colors.light }}
                       >
                         {loading ? 'Reserving...' : 'Reserve'}
