@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import {
   Box,
   Typography,
@@ -11,226 +12,248 @@ import {
   TableHead,
   TableRow,
   Paper,
+  CircularProgress,
   Snackbar,
   Alert,
+  Dialog,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
-import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:2000';
 
 const BookingManagement = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [booking, setBooking] = useState(null);
-  const [notification, setNotification] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const [bookingCode, setBookingCode] = useState('');
+  const [searchResult, setSearchResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [openImageDialog, setOpenImageDialog] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Handle search by booking code
   const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      setNotification({
-        open: true,
-        message: 'Please enter a booking code.',
-        severity: 'warning',
-      });
-      setBooking(null);
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Search initiated for booking code: ${bookingCode}`);
+
+    if (!bookingCode.trim()) {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Empty booking code entered`);
+      setError('Please enter a booking code.');
+      setSnackbar({ open: true, message: 'Please enter a booking code', severity: 'error' });
       return;
     }
 
     try {
-      const response = await axios.get(`/api/bookingHistory/code/${searchQuery.trim()}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`, // Assuming token is stored in localStorage
-        },
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Token for search:`, token ? 'Exists' : 'Missing');
+
+      if (!token) throw new Error('No authentication token found');
+
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Fetching booking data...`);
+      const bookingResponse = await axios.get(`${API_BASE_URL}/api/systembookings/code/${bookingCode}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      setBooking(response.data.data);
-      setNotification({
-        open: true,
-        message: 'Booking found.',
-        severity: 'success',
-      });
-    } catch (error) {
-      setBooking(null);
-      setNotification({
-        open: true,
-        message: error.response?.data?.message || 'No booking found with this code.',
-        severity: 'error',
-      });
-    }
-  };
+      const bookingData = bookingResponse.data.data;
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Booking data received:`, bookingData);
 
-  // Handle check-in/check-out
-  const handleStatusUpdate = async (newStatus) => {
-    if (!booking) return;
+      if (!bookingData) {
+        console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] No booking data found`);
+        throw new Error('Booking not found');
+      }
 
-    try {
-      const response = await axios.patch(
-        `/api/bookingHistory/${booking.bookingCode}/status`,
-        { status: newStatus },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
+      let userData = null;
+      if (bookingData.userId) {
+        try {
+          console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Fetching user data for userId: ${bookingData.userId}`);
+          const userResponse = await axios.get(`${API_BASE_URL}/api/systemusers/${bookingData.userId}`);
+          userData = userResponse.data.data;
+          console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] User data fetched:`, userData);
+        } catch (userError) {
+          console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Failed to fetch user details:`, userError);
         }
-      );
+      }
 
-      setBooking(response.data.data);
-      setNotification({
-        open: true,
-        message: `Booking ${newStatus} successfully.`,
-        severity: 'success',
+      setSearchResult({
+        ...bookingData,
+        guestName: userData
+          ? `${userData.firstName} ${userData.middleName || ''} ${userData.lastName}`.trim()
+          : 'Guest',
+        email: userData?.email || '',
+        phone: userData?.phone || '',
+        passportOrId: userData?.passportOrId || '',
       });
+
+      setError(null);
+      setSnackbar({ open: true, message: 'Booking found', severity: 'success' });
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Search completed successfully`);
     } catch (error) {
-      setNotification({
+      console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Search error:`, error);
+      setError(error.response?.data?.message || error.message);
+      setSearchResult(null);
+      setSnackbar({
         open: true,
-        message: error.response?.data?.message || `Failed to update booking to ${newStatus}.`,
+        message: error.response?.data?.message || error.message,
         severity: 'error',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Close notification
-  const handleCloseNotification = () => {
-    setNotification((prev) => ({ ...prev, open: false }));
+  const handleImageClick = (imageUrl) => {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Image clicked: ${imageUrl}`);
+    setSelectedImage(imageUrl);
+    setOpenImageDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Closing image dialog`);
+    setOpenImageDialog(false);
+    setSelectedImage('');
   };
 
   return (
-    <Box
-      sx={{
-        padding: 3,
-        background: '#222831',
-        minHeight: '100vh',
-        color: '#EEEEEE',
-      }}
-    >
-      <Typography variant="h4" sx={{ mb: 3, color: '#00ADB5', fontWeight: 'bold' }}>
-        Booking Management
+    <Box sx={{ p: 3, backgroundColor: '#222831', minHeight: '100vh' }}>
+      <Typography variant="h4" gutterBottom sx={{ color: '#EEEEEE' }}>
+        Booking Lookup
       </Typography>
 
-      {/* Search Bar */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+      {/* Search Section */}
+      <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
-          placeholder="Enter booking code (e.g., BK-ABC123456789012)"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          label="Enter Booking Code"
+          value={bookingCode}
+          onChange={(e) => setBookingCode(e.target.value)}
           sx={{
-            background: '#393E46',
-            borderRadius: 1,
+            backgroundColor: '#393E46',
             '& .MuiInputBase-input': { color: '#EEEEEE' },
-            '& .MuiInputLabel-root': { color: '#EEEEEE' },
             '& .MuiOutlinedInput-root': {
               '& fieldset': { borderColor: '#00ADB5' },
               '&:hover fieldset': { borderColor: '#00ADB5' },
-              '&.Mui-focused fieldset': { borderColor: '#00ADB5' },
             },
           }}
         />
         <Button
           variant="contained"
           onClick={handleSearch}
-          startIcon={<Search />}
+          disabled={loading}
           sx={{
-            bgcolor: '#00ADB5',
+            mt: 2,
+            backgroundColor: '#00ADB5',
             color: '#EEEEEE',
-            borderRadius: 1,
-            '&:hover': { bgcolor: '#0097A7' },
+            '&:hover': { backgroundColor: '#008c93' },
           }}
         >
-          Search
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Search'}
         </Button>
       </Box>
 
-      {/* Booking Details */}
-      {booking ? (
-        <TableContainer component={Paper} sx={{ background: '#393E46', borderRadius: 2 }}>
+      {/* Results Section */}
+      {searchResult && (
+        <TableContainer component={Paper} sx={{ backgroundColor: '#393E46', mb: 4 }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Booking Code</TableCell>
-                <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>User Name</TableCell>
-                <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Passport</TableCell>
-                <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Hotel</TableCell>
-                <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Status</TableCell>
-                <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Check-In Date</TableCell>
-                <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Check-Out Date</TableCell>
-                <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Total Price</TableCell>
-                <TableCell sx={{ color: '#00ADB5', fontWeight: 'bold' }}>Actions</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>Guest</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>Contact</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>Passport/ID</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>Room Details</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>Dates</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               <TableRow>
-                <TableCell sx={{ color: '#EEEEEE' }}>{booking.bookingCode}</TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>{booking.userName}</TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>{booking.passport}</TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>{booking.hotelName}</TableCell>
-                <TableCell
-                  sx={{
-                    color:
-                      booking.status === 'checked-in'
-                        ? '#00ADB5'
-                        : booking.status === 'checked-out'
-                        ? '#4CAF50'
-                        : booking.status === 'cancelled'
-                        ? '#ff6b6b'
-                        : '#FFC107',
-                  }}
-                >
-                  {booking.status}
+                <TableCell sx={{ color: '#EEEEEE' }}>{searchResult.guestName}</TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>
+                  <div>{searchResult.email}</div>
+                  <div>{searchResult.phone}</div>
                 </TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>{booking.checkInDate}</TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>{booking.checkOutDate}</TableCell>
-                <TableCell sx={{ color: '#EEEEEE' }}>${booking.totalPrice}</TableCell>
-                <TableCell>
-                  {booking.status === 'pending' && (
-                    <Button
-                      variant="contained"
-                      onClick={() => handleStatusUpdate('checked-in')}
-                      sx={{
-                        bgcolor: '#00ADB5',
-                        color: '#EEEEEE',
-                        mr: 1,
-                        '&:hover': { bgcolor: '#0097A7' },
+                <TableCell sx={{ color: '#EEEEEE' }}>
+                  {searchResult.passportOrId ? (
+                    <img
+                      src={`${API_BASE_URL}/${searchResult.passportOrId}`}
+                      alt="ID Proof"
+                      style={{
+                        maxWidth: '100px',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
                       }}
-                    >
-                      Check In
-                    </Button>
-                  )}
-                  {booking.status === 'checked-in' && (
-                    <Button
-                      variant="contained"
-                      onClick={() => handleStatusUpdate('checked-out')}
-                      sx={{
-                        bgcolor: '#4CAF50',
-                        color: '#EEEEEE',
-                        '&:hover': { bgcolor: '#45A049' },
-                      }}
-                    >
-                      Check Out
-                    </Button>
-                  )}
+                      onClick={() => handleImageClick(`${API_BASE_URL}/${searchResult.passportOrId}`)}
+                    />
+                  ) : 'N/A'}
+                </TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>
+                  {searchResult.hotelName} - {searchResult.roomType} (#{searchResult.roomNumber})
+                </TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>
+                  <div>Check-in: {new Date(searchResult.checkInDate).toLocaleDateString()}</div>
+                  <div>Check-out: {new Date(searchResult.checkOutDate).toLocaleDateString()}</div>
+                </TableCell>
+                <TableCell sx={{ color: '#EEEEEE' }}>
+                  <Box
+                    sx={{
+                      color: searchResult.status === 'checked-in' ? '#4CAF50' : '#FFA500',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {searchResult.status.toUpperCase()}
+                  </Box>
                 </TableCell>
               </TableRow>
             </TableBody>
           </Table>
         </TableContainer>
-      ) : (
-        <Typography sx={{ color: '#EEEEEE', textAlign: 'center', mt: 4 }}>
-          {searchQuery && !booking ? 'No booking found with this code.' : 'Enter a booking code to view details.'}
-        </Typography>
       )}
 
-      {/* Notification */}
+      {/* Image Dialog */}
+      <Dialog
+        open={openImageDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: '#393E46',
+            color: '#EEEEEE',
+          },
+        }}
+      >
+        <DialogContent>
+          <img
+            src={selectedImage}
+            alt="Enlarged ID Proof"
+            style={{ width: '100%', borderRadius: '8px' }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleCloseDialog}
+            sx={{
+              color: '#EEEEEE',
+              backgroundColor: '#00ADB5',
+              '&:hover': { backgroundColor: '#008c93' },
+            }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
       <Snackbar
-        open={notification.open}
+        open={snackbar.open}
         autoHideDuration={6000}
-        onClose={handleCloseNotification}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseNotification} severity={notification.severity} sx={{ width: '100%' }}>
-          {notification.message}
+        <Alert
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
         </Alert>
       </Snackbar>
     </Box>

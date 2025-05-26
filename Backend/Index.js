@@ -1,30 +1,32 @@
-import express from "express";
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import cors from "cors";
-import axios from "axios";
-import multer from "multer";
-import path from "path";
-import nodemailer from "nodemailer";
-import fs from "fs";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import Review from "./modules/HotelReviews.js";
-import Hotel from "./modules/Hotel.js";
-import RoomType from "./modules/RoomTypes.js";
-import Amenity from "./modules/Facilities.js";
-import RoomTypeProperites from "./modules/RoomTypeProperites.js";
-import AmenityFacilities from "./modules/Amenity.js";
-import HotelRules from "./modules/HotelRules.js";
-import Reservation from "./modules/Reservation.js";
-import HotelAdminList from "./modules/HotelAdminList.js";
-import ApprovedHotelAdmin from "./modules/ApprovedHotelAdminLists.js";
-import SystemAdminModel from "./modules/SystemAdminLists.js";
-import userModel from "./modules/User.js";
-import { authMiddleware, adminMiddleware } from "./Routes/middleware.js";
-import BookingHistory from "./modules/BookingHistory.js";
+import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import axios  from 'axios';
+import multer from 'multer';
+import path from 'path';
+import nodemailer from 'nodemailer';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import Review from './modules/HotelReviews.js';
+import Hotel from './modules/Hotel.js';
+import RoomType from './modules/RoomTypes.js';
+import Amenity from './modules/Facilities.js';
+import RoomTypeProperites from './modules/RoomTypeProperites.js';
+import AmenityFacilities from './modules/Amenity.js';
+import HotelRules from './modules/HotelRules.js';
+import Reservation from './modules/Reservation.js';
+import HotelAdminList from './modules/HotelAdminList.js';
+import ApprovedHotelAdmin from './modules/ApprovedHotelAdminLists.js';
+import SystemAdminModel from './modules/SystemAdminLists.js';
+import userModel from './modules/User.js';
+import { authMiddleware, adminMiddleware } from './Routes/middleware.js';
+import BookingHistory from './modules/BookingHistory.js';
+import Refund from './modules/Refund.js';
+
 dotenv.config();
 
 const app = express();
@@ -1643,29 +1645,44 @@ app.post("/api/system-admin/signup", async (req, res) => {
   }
 });
 
-app.post("/api/system-admin/login", async (req, res) => {
+// System Admin Login
+app.post('/api/system-admin/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('System admin login attempt:', email); // Debug
     const systemAdmin = await SystemAdminModel.findOne({ email });
 
     if (!systemAdmin) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      console.log('System admin not found:', email);
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      systemAdmin.password
-    );
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid email or password" });
+    const isPasswordValid = await bcrypt.compare(password, systemAdmin.password);
+    if (!isPasswordValid) {  // Removed the extra closing parenthesis here
+      console.log('Invalid password for:', email);
+      return res.status(401).json({ message: 'Invalid email or password' }); // Removed the duplicate return
     }
 
+    // Generate JWT token
+    const payload = {
+      id: systemAdmin._id.toString(),
+      email: systemAdmin.email,
+      role: 'admin' // Explicitly set to 'admin' for adminMiddleware
+    };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
+    console.log('Generated token:', token); // Debug
+
+    // Exclude password from response
     const { password: hashedPassword, ...userData } = systemAdmin.toObject();
 
-    res.json({ message: "Login successful", user: userData });
+    res.json({
+      message: 'Login successful',
+      token,
+      user: userData,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
@@ -1868,10 +1885,11 @@ app.get("/api/chapa/verify/:tx_ref", async (req, res) => {
   }
 });
 
+
 // Endpoint to process Chapa refund
-app.post("/api/chapa/refund/:tx_ref", async (req, res) => {
-  console.log("Refund endpoint called with tx_ref:", req.params.tx_ref);
-  console.log("Request body:", req.body);
+app.post('/api/chapa/refund/:tx_ref', async (req, res) => {
+  console.log('Refund endpoint called with tx_ref:', req.params.tx_ref);
+  console.log('Request body:', req.body);
   try {
     const { reason, amount, meta } = req.body;
     console.log("Sending refund request to Chapa API:", {
@@ -1900,6 +1918,39 @@ app.post("/api/chapa/refund/:tx_ref", async (req, res) => {
     console.error("Chapa refund error:", error.response?.data || error.message);
     res.status(error.response?.status || 500).json({
       message: error.response?.data?.message || "Failed to process refund",
+    });
+  }
+});
+
+// Endpoint to update Refund status by bookingCode
+app.put('/api/refunds/update/:bookingCode', async (req, res) => {
+  const { bookingCode } = req.params;
+  console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Refund update endpoint called with bookingCode: ${bookingCode}`);
+
+  try {
+    // Update Refund document status to 'refunded'
+    const updatedRefund = await Refund.findOneAndUpdate(
+      { bookingCode },
+      { $set: { status: 'refunded', updatedAt: new Date() } },
+      { new: true }
+    );
+
+    if (!updatedRefund) {
+      console.warn(`No Refund document found for bookingCode: ${bookingCode}`);
+      return res.status(404).json({
+        message: 'Refund document not found for the provided booking code',
+      });
+    }
+
+    console.log(`Refund status updated to 'refunded' for bookingCode: ${bookingCode}`);
+    res.status(200).json({
+      message: 'Refund status updated successfully',
+      data: updatedRefund,
+    });
+  } catch (error) {
+    console.error(`Error updating refund for bookingCode: ${bookingCode}:`, error.message);
+    res.status(500).json({
+      message: 'Failed to update refund status',
     });
   }
 });
@@ -2181,50 +2232,682 @@ app.patch(
   }
 );
 
-app.patch("/api/bookingHistory/:id/cancel", verifyToken, async (req, res) => {
+// app.patch('/api/bookingHistory/:id/cancel', verifyToken, async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const userId = req.user.id;
+
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({ message: 'Invalid booking ID format' });
+//     }
+
+//     const booking = await BookingHistory.findById(id);
+//     if (!booking) {
+//       return res.status(404).json({ message: 'Booking not found' });
+//     }
+
+//     if (booking.userId.toString() !== userId) {
+//       return res.status(403).json({ message: 'Unauthorized: You cannot cancel this booking' });
+//     }
+
+//     if (booking.status === 'cancelled') {
+//       return res.status(400).json({ message: 'Booking is already cancelled' });
+//     }
+
+//     if (booking.status !== 'completed') {
+//       return res.status(400).json({ message: 'Only upcoming bookings can be cancelled' });
+//     }
+
+//     booking.status = 'cancelled';
+//     await booking.save();
+
+//     res.status(200).json({
+//       message: 'Booking cancelled successfully',
+//       data: booking,
+//     });
+//   } catch (error) {
+//     console.error('Error cancelling booking:', error);
+//     res.status(500).json({
+//       message: error.message || 'Failed to cancel booking',
+//     });
+//   }
+// });
+
+// Endpoint to fetch authenticated hotel admin's hotelAdminId
+app.get('/api/hotel-admin/me', verifyToken, getHotelAdminId, async (req, res) => {
   try {
-    const { id } = req.params;
-    const userId = req.user.id;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid booking ID format" });
-    }
-
-    const booking = await BookingHistory.findById(id);
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
-
-    if (booking.userId.toString() !== userId) {
-      return res
-        .status(403)
-        .json({ message: "Unauthorized: You cannot cancel this booking" });
-    }
-
-    if (booking.status === "cancelled") {
-      return res.status(400).json({ message: "Booking is already cancelled" });
-    }
-
-    if (booking.status !== "completed") {
-      return res
-        .status(400)
-        .json({ message: "Only upcoming bookings can be cancelled" });
-    }
-
-    booking.status = "cancelled";
-    await booking.save();
-
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Received request for /api/hotel-admin/me`);
+    const hotelAdminId = req.hotelAdminId;
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Returning hotelAdminId: ${hotelAdminId}`);
     res.status(200).json({
-      message: "Booking cancelled successfully",
+      message: 'Hotel admin ID retrieved successfully',
+      data: { hotelAdminId },
+    });
+  } catch (error) {
+    console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Error fetching hotel admin ID:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Endpoint to fetch booking history by hotelAdminId
+app.get('/api/bookings/:hotelAdminId', verifyToken, async (req, res) => {
+  try {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Received request for /api/bookings/${req.params.hotelAdminId}`);
+    const { hotelAdminId } = req.params;
+
+    // Validate hotelAdminId
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Validating hotelAdminId: ${hotelAdminId}`);
+    if (!hotelAdminId || typeof hotelAdminId !== 'string') {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Invalid hotelAdminId format: ${hotelAdminId}`);
+      return res.status(400).json({ message: 'Invalid hotelAdminId format' });
+    }
+
+    // Fetch booking history
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Querying BookingHistory for hotelAdminId: ${hotelAdminId}`);
+    const bookings = await BookingHistory.find({ hotelAdminId })
+      .select('userId hotelName roomType roomNumber checkInDate checkOutDate totalPrice status guests bookingCode')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Found ${bookings.length} bookings for hotelAdminId: ${hotelAdminId}`);
+    if (!bookings || bookings.length === 0) {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] No bookings found for hotelAdminId: ${hotelAdminId}`);
+      return res.status(200).json({
+        message: 'No bookings found for this hotel admin',
+        data: [],
+      });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Sending response with ${bookings.length} bookings`);
+    res.status(200).json({
+      message: 'Bookings retrieved successfully',
+      data: bookings,
+    });
+  } catch (error) {
+    console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Error fetching bookings:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Endpoint to fetch user details by userId (no authentication required)
+app.get('/api/users/:userId', async (req, res) => {
+  try {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Received request for /api/user/${req.params.userId}`);
+    const { userId } = req.params;
+
+    // Validate userId
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Validating userId: ${userId}`);
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Invalid userId format: ${userId}`);
+      return res.status(400).json({ message: 'Invalid userId format' });
+    }
+
+    // Fetch user details
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Querying User for userId: ${userId}`);
+    const user = await userModel.findById(userId)
+      .select('firstName middleName lastName email phone passportOrId')
+      .lean();
+
+    if (!user) {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] User not found for userId: ${userId}`);
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Sending user data for userId: ${userId}`);
+    res.status(200).json({
+      message: 'User retrieved successfully',
+      data: user,
+    });
+  } catch (error) {
+    console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Error fetching user:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Debug endpoint to list all bookings or users
+app.post('/api/bookings/debug', verifyToken, async (req, res) => {
+  try {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Received request for /api/bookings/debug`);
+    const { action } = req.body;
+
+    if (action === 'list_bookings') {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Listing all bookings`);
+      const allBookings = await BookingHistory.find()
+        .select('hotelAdminId userId bookingCode status checkInDate checkOutDate')
+        .lean();
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Found ${allBookings.length} bookings`);
+      return res.status(200).json({
+        message: 'All bookings retrieved',
+        data: allBookings,
+      });
+    }
+
+    if (action === 'list_users') {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Listing all users`);
+      const allUsers = await User.find()
+        .select('_id firstName lastName email')
+        .lean();
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Found ${allUsers.length} users`);
+      return res.status(200).json({
+        message: 'All users retrieved',
+        data: allUsers,
+      });
+    }
+
+    console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Invalid debug action: ${action}`);
+    return res.status(400).json({ message: 'Invalid action. Use "list_bookings" or "list_users".' });
+  } catch (error) {
+    console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Error in debug endpoint:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+ //to search for a booking by booking code
+ app.get('/api/bookings/code/:bookingCode', verifyToken, async (req, res) => {
+  try {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Received request for /api/bookings/code/${req.params.bookingCode}`);
+    const { bookingCode } = req.params;
+
+    // Validate bookingCode
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Validating bookingCode: ${bookingCode}`);
+    if (!bookingCode || typeof bookingCode !== 'string') {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Invalid bookingCode format: ${bookingCode}`);
+      return res.status(400).json({ message: 'Invalid booking code' });
+    }
+
+    // Fetch booking
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Querying BookingHistory for bookingCode: ${bookingCode}`);
+    const booking = await BookingHistory.findOne({ bookingCode })
+      .select('hotelAdminId userId hotelName roomType roomNumber checkInDate checkOutDate totalPrice status guests bookingCode')
+      .lean();
+
+    if (!booking) {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Booking not found for bookingCode: ${bookingCode}`);
+      return res.status(404).json({ message: 'Booking not found', data: null });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Sending booking data for bookingCode: ${bookingCode}`);
+    res.status(200).json({
+      message: 'Booking retrieved successfully',
       data: booking,
     });
   } catch (error) {
-    console.error("Error cancelling booking:", error);
-    res.status(500).json({
-      message: error.message || "Failed to cancel booking",
-    });
+    console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Error fetching booking:`, error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
+
+
+// endpoint to update the booking status
+app.put('/api/bookings/update-status/:bookingCode', verifyToken, getHotelAdminId, async (req, res) => {
+  try {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Received request for /api/bookings/update-status/${req.params.bookingCode}`);
+    const { bookingCode } = req.params;
+    const { status } = req.body;
+    const hotelAdminId = req.hotelAdminId;
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Validating bookingCode: ${bookingCode}`);
+    if (!bookingCode || typeof bookingCode !== 'string') {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Invalid bookingCode format: ${bookingCode}`);
+      return res.status(400).json({ message: 'Invalid booking code' });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Validating status: ${status}`);
+    if (!status || typeof status !== 'string') {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Invalid status format: ${status}`);
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Querying BookingHistory for bookingCode: ${bookingCode}`);
+    const booking = await BookingHistory.findOne({ bookingCode });
+    if (!booking) {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Booking not found for bookingCode: ${bookingCode}`);
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Comparing hotelAdminId: booking ${booking.hotelAdminId} vs token ${hotelAdminId}`);
+    if (String(booking.hotelAdminId) !== String(hotelAdminId)) {
+      console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Authorization failed - ID mismatch: ${String(booking.hotelAdminId)} !== ${String(hotelAdminId)}`);
+      return res.status(403).json({ message: 'Unauthorized to update this booking' });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Updating status to: ${status}`);
+    booking.status = status;
+    await booking.save();
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Booking status updated successfully`);
+    res.status(200).json({
+      message: 'Booking status updated successfully',
+      data: {
+        bookingCode: booking.bookingCode,
+        newStatus: booking.status,
+        hotelAdminId: booking.hotelAdminId,
+      },
+    });
+  } catch (error) {
+    console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Error updating booking status:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// to cancel a booking 
+// Endpoint to cancel a booking
+app.patch('/api/bookingHistory/:bookingCode/cancel', verifyToken, async (req, res) => {
+  try {
+    const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' });
+    console.log(`[${timestamp}] Received request for /api/bookingHistory/${req.params.bookingCode}/cancel`);
+    console.log(`[${timestamp}] Request headers:`, JSON.stringify(req.headers));
+    console.log(`[${timestamp}] Request params:`, JSON.stringify(req.params));
+    console.log(`[${timestamp}] Request body:`, JSON.stringify(req.body));
+    console.log(`[${timestamp}] User from token:`, JSON.stringify(req.user));
+
+    const { bookingCode } = req.params;
+    const userId = req.user.id;
+
+    console.log(`[${timestamp}] Step 1: Validating bookingCode: ${bookingCode}`);
+    if (!bookingCode || typeof bookingCode !== 'string') {
+      console.warn(`[${timestamp}] Invalid bookingCode format: ${bookingCode}`);
+      return res.status(400).json({ message: 'Invalid booking code' });
+    }
+
+    console.log(`[${timestamp}] Step 2: Querying BookingHistory for bookingCode: ${bookingCode}`);
+    const booking = await BookingHistory.findOne({ bookingCode });
+    console.log(`[${timestamp}] Step 2: Booking found:`, booking ? JSON.stringify(booking) : 'null');
+    if (!booking) {
+      console.log(`[${timestamp}] Step 2: Booking not found for bookingCode: ${bookingCode}`);
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    console.log(`[${timestamp}] Step 3: Comparing userId: booking ${booking.userId} vs token ${userId}`);
+    if (String(booking.userId) !== String(userId)) {
+      console.error(`[${timestamp}] Step 3: Authorization failed - userId mismatch: ${String(booking.userId)} !== ${String(userId)}`);
+      return res.status(403).json({ message: 'Unauthorized to cancel this booking' });
+    }
+
+    console.log(`[${timestamp}] Step 4: Checking booking status: ${booking.status}`);
+    if (booking.status === 'cancelled') {
+      console.warn(`[${timestamp}] Step 4: Booking already cancelled: ${bookingCode}`);
+      return res.status(400).json({ message: 'Booking is already cancelled' });
+    }
+
+    console.log(`[${timestamp}] Step 5: Validating checkOut: ${booking.checkOutDate}`);
+    if (!booking.checkOutDate) {
+      console.warn(`[${timestamp}] Step 5: Missing checkOut for bookingCode: ${bookingCode}`);
+      return res.status(400).json({ message: 'Cannot cancel booking with missing check-out date' });
+    }
+    const checkOutDate = new Date(booking.checkOutDate);
+    console.log(`[${timestamp}] Step 5: Parsed checkOutDate: ${checkOutDate}, Valid: ${!isNaN(checkOutDate.getTime())}`);
+    if (isNaN(checkOutDate.getTime())) {
+      console.warn(`[${timestamp}] Step 5: Invalid checkOut for bookingCode: ${bookingCode}, checkOut: ${booking.checkOutDate}`);
+      return res.status(400).json({ message: 'Cannot cancel booking with invalid check-out date' });
+    }
+
+    checkOutDate.setHours(23, 59, 59, 999); // End of check-out day
+    const now = new Date();
+    console.log(`[${timestamp}] Step 6: Comparing checkOut ${checkOutDate} vs now ${now}`);
+    if (checkOutDate <= now) {
+      console.warn(`[${timestamp}] Step 6: Booking cannot be cancelled - check-out date passed: ${bookingCode}`);
+      return res.status(400).json({ message: 'Cannot cancel a completed booking' });
+    }
+
+    console.log(`[${timestamp}] Step 7: Updating status to cancelled for bookingCode: ${bookingCode}`);
+    booking.status = 'cancelled';
+    await booking.save();
+    console.log(`[${timestamp}] Step 7: Booking after update:`, JSON.stringify(booking));
+     console.log(`[${timestamp}] Step 8: Creating refund record for bookingCode: ${bookingCode}`);
+    try {
+      const refund = new Refund({
+        userId: booking.userId,
+        bookingCode: booking.bookingCode,
+        totalPrice: booking.totalPrice,
+        checkInDate: booking.checkInDate,
+        checkOutDate: booking.checkOutDate,
+        status: 'pending',
+      });
+      await refund.save();
+      console.log(`[${timestamp}] Step 9: Refund created:`, JSON.stringify(refund, null, 2));
+    } catch (refundError) {
+      console.error(`[${timestamp}] Step 10: Failed to create refund for bookingCode: ${bookingCode}`, refundError);
+      console.warn(`[${timestamp}] Step 11: Proceeding with cancellation despite refund creation error`);
+    }
+    console.log(`[${timestamp}] Step 12: Booking cancelled successfully`);
+    res.status(200).json({
+      message: 'Booking cancelled successfully',
+      data: {
+        bookingCode: booking.bookingCode,
+        status: booking.status,
+      },
+    });
+  } catch (error) {
+    console.error(`[${timestamp}] Error cancelling booking:`, error);
+    console.error(`[${timestamp}] Error details:`, JSON.stringify(error, null, 2));
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+//ask refund part
+// Fetch Booking by bookingCode
+app.get('/api/booking/:bookingCode', verifyToken, async (req, res) => {
+  try {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Received request for /api/booking/${req.params.bookingCode}`);
+    const { bookingCode } = req.params;
+    const userId = req.user.id;
+
+    // Validate bookingCode
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Validating bookingCode: ${bookingCode}`);
+    if (!bookingCode || typeof bookingCode !== 'string') {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Invalid bookingCode format: ${bookingCode}`);
+      return res.status(400).json({ message: 'Invalid bookingCode format' });
+    }
+
+    // Fetch booking details
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Querying BookingHistory for bookingCode: ${bookingCode}`);
+    const booking = await BookingHistory.findOne({ bookingCode })
+      .select('userId bookingCode totalPrice status checkInDate checkOutDate')
+      .lean();
+
+    if (!booking) {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Booking not found for bookingCode: ${bookingCode}`);
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Verify booking belongs to user
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Verifying userId match for bookingCode: ${bookingCode}`);
+    if (booking.userId.toString() !== userId) {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Unauthorized access for bookingCode: ${bookingCode}`);
+      return res.status(403).json({ message: 'Unauthorized: Booking does not belong to this user' });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Sending booking data for bookingCode: ${bookingCode}`);
+    res.status(200).json({
+      message: 'Booking retrieved successfully',
+      data: {
+        bookingCode: booking.bookingCode,
+        userId: booking.userId,
+        totalPrice: booking.totalPrice,
+        status: booking.status,
+        checkInDate: booking.checkInDate,
+        checkOutDate: booking.checkOutDate,
+      },
+    });
+  } catch (error) {
+    console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Error fetching booking:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Request Refund
+app.post('/api/askrefunds', verifyToken, async (req, res) => {
+  try {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Received request for /api/askrefunds`);
+    const { bookingCode } = req.body;
+    const userId = req.user.id;
+
+    // Validate bookingCode
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Validating bookingCode: ${bookingCode}`);
+    if (!bookingCode || typeof bookingCode !== 'string') {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Invalid bookingCode format: ${bookingCode}`);
+      return res.status(400).json({ message: 'Invalid bookingCode format' });
+    }
+
+    // Fetch booking details
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Querying BookingHistory for bookingCode: ${bookingCode}`);
+    const booking = await BookingHistory.findOne({ bookingCode })
+      .select('userId bookingCode totalPrice status checkInDate checkOutDate')
+      .lean();
+
+    if (!booking) {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Booking not found for bookingCode: ${bookingCode}`);
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Verify booking belongs to user
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Verifying userId match for bookingCode: ${bookingCode}`);
+    if (booking.userId.toString() !== userId) {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Unauthorized access for bookingCode: ${bookingCode}`);
+      return res.status(403).json({ message: 'Unauthorized: Booking does not belong to this user' });
+    }
+
+    // Check if booking status is exactly "check-in"
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Checking booking status for bookingCode: ${bookingCode}`);
+    if (booking.status !== 'check-in') {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Refund not allowed, booking status is: ${booking.status} for bookingCode: ${bookingCode}`);
+      return res.status(400).json({ message: 'Refund only allowed for bookings with check-in status' });
+    }
+
+    // Check if refund request already exists
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Checking for existing refund for bookingCode: ${bookingCode}`);
+    const existingRefund = await Refund.findOne({ bookingCode }).lean();
+    if (existingRefund) {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Refund already requested for bookingCode: ${bookingCode}`);
+      return res.status(400).json({ message: 'Refund request already submitted for this booking' });
+    }
+
+    // Create new refund record
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Creating new refund for bookingCode: ${bookingCode}`);
+    const refund = new Refund({
+      userId: booking.userId,
+      bookingCode: booking.bookingCode,
+      totalPrice: booking.totalPrice,
+      checkInDate: booking.checkInDate,
+      checkOutDate: booking.checkOutDate,
+      status: 'pending',
+    });
+
+    await refund.save();
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Refund saved for bookingCode: ${bookingCode}`);
+
+    // Update BookingHistory status to 'cancelled'
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Updating BookingHistory status to 'cancelled' for bookingCode: ${bookingCode}`);
+    const updatedBooking = await BookingHistory.findOneAndUpdate(
+      { bookingCode },
+      { $set: { status: 'cancelled', updatedAt: new Date() } },
+      { new: true }
+    );
+
+    if (!updatedBooking) {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] BookingHistory document not found for bookingCode: ${bookingCode}`);
+      return res.status(404).json({
+        message: 'Refund request submitted, but booking history record not found',
+        data: {
+          userId: refund.userId,
+          bookingCode: refund.bookingCode,
+          totalPrice: refund.totalPrice,
+          checkInDate: refund.checkInDate,
+          checkOutDate: refund.checkOutDate,
+          status: refund.status,
+        },
+      });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] BookingHistory status updated to 'cancelled' for bookingCode: ${bookingCode}`);
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Sending refund response for bookingCode: ${bookingCode}`);
+    res.status(201).json({
+      message: 'Refund request submitted successfully',
+      data: {
+        userId: refund.userId,
+        bookingCode: refund.bookingCode,
+        totalPrice: refund.totalPrice,
+        checkInDate: refund.checkInDate,
+        checkOutDate: refund.checkOutDate,
+        status: refund.status,
+      },
+    });
+  } catch (error) {
+    console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Error processing refund:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// New Endpoint: Fetch Refunds by User ID
+app.get('/api/refunds/user', verifyToken, async (req, res) => {
+  try {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Received request for /api/refunds/user`);
+    const userId = req.user.id;
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Validating userId: ${userId}`);
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Invalid userId format: ${userId}`);
+      return res.status(400).json({ message: 'Invalid userId format' });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Querying Refund for userId: ${userId}`);
+    const refunds = await Refund.find({ userId })
+      .select('bookingCode totalPrice status')
+      .lean();
+
+    if (!refunds || refunds.length === 0) {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] No refunds found for userId: ${userId}`);
+      return res.status(404).json({ message: 'No refunds found' });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Sending refund data for userId: ${userId}`);
+    res.status(200).json({
+      message: 'Refunds retrieved successfully',
+      data: refunds,
+    });
+  } catch (error) {
+    console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Error fetching refunds:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+//  search by booking code in the system admin
+// Search for a booking by booking code
+app.get('/api/systembookings/code/:bookingCode', async (req, res) => {
+  try {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Received request for /api/systembookings/code/${req.params.bookingCode}`);
+    const { bookingCode } = req.params;
+
+    // Validate bookingCode
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Validating bookingCode: ${bookingCode}`);
+    if (!bookingCode || typeof bookingCode !== 'string') {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Invalid bookingCode format: ${bookingCode}`);
+      return res.status(400).json({ message: 'Invalid booking code' });
+    }
+
+    // Fetch booking
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Querying BookingHistory for bookingCode: ${bookingCode}`);
+    const booking = await BookingHistory.findOne({ bookingCode })
+      .select('hotelAdminId userId hotelName roomType roomNumber checkInDate checkOutDate totalPrice status guests bookingCode createdAt')
+      .lean();
+
+    if (!booking) {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Booking not found for bookingCode: ${bookingCode}`);
+      return res.status(404).json({ message: 'Booking not found', data: null });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Sending booking data for bookingCode: ${bookingCode}`);
+    res.status(200).json({
+      message: 'Booking retrieved successfully',
+      data: booking,
+    });
+  } catch (error) {
+    console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Error fetching booking:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+// Fetch user details by userId (no authentication required)
+app.get('/api/systemusers/:userId', async (req, res) => {
+  try {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Received request for /api/systemusers/${req.params.userId}`);
+    const { userId } = req.params;
+
+    // Validate userId
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Validating userId: ${userId}`);
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.warn(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Invalid userId format: ${userId}`);
+      return res.status(400).json({ message: 'Invalid userId format' });
+    }
+
+    // Fetch user details
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Querying User for userId: ${userId}`);
+    const user = await userModel.findById(userId)
+      .select('firstName middleName lastName email phone passportOrId')
+      .lean();
+
+    if (!user) {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] User not found for userId: ${userId}`);
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Sending user data for userId: ${userId}`);
+    res.status(200).json({
+      message: 'User retrieved successfully',
+      data: user,
+    });
+  } catch (error) {
+    console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Error fetching user:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+//refund fatch for system admin
+// Fetch all refunds
+app.get('/api/refunds', async (req, res) => {
+  try {
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Received request for /api/refunds`);
+
+    // Fetch all refunds
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Querying all refunds`);
+    const refunds = await Refund.find()
+      .select('userId bookingCode totalPrice checkInDate checkOutDate status createAt')
+      .lean();
+
+    if (!refunds || refunds.length === 0) {
+      console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] No refunds found`);
+      return res.status(404).json({ message: 'No refunds found', data: [] });
+    }
+
+    console.log(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Sending refund data`);
+    res.status(200).json({
+      message: 'Refunds retrieved successfully',
+      data: refunds,
+    });
+  } catch (error) {
+    console.error(`[${new Date().toLocaleString('en-US', { timeZone: 'Africa/Nairobi' })}] Error fetching refunds:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+//to fatch the hotel for the system  admin dasshboard
+// GET /hotels - Fetch all hotels
+app.get('/hotels', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    console.log('Fetching hotels for user:', req.user.email); // Debug
+    const hotels = await Hotel.find().lean(); // Use lean() for performance
+    console.log('Hotels fetched:', hotels.length); // Debug
+    res.json(hotels);
+  } catch (error) {
+    console.error('Error fetching hotels:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// DELETE /hotels/:id - Delete a hotel by ID
+app.delete('/hotels/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    console.log('Deleting hotel ID:', req.params.id); // Debug
+    const hotel = await Hotel.findByIdAndDelete(req.params.id);
+    if (!hotel) {
+      console.log('Hotel not found:', req.params.id);
+      return res.status(404).json({ message: 'Hotel not found' });
+    }
+    console.log('Hotel deleted:', hotel.name); // Debug
+    res.json({ message: `Hotel ${hotel.name} deleted successfully` });
+  } catch (error) {
+    console.error('Error deleting hotel:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 
 // CHATBOT COMPONENTS
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -2321,7 +3004,7 @@ You are Lal, a helpful assistant for Amhara tourism in Ethiopia.
 Only answer questions related to tourist destinations, hotels, travel planning, cultural insights, historical sites, local food, transportation, weather, festivals, accommodations, and related topics in the Amhara region.
 Greet users politely if they say "Hi", "Hello", "Good morning", etc., with a response like "Hello! How can I assist you with Amhara tourism today?"
 If asked anything outside these topics, respond with:
-"Lal: I'm here to assist only with Amhara tourism-related queries. Please ask about destinations, hotels, travel planning, or cultural insights in the Amhara region."
+"Lal: I'm here to assist μόνο with Amhara tourism-related queries. Please ask about destinations, hotels, travel planning, or cultural insights in the Amhara region."
 Always prefix your responses with "Lal:" to identify yourself.
 `;
 
@@ -2337,7 +3020,8 @@ const isRelevant = (message) => {
 app.post("/chat", async (req, res) => {
   const { message } = req.body;
 
-  if (!message || typeof message !== "string") {
+  // Primary Error: Missing '||' operator
+  if (!message || typeof message !== "string") { // Should be: if (!message || typeof message !== "string")
     console.error("Chatbot Error: Invalid message input");
     return res.status(400).json({ error: "Invalid message input" });
   }
@@ -2354,7 +3038,7 @@ app.post("/chat", async (req, res) => {
     console.log("Chatbot Request Received:", message);
 
     const model = genAI.getGenerativeModel({
-      model: "tunedModels/chatbot-2xxfmjqzyzhm",
+      model: "tunedModels/chatbot-winxtow04ge9ecmcje31wqu55ua2zgkz",
     });
 
     console.log("Sending request to Google Generative AI...");
@@ -2371,9 +3055,10 @@ app.post("/chat", async (req, res) => {
 
     res.status(200).json({ reply });
   } catch (error) {
+    // Secondary Error: Missing '||' operator in error logging
     console.error(
       "Google Generative AI Error:",
-      error.response?.data || error.message || error
+      error.response?.data || error.message || error // Should be: error.response?.data || error.message || error
     );
     res.status(500).json({ error: "Failed to get response from the model" });
   }
