@@ -15,7 +15,6 @@ import ArrowDropDown from "@mui/icons-material/ArrowDropDown";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 import InputBase from "@mui/material/InputBase";
-import ReactCountryFlag from "react-country-flag";
 import {
   Help as HelpIcon,
   Login as LoginIcon,
@@ -116,13 +115,6 @@ const LogoImage = styled("img")({
   verticalAlign: "middle",
 });
 
-const languages = [
-  { name: "English", code: "US" },
-  { name: "Amharic", code: "ET" },
-  { name: "French", code: "FR" },
-  { name: "Spanish", code: "ES" },
-];
-
 export default function Navbar({
   isLoggedIn = false,
   onLogout = () => {},
@@ -131,8 +123,7 @@ export default function Navbar({
   const [anchorElTourist, setAnchorElTourist] = useState(null);
   const [anchorElAbout, setAnchorElAbout] = useState(null);
   const [anchorElDestination, setAnchorElDestination] = useState(null);
-  const [anchorElLanguage, setAnchorElLanguage] = useState(null);
-  const [selectedLanguage, setSelectedLanguage] = useState("English");
+  const [anchorElVR, setAnchorElVR] = useState(null); // New state for VR dropdown
   const [searchBoxOpen, setSearchBoxOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -301,17 +292,13 @@ export default function Navbar({
     setAnchorElUser(null);
   };
 
-  const handleOpenLanguage = (event) => {
-    setAnchorElLanguage(event.currentTarget);
+  // New handlers for VR dropdown
+  const handleOpenVR = (event) => {
+    setAnchorElVR(event.currentTarget);
   };
 
-  const handleCloseLanguage = () => {
-    setAnchorElLanguage(null);
-  };
-
-  const handleLanguageSelect = (language) => {
-    setSelectedLanguage(language);
-    handleCloseLanguage();
+  const handleCloseVR = () => {
+    setAnchorElVR(null);
   };
 
   const handleLogout = () => {
@@ -513,7 +500,12 @@ export default function Navbar({
                   </Link>
                 </MenuItem>
                 <MenuItem onClick={handleCloseTourist}>
-                  Other Service Providers
+                  <Link
+                    to="/tourist-and-facility/service-providers"
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    Other Service Providers
+                  </Link>
                 </MenuItem>
               </StyledMenu>
             </Box>
@@ -750,47 +742,51 @@ export default function Navbar({
               </StyledMenu>
             </Box>
 
-            <Box
-              onMouseEnter={handleOpenLanguage}
-              onMouseLeave={handleCloseLanguage}
-            >
+            {/* Replaced Language dropdown with VR Tours dropdown */}
+            <Box onMouseEnter={handleOpenVR} onMouseLeave={handleCloseVR}>
               <Button
-                id="language-button"
+                id="vr-button"
                 aria-haspopup="true"
-                aria-controls="language-menu"
+                aria-controls="vr-menu"
                 color="inherit"
                 sx={{ textTransform: "none", fontSize: "1rem" }}
               >
-                Lang
+                VR Tours
               </Button>
               <StyledMenu
-                id="language-menu"
-                anchorEl={anchorElLanguage}
-                open={Boolean(anchorElLanguage)}
-                onClose={handleCloseLanguage}
+                id="vr-menu"
+                anchorEl={anchorElVR}
+                open={Boolean(anchorElVR)}
+                onClose={handleCloseVR}
                 MenuListProps={{
-                  "aria-labelledby": "language-button",
+                  "aria-labelledby": "vr-button",
                 }}
-                onMouseLeave={handleCloseLanguage}
+                onMouseLeave={handleCloseVR}
               >
-                {languages.map((language) => (
-                  <MenuItem
-                    key={language.name}
-                    onClick={() => handleLanguageSelect(language.name)}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      backgroundColor:
-                        selectedLanguage === language.name
-                          ? colors.accent
-                          : "transparent",
-                    }}
+                <MenuItem onClick={handleCloseVR}>
+                  <Link
+                    to="/vr/lalibela"
+                    style={{ textDecoration: "none", color: "inherit" }}
                   >
-                    <ReactCountryFlag countryCode={language.code} svg />
-                    {language.name}
-                  </MenuItem>
-                ))}
+                    Lalibela VR Tour
+                  </Link>
+                </MenuItem>
+                <MenuItem onClick={handleCloseVR}>
+                  <Link
+                    to="/vr/gonder"
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    Gonder VR Tour
+                  </Link>
+                </MenuItem>
+                <MenuItem onClick={handleCloseVR}>
+                  <Link
+                    to="/vr/bahirdar"
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    Bahir Dar VR Tour
+                  </Link>
+                </MenuItem>
               </StyledMenu>
             </Box>
           </Box>

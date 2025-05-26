@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+  Outlet,
+} from "react-router-dom";
 import { Box } from "@mui/material";
 import axios from "axios";
+import { TourProvider } from "./components/vr/TourContext";
 import ButtonAppBar from "./components/Navbar/Navbar";
 import Home from "./components/Home page/Home";
 import News from "./components/News/News";
@@ -82,6 +89,11 @@ import GishenPage from "./components/Destinations/religious-sites/GishenPage";
 import TedbabeMariamMonasteryPage from "./components/Destinations/religious-sites/TedbabeMariamMonasteryPage";
 import MertuleMariamMonasteryPage from "./components/Destinations/religious-sites/MertuleMariamMonasteryPage";
 import AbuneMelkezedekMonasteryPage from "./components/Destinations/religious-sites/AbuneMelkezedekMonasteryPage";
+import AppTour from "./components/vr/AppTour";
+import LalibelaTour from "./components/vr/LalibelaTour";
+import GonderTour from "./components/vr/GonderTour";
+import BahirDarTour from "./components/vr/BahirDarTour";
+import ServiceProviders from "./components/Tourist Facilities/ServiceProviderSearch";
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
@@ -283,7 +295,7 @@ function App() {
         <Route
           path="/religious-sites/abune-melkezedek-monastery"
           element={<AbuneMelkezedekMonasteryPage />}
-        />{" "}
+        />
         <Route path="/national-parks" element={<NationalParksHome />} />
         <Route
           path="/national-parks/abune-yoseph"
@@ -361,6 +373,10 @@ function App() {
           path="/tourist-information-center"
           element={<TouristInformationCenter />}
         />
+        <Route
+          path="/tourist-and-facility/service-providers"
+          element={<ServiceProviders />}
+        />
         <Route path="/" element={<HOMEPage location={userLocation} />} />
         <Route path="/news" element={<News />} />
         <Route path="/events" element={<Events />} />
@@ -369,7 +385,7 @@ function App() {
         <Route path="/events/mewlid" element={<MewlidPage />} />
         <Route path="/events/ashenda" element={<AshendaPage />} />
         <Route path="/events/meskel" element={<MeskelPage />} />
-        <Route path="/events/gen recognized" element={<GennaPage />} />
+        <Route path="/events/genna" element={<GennaPage />} />
         <Route path="/events/timket" element={<TimketPage />} />
         <Route path="/events/fasika" element={<FasikaPage />} />
         <Route path="/things-to-do" element={<ThingsToDo />} />
@@ -391,6 +407,19 @@ function App() {
           path="/things-to-do/hiking-and-trekking"
           element={<HikingAndTrekkingPage />}
         />
+        {/* Wrap VR routes in TourProvider using Outlet */}
+        <Route
+          element={
+            <TourProvider>
+              <Outlet />
+            </TourProvider>
+          }
+        >
+          <Route path="/vr" element={<AppTour />} />
+          <Route path="/vr/lalibela" element={<LalibelaTour />} />
+          <Route path="/vr/gonder" element={<GonderTour />} />
+          <Route path="/vr/bahirdar" element={<BahirDarTour />} />
+        </Route>
         <Route path="/flights" element={<Flight />} />
         <Route path="/hotelslocation" element={<HotelsandLocations />} />
         <Route path="/filtered-hotels" element={<FilteredHotels />} />
@@ -405,11 +434,11 @@ function App() {
         <Route path="/mandate" element={<Merge />} />
         <Route path="/management" element={<Managment />} />
         {isAuthenticated && (
-          <>
+          <React.Fragment>
             <Route path="/profile" element={<Profile />} />
             <Route path="/bookings" element={<Bookings />} />
             <Route path="/reserve" element={<Reserve />} />
-          </>
+          </React.Fragment>
         )}
       </Routes>
 
