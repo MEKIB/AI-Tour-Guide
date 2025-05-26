@@ -94,6 +94,7 @@ import LalibelaTour from "./components/vr/LalibelaTour";
 import GonderTour from "./components/vr/GonderTour";
 import BahirDarTour from "./components/vr/BahirDarTour";
 import ServiceProviders from "./components/Tourist Facilities/ServiceProviderSearch";
+import VerifyEmailUser from "./components/account/verifyEmailUser";
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
