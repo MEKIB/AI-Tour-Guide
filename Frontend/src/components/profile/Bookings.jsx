@@ -389,11 +389,11 @@ const BookingHistory = () => {
   };
 
   const isUpcomingBooking = (booking) => {
-    return new Date(booking.checkOut) > new Date() && booking.status !== 'cancelled';
+    return new Date(booking.checkOut) > new Date() && booking.status == 'check-in';
   };
 
   const isCompletedBooking = (booking) => {
-    return new Date(booking.checkOut) <= new Date() && booking.status !== 'cancelled';
+    return new Date(booking.checkOut) <= new Date() && booking.status == 'checked-in';
   };
 
   const filteredBookings = bookings.filter((booking) => {
