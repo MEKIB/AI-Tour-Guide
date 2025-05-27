@@ -222,70 +222,6 @@ const WhyBookWithUs = () => {
   );
 };
 
-// Explore Hidden Gems Section
-const ExploreHiddenGems = () => {
-  const gems = [
-    {
-      name: "Simien Mountains",
-      description:
-        "A UNESCO World Heritage site, known for its dramatic landscapes and unique wildlife.",
-      image: "https://images.unsplash.com/photo-1621451537084-482c73073a0f", // Unsplash URL
-    },
-    {
-      name: "Fasil Ghebbi",
-      description:
-        "A fortress-city in Gondar, showcasing stunning Ethiopian architecture.",
-      image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791", // Unsplash URL
-    },
-    {
-      name: "Danakil Depression",
-      description:
-        "One of the hottest places on Earth, with surreal landscapes and active volcanoes.",
-      image: "https://images.unsplash.com/photo-1621451537084-482c73073a0f", // Unsplash URL
-    },
-  ];
-
-  return (
-    <Box sx={{ bgcolor: "rgba(57, 62, 70, 0.8)", py: 6 }}>
-      <Container>
-        <Typography variant="h4" align="center" sx={{ mb: 4, color: "#00ADB5" }}>
-          Explore Amhara’s Hidden Gems
-        </Typography>
-        <Grid container spacing={4}>
-          {gems.map((gem, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card
-                sx={{
-                  bgcolor: "rgba(0, 173, 181, 0.8)",
-                  color: "#EEEEEE",
-                  borderRadius: "16px",
-                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
-                  transition: "transform 0.3s ease-in-out",
-                  "&:hover": { transform: "scale(1.05)" },
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={gem.image}
-                  alt={gem.name}
-                  sx={{ borderTopLeftRadius: "16px", borderTopRightRadius: "16px" }}
-                />
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    {gem.name}
-                  </Typography>
-                  <Typography variant="body2">{gem.description}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-    </Box>
-  );
-};
-
 // Home Component
 function Home({ location }) {
   const currentLocation = location || "Lalibela";
@@ -338,8 +274,6 @@ function Home({ location }) {
           {/* Why Book with Visit Amhara Section */}
           <WhyBookWithUs />
 
-          {/* Explore Hidden Gems Section */}
-          <ExploreHiddenGems />
 
           {/* Filter Buttons */}
           <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 4, px: 2 }}>
