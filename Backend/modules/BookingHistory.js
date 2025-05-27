@@ -16,7 +16,7 @@ const bookingHistorySchema = new mongoose.Schema({
   },
   rating: { type: Number, min: 0, max: 5 },
   image: { type: String },
-  guests: { type: Number, default: 1 },
+  guests: { type: Number, defdault: 1 },
   bookingCode: { type: String, required: true, unique: true },
 }, { timestamps: true });
 

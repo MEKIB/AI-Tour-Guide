@@ -110,6 +110,7 @@ function HotelsLodges() {
     );
   }
 
+  
   return (
     <Box sx={{ bgcolor: '#222831', color: '#EEEEEE', minHeight: '100vh', p: 3 }}>
       <Breadcrumbs separator="›" aria-label="breadcrumb" sx={{ mb: 3, color: '#EEEEEE' }}>

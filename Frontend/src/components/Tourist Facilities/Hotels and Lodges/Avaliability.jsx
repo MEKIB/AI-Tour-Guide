@@ -69,8 +69,25 @@ const Availability = ({ hotelAdminId }) => {
 
   // Check login status
   const token = localStorage.getItem('token');
-  const user = JSON.parse(localStorage.getItem('user'));
-  const isLoggedIn = !!token && !!user && !!user._id;
+  let user;
+  try {
+    user = JSON.parse(localStorage.getItem('user') || '{}');
+  } catch (e) {
+    console.error('Error parsing user from localStorage:', e);
+    user = null;
+  }
+  const isLoggedIn = !!token && !!user && !!user.id && user.role === 'user';
+  const userId = user?.id;
+
+  // Debug login status
+  useEffect(() => {
+    console.log('Availability: Login status check', {
+      token,
+      user,
+      userId,
+      isLoggedIn,
+    });
+  }, [token, user, userId, isLoggedIn]);
 
   // Reset selections when dates change
   useEffect(() => {
@@ -101,6 +118,7 @@ const Availability = ({ hotelAdminId }) => {
       setError('Hotel ID is missing. Please try again.');
       return;
     }
+    
     try {
       setLoading(true);
       const response = await axios.get(
@@ -110,6 +128,7 @@ const Availability = ({ hotelAdminId }) => {
             checkInDate: checkInDate.toISOString(),
             checkOutDate: checkOutDate.toISOString(),
           },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
       const rooms = response.data.data;
@@ -122,7 +141,13 @@ const Availability = ({ hotelAdminId }) => {
         setError('No valid rooms available for the selected dates.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch available rooms');
+      console.error('Fetch available rooms error:', err);
+      if (err.response?.status === 401) {
+        setError('Unauthorized. Please log in again.');
+        setLoginPrompt(true);
+      } else {
+        setError(err.response?.data?.message || 'Failed to fetch available rooms');
+      }
     } finally {
       setLoading(false);
     }
@@ -216,19 +241,34 @@ const Availability = ({ hotelAdminId }) => {
       return;
     }
 
-    if (!isLoggedIn) {
+    if (!isLoggedIn || !userId) {
+      console.log('Reservation attempt failed: User not logged in', { isLoggedIn, userId });
+      setError('Please log in to make a reservation.');
       setLoginPrompt(true);
       return;
     }
 
     try {
       setLoading(true);
+      console.log('Attempting to create reservation:', {
+        hotelAdminId,
+        userId,
+        roomType: selectedRoomType,
+        selectedRooms,
+        checkInDate: checkInDate.toISOString(),
+        checkOutDate: checkOutDate.toISOString(),
+        adults,
+        children,
+        childrenAges,
+        token,
+      });
+
       const promises = selectedRooms.map((roomNumber) =>
         axios.post(
           'http://localhost:2000/api/reservations',
           {
             hotelAdminId,
-            userId: user._id,
+            userId,
             roomType: selectedRoomType,
             roomNumber,
             checkInDate: checkInDate.toISOString(),
@@ -244,16 +284,22 @@ const Availability = ({ hotelAdminId }) => {
       );
 
       const responses = await Promise.all(promises);
+      console.log('Reservation responses:', responses);
       setSuccess('Reservation(s) created successfully!');
       setSelectedRooms([]);
       setSelectedRoomType('');
       setShowBookingForm(false);
       fetchAvailableRooms();
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          `Failed to create reservation: ${err.message}`
-      );
+      console.error('Reservation error:', err);
+      if (err.response?.status === 401) {
+        setError('Unauthorized. Please log in again.');
+        setLoginPrompt(true);
+      } else if (err.response?.status === 400) {
+        setError('Invalid reservation data. Please try again.');
+      } else {
+        setError(err.response?.data?.message || `Failed to create reservation: ${err.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -272,21 +318,14 @@ const Availability = ({ hotelAdminId }) => {
     : [];
 
   // Calculate if reserve button should be disabled
-  const isReserveDisabled = 
-    !selectedRoomType || 
-    selectedRooms.length === 0 || 
-    loading || 
-    !isLoggedIn ||
-    !checkInDate ||
-    !checkOutDate ||
-    selectedRooms.length > rooms;
+  const isReserveDisabled = !selectedRoomType || selectedRooms.length === 0 || selectedRooms.length > rooms;
 
   return (
     <Box sx={{ p: 3, maxWidth: '1200px', margin: '0 auto', backgroundColor: colors.dark, color: colors.light }}>
       {/* Display login status */}
       <Box sx={{ mb: 2 }}>
         <Typography variant="body1" sx={{ color: colors.light }}>
-          Booking as: {isLoggedIn ? `${user.firstName} ${user.lastName}` : 'Guest'}
+          Booking as: {isLoggedIn ? `${user.firstName} ${user.middleName}` : 'Guest'}
         </Typography>
       </Box>
 

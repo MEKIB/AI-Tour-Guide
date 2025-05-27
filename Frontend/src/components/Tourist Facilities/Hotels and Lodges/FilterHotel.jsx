@@ -13,12 +13,14 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
+// Import the background image and fallback image
+import backgroundImage from '../../../assets/homepage/bahirdar.jpg';
+import fallbackImage from '../../../assets/homepage/gonder1.jpg';
+
 const ALL_LOCATIONS = 'All Locations';
 const ALL_FACILITY_TYPES = 'All Facility Types';
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/400x200?text=No+Image+Available';
 const BACKEND_URL = 'http://localhost:2000';
-
-const backgroundImage = 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&q=80';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -93,6 +95,23 @@ const HotelFilter = () => {
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        // Fallback background image if primary image fails to load
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundImage: `url(${fallbackImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          zIndex: -1,
+          display: backgroundImage ? 'none' : 'block', // Show fallback only if primary fails
+        },
+      }}
+      onError={(e) => {
+        e.target.style.backgroundImage = `url(${fallbackImage})`; // Fallback for background
       }}
     >
       <StyledPaper>

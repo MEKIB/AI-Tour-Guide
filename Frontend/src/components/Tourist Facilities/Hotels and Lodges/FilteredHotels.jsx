@@ -13,6 +13,10 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
+// Import the background image and fallback image
+import backgroundImage from '../../../assets/homepage/bahirdar.jpg';
+import fallbackImage from '../../../assets/homepage/gonder1.jpg';
+
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/400x200?text=No+Image+Available';
 const BACKEND_URL = 'http://localhost:2000';
 
@@ -21,6 +25,7 @@ const FilteredHotels = () => {
   const navigate = useNavigate();
   const [filteredHotels, setFilteredHotels] = useState(location.state?.filteredHotels || []);
   const [loading, setLoading] = useState(!location.state?.filteredHotels);
+  const [imageError, setImageError] = useState(false); // Track if background image fails
 
   useEffect(() => {
     if (!filteredHotels.length && loading) {
@@ -78,7 +83,14 @@ const FilteredHotels = () => {
   };
 
   const handleImageError = (e) => {
-    console.warn('Image failed to load:', e.target.src);
+    console.warn('Background image failed to load:', e.target.src);
+    e.target.onerror = null;
+    e.target.src = fallbackImage;
+    setImageError(true);
+  };
+
+  const handleCardImageError = (e) => {
+    console.warn('Card image failed to load:', e.target.src);
     e.target.src = PLACEHOLDER_IMAGE;
   };
 
@@ -102,13 +114,26 @@ const FilteredHotels = () => {
     return (
       <Box
         sx={{
-          backgroundImage: `url(https://images.unsplash.com/photo-1564501049412-61c2a3083791)`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          position: 'relative',
           minHeight: '100vh',
           p: 3,
+          overflow: 'hidden',
         }}
       >
+        <img
+          src={imageError ? fallbackImage : backgroundImage}
+          alt="Filtered Hotels Background"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: -1,
+          }}
+          onError={handleImageError}
+        />
         <Box sx={{ background: 'rgba(34, 40, 49, 0.8)', minHeight: '100vh', p: 3 }}>
           <Typography sx={{ color: '#EEEEEE' }}>Loading hotels...</Typography>
         </Box>
@@ -119,13 +144,26 @@ const FilteredHotels = () => {
   return (
     <Box
       sx={{
-        backgroundImage: `url(https://images.unsplash.com/photo-1564501049412-61c2a3083791)`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        position: 'relative',
         minHeight: '100vh',
         p: 3,
+        overflow: 'hidden',
       }}
     >
+      <img
+        src={imageError ? fallbackImage : backgroundImage}
+        alt="Filtered Hotels Background"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: -1,
+        }}
+        onError={handleImageError}
+      />
       <Box sx={{ background: 'rgba(34, 40, 49, 0.8)', minHeight: '100vh', p: 3 }}>
         <Breadcrumbs separator="›" aria-label="breadcrumb" sx={{ mb: 3, color: '#EEEEEE' }}>
           {breadcrumbItems}
@@ -158,7 +196,7 @@ const FilteredHotels = () => {
                   }}
                   image={hotel.image || PLACEHOLDER_IMAGE}
                   alt={hotel.name || 'Hotel Image'}
-                  onError={handleImageError}
+                  onError={handleCardImageError}
                 />
                 <CardContent>
                   <Typography variant="h6" component="h3" sx={{ color: '#00ADB5' }}>
@@ -195,6 +233,5 @@ const FilteredHotels = () => {
     </Box>
   );
 };
-
 
 export default FilteredHotels;

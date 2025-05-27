@@ -335,6 +335,7 @@ const Reserve = () => {
         </DialogActions>
       </Dialog>
 
+
       <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
         <Alert onClose={() => setError('')} severity="error" sx={{ width: '100%' }}>
           {error}

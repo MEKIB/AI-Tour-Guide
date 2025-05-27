@@ -1202,6 +1202,7 @@ app.get("/api/reviews/:hotelAdminId", async (req, res) => {
   }
 });
 
+
 // Room Availability Route
 app.get("/api/rooms/available/:hotelAdminId", async (req, res) => {
   try {
@@ -1693,56 +1694,80 @@ app.post("/api/system-admin/login", async (req, res) => {
   }
 });
 
-// User Routes
-app.post("/register", upload.single("passportOrId"), async (req, res) => {
-  try {
-    const {
-      firstName,
-      middleName,
-      lastName,
-      email,
-      phone,
-      password,
-      confirmPassword,
-      acceptedTerms,
-    } = req.body;
-    const passportOrId = req.file ? req.file.path : null;
 
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
+app.post("/api/signupuser", upload.single("passportOrId"), async (req, res) => {
+  try {
+    const { firstName, middleName, lastName, email, phone, password, confirmPassword, agreedToTerms } = req.body;
+    const passportOrId = req.file; // Multer populates this
+
+    // Log incoming data for debugging
+    console.log("Request body:", req.body);
+    console.log("Request file:", req.file);
+
+    // Validate inputs
+    if (!firstName || !lastName || !email || !phone || !password || !confirmPassword || !passportOrId || !agreedToTerms) {
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-    const existingUser = await userModel.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+    // Generate verification code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store only the file path or name in verificationCodes
+    verificationCodes.set(email, {
+      data: {
+        firstName,
+        middleName,
+        lastName,
+        email,
+        phone,
+        password,
+        passportOrId: passportOrId.path || passportOrId.filename, // Store file path
+        acceptedTerms: agreedToTerms === "true" || agreedToTerms === true, // Handle both string and boolean
+      },
+      code,
+    });
+
+    // Send verification email
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Verify Your Email",
+      text: `Your verification code is: ${code}`,
+    });
+
+    res.status(200).json({ message: "Verification code sent to your email" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+// /api/verify-email-user route
+app.post("/api/verify-email-user", async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) {
+      return res.status(400).json({ message: "Email and verification code are required" });
+    }
+
+    const storedData = verificationCodes.get(email);
+    if (!storedData || storedData.code !== code) {
+      return res.status(400).json({ message: "Invalid or expired verification code" });
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(storedData.data.password, salt);
 
-    const user = new userModel({
-      firstName,
-      middleName,
-      lastName,
-      email,
-      phone,
+    const newUser = new userModel({
+      ...storedData.data,
       password: hashedPassword,
-      passportOrId,
-      acceptedTerms,
     });
 
-    await user.save();
-
-    res.status(201).json({
-      message: "Registration successful",
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
-    });
+    await newUser.save();
+    verificationCodes.delete(email);
+    res.status(201).json({ message: "Account created successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
@@ -2031,6 +2056,12 @@ app.post("/api/bookingHistory/create", verifyToken, async (req, res) => {
         .json({ message: "Unauthorized: User ID does not match token" });
     }
 
+    // Fetch user to get email
+    const user = await userModel.findById(userId).select("email firstName");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
     // Generate a unique booking code (use tx_ref if provided, else generate new)
     const bookingCode = tx_ref || generateBookingCode();
 
@@ -2052,6 +2083,50 @@ app.post("/api/bookingHistory/create", verifyToken, async (req, res) => {
 
     // Save to database
     await bookingHistory.save();
+
+    // Send confirmation email to the user
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: "Booking Confirmation - Visit Amhara",
+        html: `
+          <h2>Booking Confirmation</h2>
+          <p>Dear ${user.firstName},</p>
+          <p>Thank you for your booking with Visit Amhara! Here are your booking details:</p>
+          <ul>
+            <li><strong>Booking Code:</strong> ${bookingCode}</li>
+            <li><strong>Hotel:</strong> ${hotelName}</li>
+            <li><strong>Room Type:</strong> ${roomType}</li>
+            <li><strong>Room Number:</strong> ${roomNumber}</li>
+            <li><strong>Check-in Date:</strong> ${new Date(
+              checkInDate
+            ).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}</li>
+            <li><strong>Check-out Date:</strong> ${new Date(
+              checkOutDate
+            ).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}</li>
+            <li><strong>Total Price:</strong> $${parseFloat(totalPrice).toFixed(
+              2
+            )}</li>
+            <li><strong>Guests:</strong> ${guests || 1}</li>
+          </ul>
+          <p>We look forward to welcoming you! If you have any questions, please contact our support team.</p>
+          <p>Best regards,<br/>Visit Amhara Team</p>
+        `,
+      });
+      console.log(`Confirmation email sent to ${user.email}`);
+    } catch (emailError) {
+      console.error("Error sending confirmation email:", emailError);
+      // Note: We don't fail the booking if the email fails, but log it
+    }
 
     res.status(201).json({
       message: "Booking history created successfully",
