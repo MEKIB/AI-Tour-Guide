@@ -1,65 +1,85 @@
 import React, { useState } from 'react';
 import { Carousel } from 'antd';
-import 'antd/dist/reset.css'; // Correct import for antd styles
-import { Box, Typography, TextField, Button } from '@mui/material'; // Import MUI components for styling
+import 'antd/dist/reset.css';
+import { Box, Typography, TextField, Button } from '@mui/material';
+
+// Import local images with unique names
+import bahirdarImage1 from '../../../assets/homepage/bahirdar.jpg';
+import gonderImage1 from '../../../assets/homepage/gonder.jpg';
+import fallbackImage from '../../../assets/homepage/gonder1.jpg';
+import gonderImage2 from '../../../assets/homepage/gonder2.jpg';
+import lalibelaImage1 from '../../../assets/homepage/lalibela.jpg';
+import lalibelaImage2 from '../../../assets/homepage/lalibela1.jpg';
+import lalibelaImage3 from '../../../assets/homepage/lalibela2.jpg';
+import tanaImage1 from '../../../assets/homepage/tana.jpg';
+import tanaImage2 from '../../../assets/homepage/tana1.jpg';
+import tisabayImage1 from '../../../assets/homepage/tisabay.jpg';
+import tisabayImage2 from '../../../assets/homepage/tisabay1.jpg';
+import tisabayImage3 from '../../../assets/homepage/tisabay2.jpg';
 
 const images = [
   {
-    src: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    title: "Lalibela",
-    description: "Explore the ancient rock-hewn churches of Lalibela, a UNESCO World Heritage Site.",
+    src: lalibelaImage1,
+    title: 'Lalibela',
+    description: 'Explore the ancient rock-hewn churches of Lalibela, a UNESCO World Heritage Site.',
   },
   {
-    src: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    title: "Lake Tana",
-    description: "Discover the serene beauty of Lake Tana and its historic monasteries.",
+    src: tanaImage1,
+    title: 'Lake Tana',
+    description: 'Discover the serene beauty of Lake Tana and its historic monasteries.',
   },
   {
-    src: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    title: "Gondar",
+    src: gonderImage1,
+    title: 'Gondar',
     description: "Visit the castles of Gondar, known as the 'Camelot of Africa'.",
   },
   {
-    src: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    title: "Simien Mountains",
-    description: "Hike through the stunning landscapes of the Simien Mountains.",
+    src: gonderImage2,
+    title: 'Gondar Castles',
+    description: 'Another view of the historic castles in the city of Gondar.',
   },
   {
-    src: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    title: "Danakil Depression",
-    description: "Explore one of the hottest and lowest places on Earth.",
+    src: lalibelaImage2,
+    title: 'Lalibela Churches',
+    description: 'More stunning views of Lalibela’s rock-hewn churches.',
   },
   {
-    src: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    title: "Axum",
-    description: "Discover the ancient obelisks and history of Axum.",
+    src: lalibelaImage3,
+    title: 'Lalibela Heritage',
+    description: 'Explore the spiritual and architectural heritage of Lalibela.',
   },
   {
-    src: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    title: "Harar",
-    description: "Experience the vibrant culture and ancient walls of Harar.",
+    src: tanaImage2,
+    title: 'Lake Tana Monasteries',
+    description: 'Visit the historic monasteries on the islands of Lake Tana.',
   },
   {
-    src: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    title: "Blue Nile Falls",
-    description: "Witness the majestic beauty of the Blue Nile Falls.",
+    src: tisabayImage1,
+    title: 'Blue Nile Falls',
+    description: 'Witness the majestic beauty of the Blue Nile Falls at Tis Abay.',
   },
   {
-    src: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    title: "Bale Mountains",
-    description: "Explore the unique wildlife and landscapes of the Bale Mountains.",
+    src: tisabayImage2,
+    title: 'Tis Abay Falls',
+    description: 'Another view of the stunning Blue Nile Falls.',
   },
   {
-    src: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    title: "Debre Damo",
-    description: "Visit the ancient monastery of Debre Damo.",
+    src: tisabayImage3,
+    title: 'Tis Abay Landscape',
+    description: 'Explore the natural beauty surrounding Tis Abay.',
   },
+  {
+    src: bahirdarImage1,
+    title: 'Bahir Dar',
+    description: 'Experience the vibrant culture and lakeside charm of Bahir Dar.',
+  },
+ 
 ];
 
 function HomeCarousel() {
   const [whereTo, setWhereTo] = useState('');
   const [when, setWhen] = useState('');
-  const [showNearby, setShowNearby] = useState(false); // Controls visibility of "Nearby" option
+  const [showNearby, setShowNearby] = useState(false);
 
   const handleSearch = () => {
     if (whereTo.toLowerCase() === 'nearby') {
@@ -78,9 +98,12 @@ function HomeCarousel() {
           <Box key={index} sx={{ position: 'relative', width: '100%', height: '500px' }}>
             <img
               src={image.src}
-              alt={`Image ${index + 1}`}
+              alt={image.title}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              onError={(e) => { e.target.onerror = null; e.target.src = 'fallback-image-url.jpg'; }} // Fallback image
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = fallbackImage;
+              }}
             />
             {/* Caption Overlay */}
             <Box
@@ -90,10 +113,10 @@ function HomeCarousel() {
                 left: 0,
                 right: 0,
                 padding: '20px',
-                backgroundColor: 'rgba(34, 40, 49, 0.7)', // #222831 with opacity
-                color: '#EEEEEE', // Text color
+                backgroundColor: 'rgba(34, 40, 49, 0.7)',
+                color: '#EEEEEE',
                 textAlign: 'center',
-                animation: 'fadeIn 1.5s ease-in-out', // Animation for caption
+                animation: 'fadeIn 1.5s ease-in-out',
               }}
             >
               <Typography variant="h4" sx={{ color: '#00ADB5', fontWeight: 'bold', marginBottom: '10px' }}>
@@ -113,16 +136,15 @@ function HomeCarousel() {
                 transform: 'translate(-50%, -50%)',
                 width: '80%',
                 maxWidth: '500px',
-                backgroundColor: 'rgba(57, 62, 70, 0.8)', // #393E46 with opacity
+                backgroundColor: 'rgba(57, 62, 70, 0.8)',
                 padding: '15px',
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                animation: 'slideIn 1s ease-in-out', // Animation for search bar
+                animation: 'slideIn 1s ease-in-out',
               }}
             >
-              {/* Where Input */}
               <Box sx={{ flex: 2, position: 'relative' }}>
                 <TextField
                   fullWidth
@@ -130,13 +152,12 @@ function HomeCarousel() {
                   value={whereTo}
                   onChange={(e) => setWhereTo(e.target.value)}
                   onFocus={() => setShowNearby(true)}
-                  onBlur={() => setTimeout(() => setShowNearby(false), 200)} // Delay to allow clicking "Nearby"
+                  onBlur={() => setTimeout(() => setShowNearby(false), 200)}
                   sx={{
                     bgcolor: '#EEEEEE',
                     borderRadius: '4px',
                   }}
                 />
-                {/* Nearby Option */}
                 {showNearby && (
                   <Box
                     sx={{
@@ -159,7 +180,6 @@ function HomeCarousel() {
                   </Box>
                 )}
               </Box>
-              {/* When Input */}
               <TextField
                 fullWidth
                 type="date"
@@ -171,7 +191,6 @@ function HomeCarousel() {
                   flex: 1,
                 }}
               />
-              {/* Search Button */}
               <Button
                 variant="contained"
                 onClick={handleSearch}
@@ -189,7 +208,6 @@ function HomeCarousel() {
         ))}
       </Carousel>
 
-      {/* Define the fadeIn and slideIn animations */}
       <style>
         {`
           @keyframes fadeIn {
