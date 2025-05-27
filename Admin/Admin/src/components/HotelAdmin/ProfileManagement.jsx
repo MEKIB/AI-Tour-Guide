@@ -268,7 +268,7 @@ const ProfileManagement = () => {
             >
               <MenuItem value="Hotels">Hotels</MenuItem>
               <MenuItem value="Resorts">Resorts</MenuItem>
-              <MenuItem value="Villas">Villas</MenuItem>
+              <MenuItem value="Lodges">Lodges</MenuItem>
               <MenuItem value="Guest Houses">Guest Houses</MenuItem>
             </Select>
           </Grid>

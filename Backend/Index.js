@@ -1776,12 +1776,12 @@ app.post("/login", async (req, res) => {
     const { email, password } = req.body;
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "incorrect email or password" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "incorrect email or password" });
     }
 
     const token = jwt.sign(
@@ -1813,6 +1813,103 @@ app.post("/login", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+ const resetTokens = new Map();
+// Forgot Password Route (updated to include HTML email)
+app.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Generate a reset token
+    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    // Store the reset token with an expiry
+    resetTokens.set(resetToken, {
+      userId: user._id,
+      expiresAt: Date.now() + 60 * 60 * 1000, // 1 hour
+    });
+
+    // Send reset email with clickable link
+    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`; // Adjust to your frontend URL
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Password Reset Request',
+      text: `You requested a password reset. Click the link to reset your password: ${resetUrl}\nThis link will expire in 1 hour.`,
+      html: `
+        <p>You requested a password reset.</p>
+        <p>Click the button below to reset your password:</p>
+        <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; color: white; background-color: #00ADB5; text-decoration: none; border-radius: 5px;">Reset Password</a>
+        <p>Or copy and paste this link into your browser:</p>
+        <p>${resetUrl}</p>
+        <p>This link will expire in 1 hour.</p>
+      `,
+    });
+
+    res.status(200).json({ message: 'Password reset link sent to your email' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Reset Password Route
+app.post('/reset-password/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: 'New password is required' });
+    }
+
+    // Verify the reset token
+    const tokenData = resetTokens.get(token);
+    if (!tokenData || tokenData.expiresAt < Date.now()) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    // Verify JWT
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      resetTokens.delete(token);
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    // Find the user
+    const user = await userModel.findById(tokenData.userId);
+    if (!user) {
+      resetTokens.delete(token);
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Update the user's password
+    user.password = hashedPassword;
+    await user.save();
+
+    // Clean up the token
+    resetTokens.delete(token);
+
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 
 app.get("/me", authMiddleware, async (req, res) => {
   try {
@@ -1848,6 +1945,62 @@ app.get("/users", authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
+// POST /api/change-password - Update user's password
+app.post('/api/change-password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Validate inputs
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new passwords are required' });
+    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({ message: 'New password does not meet requirements' });
+    }
+
+    // Verify current password
+    const user = await userModel.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// DELETE /api/me - Delete authenticated user's account
+app.delete('/api/me', authMiddleware, async (req, res) => {
+  try {
+    const user = await userModel.findByIdAndDelete(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+
+
+
 // Delete a user (accessible only to system admins)
 app.delete("/users/:id", authMiddleware, adminMiddleware, async (req, res) => {
   try {
@@ -1864,6 +2017,7 @@ app.delete("/users/:id", authMiddleware, adminMiddleware, async (req, res) => {
     });
   }
 });
+
 
 // MongoDB Connection
 mongoose

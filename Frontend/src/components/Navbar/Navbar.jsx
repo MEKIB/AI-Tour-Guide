@@ -641,7 +641,7 @@ export default function Navbar({
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
-                        navigate("/profile/settings");
+                        navigate("/profile");
                         handleCloseUserMenu();
                       }}
                     >

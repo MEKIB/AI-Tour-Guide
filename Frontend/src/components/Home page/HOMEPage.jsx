@@ -1,14 +1,14 @@
-import React from 'react'
-import Home from './Home'
-import HomeCarousel from './Carousel/HomeCarousel'
+import React from 'react';
+import Home from './Home';
+import HomeCarousel from './Carousel/HomeCarousel';
 
-function HOMEPage() {
+function HOMEPage({ location }) {
   return (
     <>
-    <HomeCarousel/>
-    <Home/>
+      <HomeCarousel />
+      <Home userLocation={location} />
     </>
-  )
+  );
 }
 
-export default HOMEPage
+export default HOMEPage;

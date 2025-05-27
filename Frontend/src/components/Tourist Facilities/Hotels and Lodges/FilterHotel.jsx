@@ -33,8 +33,8 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 }));
 
 const HotelFilter = () => {
-  const locations = [ALL_LOCATIONS, 'Bahir Dar', 'Gondar', 'Lalibela'];
-  const facilityTypes = [ALL_FACILITY_TYPES, 'Hotels', 'Lodges', 'Restaurants'];
+  const locations = [ALL_LOCATIONS, 'Bahir Dar', 'Gonder', 'Lalibela'];
+  const facilityTypes = [ALL_FACILITY_TYPES, 'Hotels','Resorts', 'Lodges', 'Restaurants'];
 
   const [selectedLocation, setSelectedLocation] = useState(ALL_LOCATIONS);
   const [selectedFacilityType, setSelectedFacilityType] = useState(ALL_FACILITY_TYPES);

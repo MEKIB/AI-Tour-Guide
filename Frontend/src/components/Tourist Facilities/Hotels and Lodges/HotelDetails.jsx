@@ -445,4 +445,5 @@ const HotelDetails = ({ hotelAdminId }) => {
   );
 };
 
+
 export default HotelDetails;

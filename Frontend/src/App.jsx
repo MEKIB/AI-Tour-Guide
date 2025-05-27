@@ -4,18 +4,9 @@ import {
   Routes,
   Route,
   useNavigate,
-  useLocation,
   Outlet,
 } from "react-router-dom";
-import {
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-} from "@mui/material";
+import { Box } from "@mui/material";
 import axios from "axios";
 import { TourProvider } from "./components/vr/TourContext";
 import ButtonAppBar from "./components/Navbar/Navbar";
@@ -104,16 +95,13 @@ import GonderTour from "./components/vr/GonderTour";
 import BahirDarTour from "./components/vr/BahirDarTour";
 import ServiceProviders from "./components/Tourist Facilities/ServiceProviderSearch";
 import VerifyEmailUser from "./components/account/verifyEmailUser";
-
 function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [openLocationDialog, setOpenLocationDialog] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
   // Authentication check and user data fetch
   useEffect(() => {
@@ -163,26 +151,8 @@ function App() {
     checkAuth();
   }, []);
 
-  // Check location permission and show dialog if needed
+  // Geolocation
   useEffect(() => {
-    const permission = localStorage.getItem("locationPermission");
-    if (location.pathname === "/" && permission !== "allowed") {
-      setOpenLocationDialog(true);
-    } else {
-      setOpenLocationDialog(false);
-      if (permission === "allowed" && !userLocation) {
-        // Fetch location if previously allowed but no location is set
-        handleAllowLocation();
-      } else if (!userLocation) {
-        // Set default location if none exists
-        setUserLocation("Lalibela");
-        setPermissionGranted(true);
-      }
-    }
-  }, [location.pathname, userLocation]);
-
-  // Geolocation logic, triggered after user grants permission
-  const handleAllowLocation = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -192,29 +162,16 @@ function App() {
           setUserLocation("Gondar");
         } else if (latitude >= 11.5 && latitude <= 11.7) {
           setUserLocation("BahirDar");
-        } else {
-          setUserLocation("Lalibela"); // Default location
         }
         setPermissionGranted(true);
-        localStorage.setItem("locationPermission", "allowed");
-        setOpenLocationDialog(false);
       },
       (error) => {
         console.error("Location permission denied:", error);
-        setUserLocation("Lalibela"); // Default location
+        setUserLocation("Lalibela");
         setPermissionGranted(true);
-        localStorage.setItem("locationPermission", "denied");
-        setOpenLocationDialog(false);
       }
     );
-  };
-
-  const handleDenyLocation = () => {
-    setUserLocation("Lalibela"); // Default location
-    setPermissionGranted(true);
-    localStorage.setItem("locationPermission", "denied");
-    setOpenLocationDialog(false);
-  };
+  }, []);
 
   const handleLocationChange = (event) => {
     setUserLocation(event.target.value);
@@ -266,34 +223,6 @@ function App() {
         overflowX: "hidden",
       }}
     >
-      {/* Location Permission Pop-up */}
-      <Dialog
-        open={openLocationDialog}
-        onClose={handleDenyLocation}
-        aria-labelledby="location-dialog-title"
-        aria-describedby="location-dialog-description"
-      >
-        <DialogTitle id="location-dialog-title">
-          Allow Location Access
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="location-dialog-description">
-            We would like to access your location to provide a better experience
-            with personalized filters for destinations and services. Would you
-            like to allow location access?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDenyLocation} color="secondary">
-            Deny
-          </Button>
-          <Button onClick={handleAllowLocation} color="primary" autoFocus>
-            Allow
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-７
       <ButtonAppBar
         isLoggedIn={isAuthenticated}
         onLogout={handleLogout}
@@ -501,11 +430,13 @@ function App() {
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/verifyEmailUser" element={<VerifyEmailUser />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route path="/amhara" element={<AmharaBoth />} />
         <Route path="/bureau" element={<Bureau />} />
         <Route path="/mandate" element={<Merge />} />
         <Route path="/management" element={<Managment />} />
+
         {isAuthenticated && (
           <React.Fragment>
             <Route path="/profile" element={<Profile />} />

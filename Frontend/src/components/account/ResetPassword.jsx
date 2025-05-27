@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import {
@@ -16,40 +16,28 @@ import {
   CardContent,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { Lock } from "@mui/icons-material"; // Import icons
+import { Lock } from "@mui/icons-material";
 
 // Define the color palette for dark theme
 const colors = {
-  primary: "#00ADB5", // Teal
-  secondary: "#393E46", // Medium gray
-  background: "#222831", // Dark gray
-  text: "#EEEEEE", // Light gray
+  primary: "#00ADB5",
+  secondary: "#393E46",
+  background: "#222831",
+  text: "#EEEEEE",
 };
 
 // Custom dark theme for consistent styling
 const theme = createTheme({
   palette: {
-    mode: "dark", // Enable dark mode
-    primary: {
-      main: colors.primary,
-    },
-    secondary: {
-      main: colors.secondary,
-    },
-    background: {
-      default: colors.background,
-      paper: colors.secondary,
-    },
-    text: {
-      primary: colors.text,
-    },
+    mode: "dark",
+    primary: { main: colors.primary },
+    secondary: { main: colors.secondary },
+    background: { default: colors.background, paper: colors.secondary },
+    text: { primary: colors.text },
   },
   typography: {
     fontFamily: "Roboto, sans-serif",
-    h4: {
-      fontWeight: 600,
-      color: colors.text,
-    },
+    h4: { fontWeight: 600, color: colors.text },
   },
 });
 
@@ -60,7 +48,14 @@ const ResetPasswordPage = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { token } = useParams(); // Get the token from the URL
+  const { token } = useParams();
+
+  useEffect(() => {
+    console.log('ResetPasswordPage: Token from URL:', token);
+    if (!token) {
+      setError("No reset token provided. Please request a new password reset link.");
+    }
+  }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,19 +70,19 @@ const ResetPasswordPage = () => {
     }
 
     try {
+      console.log('ResetPasswordPage: Sending reset request for token:', token);
       const response = await axios.post(
         `http://localhost:2000/reset-password/${token}`,
-        {
-          password: password,
-        }
+        { password }
       );
       setMessage(response.data.message);
-      // Optionally, navigate to the login page after successful reset
       setTimeout(() => {
+        console.log('ResetPasswordPage: Redirecting to /login');
         navigate("/login");
-      }, 2000); // Redirect after 2 seconds
+      }, 3000);
     } catch (err) {
-      setError(err.response?.data.message || "An error occurred.");
+      console.error('ResetPasswordPage: Error:', err);
+      setError(err.response?.data.message || "Failed to reset password. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -122,16 +117,15 @@ const ResetPasswordPage = () => {
                 Reset Password
               </Typography>
 
-              {/* Success and Error Messages */}
               {message && (
-                <Typography color="success" align="center" sx={{ mb: 2 }}>
-                  {message}
-                </Typography>
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  {message} Redirecting to login...
+                </Alert>
               )}
               {error && (
-                <Typography color="error" align="center" sx={{ mb: 2 }}>
+                <Alert severity="error" sx={{ mb: 2 }}>
                   {error}
-                </Typography>
+                </Alert>
               )}
 
               <form onSubmit={handleSubmit}>
@@ -169,7 +163,7 @@ const ResetPasswordPage = () => {
                   color="primary"
                   size="large"
                   fullWidth
-                  disabled={loading}
+                  disabled={loading || !token}
                   sx={{
                     mt: 2,
                     py: 1.5,
@@ -191,7 +185,6 @@ const ResetPasswordPage = () => {
         </Container>
       </Box>
 
-      {/* Snackbar for Success and Error Messages */}
       <Snackbar
         open={!!message}
         autoHideDuration={3000}
@@ -199,7 +192,7 @@ const ResetPasswordPage = () => {
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert severity="success" sx={{ width: "100%" }}>
-          {message}
+          {message} Redirecting to login...
         </Alert>
       </Snackbar>
       <Snackbar
