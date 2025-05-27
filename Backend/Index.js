@@ -1485,8 +1485,8 @@ app.post("/api/hotel-admins/approve/:id", async (req, res) => {
       rangeStart = 100;
       rangeEnd = 200;
     } else if (locationLower.includes("gonder")) {
-      rangeStart = 300;
-      rangeEnd = 400;
+      rangeStart = 700;
+      rangeEnd = 900;
     } else if (locationLower.includes("lalibela")) {
       rangeStart = 400;
       rangeEnd = 500;

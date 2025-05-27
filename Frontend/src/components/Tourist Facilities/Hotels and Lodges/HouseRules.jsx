@@ -6,7 +6,6 @@ function HouseRules({ hotelAdminId }) {
   return (
     <>
       <Rules hotelAdminId={hotelAdminId} />
-      <HotelFAQs />
     </>
   );
 }
