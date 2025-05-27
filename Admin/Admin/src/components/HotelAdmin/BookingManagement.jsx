@@ -411,7 +411,7 @@ const BookingManagement = ({ hotelAdminId: propHotelAdminId }) => {
                     <TableCell sx={{ color: '#EEEEEE' }}>Guests</TableCell>
                     <TableCell sx={{ color: '#EEEEEE' }}>Total Price</TableCell>
                     <TableCell sx={{ color: '#EEEEEE' }}>Status</TableCell>
-                    <TableCell sx={{ color: '#EEEEEE' }}>Booking Code</TableCell>
+                    {/* <TableCell sx={{ color: '#EEEEEE' }}>Booking Code</TableCell> */}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -464,7 +464,7 @@ const BookingManagement = ({ hotelAdminId: propHotelAdminId }) => {
                         <TableCell sx={{ color: '#EEEEEE' }}>{booking.guests}</TableCell>
                         <TableCell sx={{ color: '#EEEEEE' }}>${booking.totalPrice}</TableCell>
                         <TableCell sx={{ color: '#EEEEEE' }}>{booking.status}</TableCell>
-                        <TableCell sx={{ color: '#EEEEEE' }}>{booking.bookingCode}</TableCell>
+                        {/* <TableCell sx={{ color: '#EEEEEE' }}>{booking.bookingCode}</TableCell> */}
                       </TableRow>
                     ))
                   ) : (
