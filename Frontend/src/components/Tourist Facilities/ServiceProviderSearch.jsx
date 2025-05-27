@@ -480,38 +480,96 @@ const ServiceProviderSearch = () => {
               >
                 All Service Providers in {userCity} (Sorted by Distance)
               </Typography>
-              {providers.map((provider) => (
-                <Box
-                  key={provider._id}
-                  sx={{
-                    ...cardStyle,
-                    marginBottom: "10px",
-                    background:
-                      provider === nearestHospital ||
-                      provider === nearestPoliceStation
-                        ? "rgba(0, 173, 181, 0.1)"
-                        : "rgba(57, 62, 70, 0.9)",
-                  }}
-                >
-                  <Typography sx={textStyle}>
-                    <strong>{provider.name}</strong> ({provider.typeId})
+              <Grid container spacing={2}>
+                {/* Hospitals Column */}
+                <Grid item xs={12} md={6}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ color: "#00ADB5", marginBottom: "10px" }}
+                  >
+                    Hospitals
                   </Typography>
-                  <Typography sx={textStyle}>City: {provider.city}</Typography>
-                  <Typography sx={textStyle}>
-                    Address: {provider.address}
+                  {providers
+                    .filter((provider) => provider.typeId === "hospital")
+                    .map((provider) => (
+                      <Box
+                        key={provider._id}
+                        sx={{
+                          ...cardStyle,
+                          marginBottom: "10px",
+                          background:
+                            provider === nearestHospital
+                              ? "rgba(0, 173, 181, 0.1)"
+                              : "rgba(57, 62, 70, 0.9)",
+                        }}
+                      >
+                        <Typography sx={textStyle}>
+                          <strong>{provider.name}</strong> (hospital)
+                        </Typography>
+                        <Typography sx={textStyle}>
+                          City: {provider.city}
+                        </Typography>
+                        <Typography sx={textStyle}>
+                          Address: {provider.address}
+                        </Typography>
+                        <Typography sx={textStyle}>
+                          Phone: {provider.phoneNumber}
+                        </Typography>
+                        <Typography sx={textStyle}>
+                          Distance: {provider.distance.toFixed(2)} km
+                        </Typography>
+                        <Typography sx={textStyle}>
+                          Location: Lat {provider.location.coordinates[1]}, Lng{" "}
+                          {provider.location.coordinates[0]}
+                        </Typography>
+                      </Box>
+                    ))}
+                </Grid>
+                {/* Police Stations Column */}
+                <Grid item xs={12} md={6}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ color: "#00ADB5", marginBottom: "10px" }}
+                  >
+                    Police Stations
                   </Typography>
-                  <Typography sx={textStyle}>
-                    Phone: {provider.phoneNumber}
-                  </Typography>
-                  <Typography sx={textStyle}>
-                    Distance: {provider.distance.toFixed(2)} km
-                  </Typography>
-                  <Typography sx={textStyle}>
-                    Location: Lat {provider.location.coordinates[1]}, Lng{" "}
-                    {provider.location.coordinates[0]}
-                  </Typography>
-                </Box>
-              ))}
+                  {providers
+                    .filter((provider) => provider.typeId === "police_station")
+                    .map((provider) => (
+                      <Box
+                        key={provider._id}
+                        sx={{
+                          ...cardStyle,
+                          marginBottom: "10px",
+                          background:
+                            provider === nearestPoliceStation
+                              ? "rgba(0, 173, 181, 0.1)"
+                              : "rgba(57, 62, 70, 0.9)",
+                        }}
+                      >
+                        <Typography sx={textStyle}>
+                          <strong>{provider.name}</strong> (police_station)
+                        </Typography>
+                        <Typography sx={textStyle}>
+                          City: {provider.city}
+                        </Typography>
+                        <Typography sx={textStyle}>
+                          Address: {provider.address}
+                        </Typography>
+                        <Typography sx={textStyle}>
+                          Phone: {provider.phoneNumber}
+                        </Typography>
+                        <Typography sx={textStyle}>
+                          Distance: {provider.distance.toFixed(2)} km
+                        </Typography>
+                        <Typography sx={textStyle}>
+                          Location: Lat {provider.location.coordinates[1]}, Lng{" "}
+                          {provider.location.coordinates[0]}
+                        </Typography>
+                      </Box>
+                    ))}
+                </Grid>
+              </Grid>
             </Box>
           ) : (
             !loading &&

@@ -27,12 +27,6 @@ const ServiceProvider = mongoose.model(
 // Seed data
 const seedServiceProviders = async () => {
   try {
-    const existingProviders = await ServiceProvider.countDocuments();
-    if (existingProviders > 0) {
-      console.log("Service providers already seeded");
-      return;
-    }
-
     const providers = [
       // Lalibela: 1 hospital, 2 clinics, 1 police station
       {
@@ -52,7 +46,7 @@ const seedServiceProviders = async () => {
         location: { type: "Point", coordinates: [39.042, 12.032] },
       },
       {
-        name: "Eshetu private Clinic",
+        name: "Eshetu Private Clinic",
         typeId: "clinic",
         city: "Lalibela",
         address: "Kebele Roha, Lalibela",
@@ -63,11 +57,11 @@ const seedServiceProviders = async () => {
         name: "Lalibela Main Police Station",
         typeId: "police_station",
         city: "Lalibela",
-        address: "Near adebabay, Lalibela",
+        address: "Near Adebabay, Lalibela",
         phoneNumber: "+251910456789",
         location: { type: "Point", coordinates: [39.0426, 12.0226] },
       },
-      // Bahir Dar: 3 hospitals, 3 clinics
+      // Bahir Dar: 3 hospitals, 3 clinics, 2 additional police stations
       {
         name: "Felege Hiwot Referral Hospital",
         typeId: "hospital",
@@ -83,6 +77,22 @@ const seedServiceProviders = async () => {
         address: "Kebele 10, Bahir Dar",
         phoneNumber: "+251917456123",
         location: { type: "Point", coordinates: [37.4012, 11.5943] },
+      },
+      {
+        name: "Kebele 10 Police Office",
+        typeId: "police_station",
+        city: "Bahir Dar",
+        address: "Kebele 10, Bahir Dar",
+        phoneNumber: "+251917456123",
+        location: { type: "Point", coordinates: [37.4003, 11.5963] },
+      },
+      {
+        name: "Kebele 5 Police Office",
+        typeId: "police_station",
+        city: "Bahir Dar",
+        address: "Kebele 5, Bahir Dar",
+        phoneNumber: "+251917456123",
+        location: { type: "Point", coordinates: [37.3894, 11.5906] },
       },
       {
         name: "Tibebe Ghion Specialized Hospital",
@@ -151,8 +161,19 @@ const seedServiceProviders = async () => {
       },
     ];
 
-    await ServiceProvider.insertMany(providers);
-    console.log("Service providers seeded successfully");
+    // Check and insert only new providers based on name
+    for (const provider of providers) {
+      const existingProvider = await ServiceProvider.findOne({
+        name: provider.name,
+      });
+      if (!existingProvider) {
+        await ServiceProvider.create(provider);
+        console.log(`Added new service provider: ${provider.name}`);
+      } else {
+        console.log(`Service provider already exists: ${provider.name}`);
+      }
+    }
+    console.log("Service provider seeding completed");
   } catch (error) {
     console.error("Error seeding service providers:", error);
   }

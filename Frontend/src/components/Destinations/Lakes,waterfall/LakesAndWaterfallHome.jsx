@@ -30,7 +30,7 @@ const attractions = [
     description:
       "Wanzaye Filweha/hot spring/ is one of the nearby and closest natural hot springs near the regional capital Bahir Dar. The hot spring has a curative role for local communities.",
     image: WanzayeHotspringImage,
-    path: "/lakes-hot-springs-waterfalls/wanzaye-hot-spring",
+    path: "/lakes-hot-springs-waterfalls/wanzaye-hot spring",
   },
   {
     title: "Lake Hayq",
