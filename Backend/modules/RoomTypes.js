@@ -22,7 +22,7 @@ const roomTypeSchema = new mongoose.Schema({
         required: true,
       },
       availability: [
-        {
+        { 
           startDate: {
             type: Date,
             required: true,
@@ -40,7 +40,5 @@ const roomTypeSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
-
-
 const RoomType = mongoose.model('RoomType', roomTypeSchema);
 export default RoomType;
