@@ -730,7 +730,7 @@ const BookingHistory = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <Receipt sx={{ mr: 1, color: '#00ADB5' }} />
                             <Typography variant="h6" sx={{ color: '#EEEEEE' }}>
-                              ${booking.totalPrice?.toFixed(2) || '0.00'}
+                              ETB {booking.totalPrice?.toFixed(2) || '0.00'}
                             </Typography>
                           </Box>
                         </Box>
