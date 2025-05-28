@@ -20,6 +20,18 @@ import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import LoyaltyIcon from "@mui/icons-material/Loyalty";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import PaymentIcon from "@mui/icons-material/Payment";
+import bahirdarImage1 from '../../assets/homepage/bahirdar.jpg';
+import gonderImage1 from '../../assets/homepage/gonder.jpg';
+import fallbackImage from '../../assets/homepage/gonder1.jpg';
+import gonderImage2 from '../../assets/homepage/gonder2.jpg';
+import lalibelaImage1 from '../../assets/homepage/lalibela.jpg';
+import lalibelaImage2 from '../../assets/homepage/lalibela1.jpg';
+import lalibelaImage3 from '../../assets/homepage/lalibela2.jpg';
+import tanaImage1 from '../../assets/homepage/tana.jpg';
+import tanaImage2 from '../../assets/homepage/tana1.jpg';
+import tisabayImage1 from '../../assets/homepage/tisabay.jpg';
+import tisabayImage2 from '../../assets/homepage/tisabay1.jpg';
+import tisabayImage3 from '../../assets/homepage/tisabay2.jpg';
 
 // Testimonials Data with Unsplash Images
 const testimonials = [
@@ -83,20 +95,20 @@ const locationData = {
       name: "Rock-Hewn Churches",
       description:
         "The Rock-Hewn Churches of Lalibela are a UNESCO World Heritage site and one of the most extraordinary architectural wonders in the world. Carved directly into solid rock in the 12th century, these churches are a testament to the ingenuity and devotion of the Ethiopian people. Each church has unique features, and the site remains an active place of worship and pilgrimage.",
-      image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791", // Unsplash URL
+      image: "lalibelaImage1", // Unsplash URL
     },
     hotels: [
       {
         name: "Lalibela Lodge",
         description:
           "A luxurious lodge offering breathtaking views of the surrounding mountains and valleys. Perfect for travelers seeking comfort and tranquility.",
-        image: "https://images.unsplash.com/photo-1621451537084-482c73073a0f", // Unsplash URL
+        image: "lalibelaImage2", // Unsplash URL
       },
       {
         name: "Rock Hotel",
         description:
           "A unique hotel built into the rock formations, offering an authentic Lalibela experience with modern amenities.",
-        image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791", // Unsplash URL
+        image: "lalibelaImage3", // Unsplash URL
       },
       {
         name: "Mountain View Hotel",
@@ -308,16 +320,7 @@ function Home({ location }) {
               >
                 Lakes
               </Button>
-              <Button
-                onClick={() => setFilter("historicalLandmarks")}
-                sx={{
-                  bgcolor: filter === "historicalLandmarks" ? "#00ADB5" : "#393E46",
-                  color: "#EEEEEE",
-                  "&:hover": { bgcolor: "#00ADB5" },
-                }}
-              >
-                Historical Landmarks
-              </Button>
+            
             </ButtonGroup>
           </Box>
 

@@ -35,7 +35,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Recommended from './Recommended';
+// import Recommended from './Recommended';
 import PaymentModal from './PaymentModal';
 
 const Reserve = () => {
@@ -414,23 +414,7 @@ const Reserve = () => {
             </Button>
           </Badge>
 
-          <Button
-            variant={activeTab === 'recommended' ? 'contained' : 'outlined'}
-            onClick={() => setActiveTab('recommended')}
-            size="medium"
-            sx={{
-              backgroundColor: activeTab === 'recommended' ? '#00ADB5' : 'transparent',
-              color: '#EEEEEE',
-              borderColor: '#00ADB5',
-              minWidth: 100,
-              fontSize: '0.9rem',
-              '&:hover': {
-                backgroundColor: activeTab === 'recommended' ? '#008B8B' : '#393E46',
-              },
-            }}
-          >
-            Recommended
-          </Button>
+     
         </Box>
       </Box>
 
@@ -707,10 +691,10 @@ const Reserve = () => {
                             mb: 0.5,
                           }}
                         >
-                          Total: ${reservation.totalPrice}
+                          Total: ETB {reservation.totalPrice}
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#EEEEEE', fontSize: '0.9rem' }}>
-                          (${reservation.price} per night)
+                          (ETB {reservation.price} per night)
                         </Typography>
                       </Box>
                     </Box>

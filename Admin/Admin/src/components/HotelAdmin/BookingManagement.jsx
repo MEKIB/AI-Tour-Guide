@@ -462,7 +462,7 @@ const BookingManagement = ({ hotelAdminId: propHotelAdminId }) => {
                           {new Date(booking.checkOutDate).toLocaleDateString('en-US', { timeZone: 'Africa/Nairobi' })}
                         </TableCell>
                         <TableCell sx={{ color: '#EEEEEE' }}>{booking.guests}</TableCell>
-                        <TableCell sx={{ color: '#EEEEEE' }}>${booking.totalPrice}</TableCell>
+                        <TableCell sx={{ color: '#EEEEEE' }}>ETB {booking.totalPrice}</TableCell>
                         <TableCell sx={{ color: '#EEEEEE' }}>{booking.status}</TableCell>
                         {/* <TableCell sx={{ color: '#EEEEEE' }}>{booking.bookingCode}</TableCell> */}
                       </TableRow>

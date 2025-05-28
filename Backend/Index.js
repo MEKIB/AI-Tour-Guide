@@ -2267,7 +2267,7 @@ app.post("/api/bookingHistory/create", verifyToken, async (req, res) => {
               day: "numeric",
               year: "numeric",
             })}</li>
-            <li><strong>Total Price:</strong> $${parseFloat(totalPrice).toFixed(
+            <li><strong>Total Price:</strong> ETB ${parseFloat(totalPrice).toFixed(
               2
             )}</li>
             <li><strong>Guests:</strong> ${guests || 1}</li>

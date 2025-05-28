@@ -339,7 +339,7 @@ const AskRefund = () => {
                   {filteredRefunds.map((refund) => (
                     <TableRow key={refund.bookingCode}>
                       <TableCell sx={{ color: '#EEEEEE' }}>{refund.bookingCode}</TableCell>
-                      <TableCell sx={{ color: '#EEEEEE' }}>${refund.totalPrice.toFixed(2)}</TableCell>
+                      <TableCell sx={{ color: '#EEEEEE' }}>ETB {refund.totalPrice.toFixed(2)}</TableCell>
                       <TableCell sx={{ color: '#EEEEEE' }}>
                         <Typography
                           sx={{
