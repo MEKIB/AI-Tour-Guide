@@ -393,7 +393,7 @@ const BookingHistory = () => {
   };
 
   const isCompletedBooking = (booking) => {
-    return new Date(booking.checkOut) <= new Date() && booking.status == 'checked-in';
+    return new Date(booking.checkOut) >= new Date() && booking.status == 'checked-in';
   };
 
   const filteredBookings = bookings.filter((booking) => {
@@ -762,33 +762,8 @@ const BookingHistory = () => {
                         )}
                         {isCompletedBooking(booking) && (
                           <>
-                            <Button
-                              variant="contained"
-                              sx={{
-                                backgroundColor: '#4CAF50',
-                                color: '#EEEEEE',
-                                mb: 2,
-                                width: '100%',
-                                '&:hover': {
-                                  backgroundColor: '#3e8e41',
-                                },
-                              }}
-                            >
-                              Book Again
-                            </Button>
-                            <Button
-                              variant="outlined"
-                              sx={{
-                                color: '#00ADB5',
-                                borderColor: '#00ADB5',
-                                width: '100%',
-                                '&:hover': {
-                                  borderColor: '#008B8B',
-                                },
-                              }}
-                            >
-                              Leave Review
-                            </Button>
+                           
+                           
                           </>
                         )}
                       </Box>
